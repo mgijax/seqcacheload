@@ -61,20 +61,15 @@ def createBCP():
 
 	for r in results:
 
-		description = `r['startCoordinate']` + ' - ' + `r['endCoordinate']` + ' ' + r['mapUnits'] + \
-			',' + r['strand'] + 'strand' + NL + \
-			'(From ' + r['provider'] + ' annotation of ' + r['version'] + ')'
-
 		outBCP.write(str(r['_Map_key']) + DL + \
 			str(r['_Object_key']) + DL + \
 			r['chromosome'] + DL + \
 			str(r['startCoordinate']) + DL + \
 			str(r['endCoordinate']) + DL + \
-			str(r['mapUnits']) + DL + \
 			str(r['strand']) + DL + \
+			str(r['mapUnits']) + DL + \
 			str(r['provider']) + DL + \
 			str(r['version']) + DL + \
-			str(description) + DL + \
 			str(userKey) + DL + str(userKey) + DL + \
 			loaddate + DL + loaddate + NL)
 
