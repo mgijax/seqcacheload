@@ -10,9 +10,7 @@
 # (DSQUERY and MGD).
 #
 # Usage:
-#	seqmarker.py [markerkey]
-#
-# If markerkey is provided, then only create the bcp file for that marker.
+#	seqmarker.py
 #
 # History
 #
