@@ -39,7 +39,7 @@ def createBCP(markerKey):
 
 	outBCP = open('%s.bcp' % (table), 'w')
 
-	cmd = 'select distinct sequenceKey = s._Object_key, ' + \
+	cmd = 'select sequenceKey = s._Object_key, ' + \
 		'markerKey = m._Object_key, refsKey = ar._Refs_key,
 		'mdate = convert(char(10), m.modification_date, 101) ' + \
 		'from ACC_Accession s, ACC_Accession m, ACC_AccessionReference ar ' + \
