@@ -1,3 +1,10 @@
+TAG: seqcacheload-1-0-11
+DATE: 06/04/2004
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) check bcp file before truncating/loading
+
 TAG: seqcacheload-1-0-10
 DATE: 06/03/2004
 STAFF: lec
