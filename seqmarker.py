@@ -189,6 +189,8 @@ def createBCP():
 		'from #nondummyannot group by sequenceKey, markerKey, refsKey')
 	cmds.append('create nonclustered index idx1 on #finalnondummy (sequenceKey)')
 	cmds.append('create nonclustered index idx2 on #finalnondummy (markerKey)')
+	cmds.append('create nonclustered index idx3 on #finalnondummy (refsKey)')
+	cmds.append('create nonclustered index idx4 on #finalnondummy (mdate)')
 
 	cmds.append('select distinct sequenceKey, markerKey, accID into #deriveQuality ' + \
 		'from #finalnondummy order by markerKey')
