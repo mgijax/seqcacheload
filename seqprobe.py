@@ -40,9 +40,8 @@ def createBCP():
 	outBCP = open('%s.bcp' % (table), 'w')
 
 	cmds = []
-
-	cmds.append('select sequenceKey = s._Object_key, probeKey = p._Object_key, ' + \
-		'refsKey = ar._Refs_key, ' + \
+	cmds.append('select sequenceKey = s._Object_key, ' + \
+		'probeKey = p._Object_key, refsKey = ar._Refs_key, ' + \
 		'mdate = convert(char(10), p.modification_date, 101) ' + \
 		'into #sequences ' + \
 		'from ACC_Accession s, ACC_Accession p, ACC_AccessionReference ar ' + \
@@ -51,6 +50,11 @@ def createBCP():
 		'and p._MGIType_key = 3 ' + \
 		'and s._LogicalDB_key = p._LogicalDB_key ' + \
 		'and p._Accession_key = ar._Accession_key')
+
+	cmds.append('create nonclustered index idx_seq on #sequences (sequenceKey)')
+	cmds.append('create nonclustered index idx_mrk on #sequences (markerKey)')
+	cmds.append('create nonclustered index idx_ref on #sequences (refsKey)')
+	cmds.append('create nonclustered index idx_mdt on #sequences (mdate)')
 
 	cmds.append('select distinct sequenceKey, probeKey, refsKey, mdate from #sequences')
 
