@@ -40,9 +40,12 @@ def createBCP(markerKey):
 	outBCP = open('%s.bcp' % (table), 'w')
 
 	cmd = 'select distinct sequenceKey = s._Object_key, ' + \
-		'markerKey = m._Object_key, refsKey = ar._Refs_key ' + \
-		'from SEQ_Sequence_Acc_View s, MRK_Acc_View m, ACC_AccessionReference ar ' + \
-		'where s.accID = m.accID ' + \
+		'markerKey = m._Object_key, refsKey = ar._Refs_key,
+		'mdate = convert(char(10), m.modification_date, 101) ' + \
+		'from ACC_Accession s, ACC_Accession m, ACC_AccessionReference ar ' + \
+		'where s._MGIType_key = 19 ' + \
+		'and s.accID = m.accID ' + \
+		'and m._MGIType_key = 2 ' + \
 		'and s._LogicalDB_key = m._LogicalDB_key ' + \
 		'and m._Accession_key = ar._Accession_key'
 
@@ -56,6 +59,7 @@ def createBCP(markerKey):
 		outBCP.write(mgi_utils.prvalue(r['sequenceKey']) + DL + \
 		       	mgi_utils.prvalue(r['markerKey']) + DL + \
 		       	mgi_utils.prvalue(r['refsKey']) + DL + \
+			mdate + DL + \
 			str(userKey) + DL + str(userKey) + DL + \
 			loaddate + DL + loaddate + NL)
 
