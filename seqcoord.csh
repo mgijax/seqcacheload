@@ -22,7 +22,7 @@ date | tee -a ${LOG}
 
 # Create the bcp file
 
-#../seqcoord.py | tee -a ${LOG}
+../seqcoord.py | tee -a ${LOG}
 
 # Allow bcp into database and truncate tables
 
