@@ -39,15 +39,17 @@ def createBCP():
 
 	outBCP = open('%s.bcp' % (table), 'w')
 
-        cmd = 'select mcf.startBP, mcf.endBP, mcf.strand, c.chromosome, sequenceKey = a._Object_key ' + \
-              'from MAP_Coord_Feature mcf, MAP_Coordinate mc, VOC_Term t, MRK_Chromosome c, MRK_Acc_View a ' + \
+        cmd = 'select mcf.startBP, mcf.endBP, mcf.strand, c.chromosome, sequenceKey = a2._Object_key ' + \
+              'from MAP_Coord_Feature mcf, MAP_Coordinate mc, VOC_Term t, MRK_Chromosome c, MRK_Acc_View a1, SEQ_Acc_View a2 ' + \
 	      'where mcf._Map_key = mc._Map_key ' + \
 	      'and mc._MapType_key = t._Term_key ' + \
 	      'and t.term = "Assembly" ' + \
 	      'and mc._Chromosome_key = c._Chromosome_key ' + \
 	      'and mcf._MGIType_key = 2 ' + \
-	      'and mcf._Object_key = a._Object_key ' + \
-	      'and a._LogicalDB_key = ?'
+	      'and mcf._Object_key = a1._Object_key ' + \
+	      'and a1.accID = a2.accID ' + \
+	      'and a1._LogicalDB_key = a2._LogicalDB_key ' + \
+	      'and a1._LogicalDB_key in ()'
 
 	results = db.sql(cmd, 'auto')
 

@@ -39,10 +39,12 @@ def createBCP(probeKey):
 
 	outBCP = open('%s.bcp' % (table), 'w')
 
-	cmd = 'select distinct sequenceKey = s._Object_key, probeKey = p._Object_key ' + \
-		'from SEQ_Sequence_Acc_View s, PRB_Acc_View p ' + \
+	cmd = 'select distinct sequenceKey = s._Object_key, probeKey = p._Object_key, ' + \
+		'refsKey = ar._Refs_key ' + \
+		'from SEQ_Sequence_Acc_View s, PRB_Acc_View p, ACC_AccessionReference ar ' + \
 		'where s.accID = p.accID ' + \
-		'and s._LogicalDB_key = p._LogicalDB_key'
+		'and s._LogicalDB_key = p._LogicalDB_key ' + \
+		'and p._Accession_key = ar._Accession_key'
 
 	if probeKey is not None:
 		cmd = cmd + 'and p._Object_key = %s\n' % probeKey
@@ -53,6 +55,7 @@ def createBCP(probeKey):
 
 		outBCP.write(mgi_utils.prvalue(r['sequenceKey']) + DL + \
 		       	mgi_utils.prvalue(r['probeKey']) + DL + \
+		       	mgi_utils.prvalue(r['refsKey']) + DL + \
 			str(userKey) + DL + str(userKey) + DL + \
 			loaddate + DL + loaddate + NL)
 

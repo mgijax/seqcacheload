@@ -39,13 +39,15 @@ def createBCP(markerKey):
 
 	outBCP = open('%s.bcp' % (table), 'w')
 
-	cmd = 'select distinct sequenceKey = s._Object_key, markerKey = m._Object_key ' + \
-		'from SEQ_Sequence_Acc_View s, MRK_Acc_View m ' + \
+	cmd = 'select distinct sequenceKey = s._Object_key, ' + \
+		'markerKey = m._Object_key, refsKey = ar._Refs_key ' + \
+		'from SEQ_Sequence_Acc_View s, MRK_Acc_View m, ACC_AccessionReference ar ' + \
 		'where s.accID = m.accID ' + \
-		'and s._LogicalDB_key = m._LogicalDB_key'
+		'and s._LogicalDB_key = m._LogicalDB_key ' + \
+		'and m._Accession_key = ar._Accession_key'
 
 	if markerKey is not None:
-		cmd = cmd + 'and m._Object_key = %s\n' % markerKey
+		cmd = cmd + ' and m._Object_key = %s\n' % markerKey
 
 	results = db.sql(cmd, 'auto')
 
@@ -53,6 +55,7 @@ def createBCP(markerKey):
 
 		outBCP.write(mgi_utils.prvalue(r['sequenceKey']) + DL + \
 		       	mgi_utils.prvalue(r['markerKey']) + DL + \
+		       	mgi_utils.prvalue(r['refsKey']) + DL + \
 			str(userKey) + DL + str(userKey) + DL + \
 			loaddate + DL + loaddate + NL)
 

@@ -8,7 +8,7 @@
 # lec	10/23/2003
 #
 
-cd `dirname ${0` && source Configuration
+cd `dirname $0` && source Configuration
 
 cd ${SEQCACHEBCPDIR}
 
