@@ -4,15 +4,15 @@
 #
 # Purpose:
 #
-# Create bcp file for SEQ_Marker_Cache
+# Create bcp file for SEQ_Probe_Cache
 #
 # Uses environment variables to determine Server and Database
 # (DSQUERY and MGD).
 #
 # Usage:
-#	seqmarker.py [markerkey]
+#	seqprobe.py [probekey]
 #
-# If markerkey is provided, then only create the bcp file for that marker.
+# If probekey is provided, then only create the bcp file for that probe.
 #
 # History
 #
@@ -33,26 +33,26 @@ table = os.environ['TABLE']
 userKey = 0
 loaddate = loadlib.loaddate
 
-def createBCP(markerKey):
+def createBCP(probeKey):
 
 	print 'Creating %s.bcp...%s' % (table, mgi_utils.date())
 
 	outBCP = open('%s.bcp' % (table), 'w')
 
-	cmd = 'select distinct sequenceKey = s._Object_key, markerKey = m._Object_key ' + \
-		'from SEQ_Sequence_Acc_View s, MRK_Acc_View m ' + \
-		'where s.accID = m.accID ' + \
-		'and s._LogicalDB_key = m._LogicalDB_key'
+	cmd = 'select distinct sequenceKey = s._Object_key, probeKey = p._Object_key ' + \
+		'from SEQ_Sequence_Acc_View s, PRB_Acc_View p ' + \
+		'where s.accID = p.accID ' + \
+		'and s._LogicalDB_key = p._LogicalDB_key'
 
-	if markerKey is not None:
-		cmd = cmd + 'and m._Object_key = %s\n' % markerKey
+	if probeKey is not None:
+		cmd = cmd + 'and p._Object_key = %s\n' % probeKey
 
 	results = db.sql(cmd, 'auto')
 
 	for r in results:
 
 		outBCP.write(mgi_utils.prvalue(r['sequenceKey']) + DL + \
-		       	mgi_utils.prvalue(r['markerKey']) + DL + \
+		       	mgi_utils.prvalue(r['probeKey']) + DL + \
 			str(userKey) + DL + str(userKey) + DL + \
 			loaddate + DL + loaddate + NL)
 
@@ -65,16 +65,16 @@ def createBCP(markerKey):
 userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
 
 if len(sys.argv) == 2:
-	markerKey = sys.argv[1]
+	probeKey = sys.argv[1]
 else:
-	markerKey = None
+	probeKey = None
 
 print '%s' % mgi_utils.date()
 
 # Log all SQL commands
 #db.set_sqlLogFunction(db.sqlLogAll)
 
-createBCP(markerKey)
+createBCP(probeKey)
 
 print '%s' % mgi_utils.date()
 

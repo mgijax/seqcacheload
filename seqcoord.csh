@@ -1,7 +1,7 @@
 #!/bin/csh -fx
 
 #
-# Usage:  seqmarker.csh
+# Usage:  seqcoord.csh
 #
 # History
 #
@@ -16,13 +16,13 @@ setenv LOG	$SEQCACHEBCPDIR/`basename $0`.log
 rm -rf $LOG
 touch $LOG
 
-setenv TABLE	SEQ_Marker_Cache
+setenv TABLE	SEQ_Coord_Cache
 
 date >>& $LOG
 
 # Create the bcp file
 
-../seqmarker.py >>& $LOG
+../seqcoord.py >>& $LOG
 
 # Allow bcp into database and truncate tables
 
