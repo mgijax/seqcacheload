@@ -65,7 +65,7 @@ def createBCP():
 		outBCP.write(mgi_utils.prvalue(r['sequenceKey']) + DL + \
 		       	mgi_utils.prvalue(r['markerKey']) + DL + \
 		       	mgi_utils.prvalue(r['refsKey']) + DL + \
-			mdate + DL + \
+			r['mdate'] + DL + \
 			str(userKey) + DL + str(userKey) + DL + \
 			loaddate + DL + loaddate + NL)
 
