@@ -24,6 +24,11 @@ date | tee -a ${LOG}
 
 ../seqprobe.py | tee -a ${LOG}
 
+if ( -z ${TABLE}.bcp ) then
+echo 'BCP Files are empty' >>& $LOG
+exit 0
+endif
+
 # Allow bcp into database and truncate tables
 
 ${DBUTILSBINDIR}/turnonbulkcopy.csh ${DBSERVER} ${DBNAME} | tee -a ${LOG}
