@@ -102,7 +102,7 @@ def createBCP():
 	cmds = []
 	cmds.append('select _Marker_key into #mouse from MRK_Marker ' + \
 		'where _Organism_key = 1 and _Marker_Status_key in (1,3)')
-#		'where _Organism_key = 1 and _Marker_Status_key in (1,3) and _Marker_key = 10603')
+#		'where _Organism_key = 1 and _Marker_Status_key in (1,3) and _Marker_key = 52291')
 	cmds.append('create nonclustered index idx_key on #mouse (_Marker_key)')
 	db.sql(cmds, None)
 	print 'markers end...%s' % (mgi_utils.date())
