@@ -52,7 +52,7 @@ def createBCP():
 		'and p._Accession_key = ar._Accession_key')
 
 	cmds.append('create nonclustered index idx_seq on #sequences (sequenceKey)')
-	cmds.append('create nonclustered index idx_mrk on #sequences (markerKey)')
+	cmds.append('create nonclustered index idx_mrk on #sequences (probeKey)')
 	cmds.append('create nonclustered index idx_ref on #sequences (refsKey)')
 	cmds.append('create nonclustered index idx_mdt on #sequences (mdate)')
 
