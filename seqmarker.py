@@ -73,11 +73,6 @@ else:
 	markerKey = None
 
 print '%s' % mgi_utils.date()
-
-# Log all SQL commands
-#db.set_sqlLogFunction(db.sqlLogAll)
-
 createBCP(markerKey)
-
 print '%s' % mgi_utils.date()
 

@@ -73,11 +73,6 @@ else:
 	probeKey = None
 
 print '%s' % mgi_utils.date()
-
-# Log all SQL commands
-#db.set_sqlLogFunction(db.sqlLogAll)
-
 createBCP(probeKey)
-
 print '%s' % mgi_utils.date()
 
