@@ -1,3 +1,10 @@
+TAG: seqcacheload-1-0-9
+DATE: 06/02/2004
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) don't cache dummy annotations if the real thing exists
+
 TAG: seqcacheload-1-0-8
 DATE: 05/13/2004
 STAFF: lec
