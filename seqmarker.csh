@@ -47,23 +47,4 @@ ${SCHEMADIR}/index/${TABLE}_create.object | tee -a ${LOG}
 
 ${DBUTILSBINDIR}/updateStatistics.csh ${DBSERVER} ${DBNAME} ${TABLE} | tee -a ${LOG}
 
-# derive representative sequences
-
-date | tee -a ${LOG}
-
-cat - <<EOSQL | doisql.csh $0 | tee -a $LOG
-
-use ${DBNAME}
-go
-
-exec SEQ_deriveRepAll
-go
-
-checkpoint
-go
-
-quit
-
-EOSQL
-
 date | tee -a ${LOG}

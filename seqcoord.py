@@ -10,9 +10,7 @@
 # (DSQUERY and MGD).
 #
 # Usage:
-#	seqcoord.py [coordkey]
-#
-# If coordkey is provided, then only create the bcp file for that coord.
+#	seqcoord.py
 #
 # History
 #
