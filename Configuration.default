@@ -8,13 +8,13 @@
 #
 
 # install directory
-setenv SEQCACHEINSTALLDIR	/usr/local/mgi/dbutils/seqcacheload
+setenv CACHEINSTALLDIR		/usr/local/mgi/dbutils/seqcacheload
 
 # bcp output directory
-setenv SEQCACHEBCPDIR		${SEQCACHEINSTALLDIR}/output
+setenv CACHEBCPDIR		${CACHEINSTALLDIR}/output
 
 # schema product directory
-setenv SCHEMADIR		/usr/local/mgi/dbutils/mgd/mgddbschema
+setenv SCHEMADIR		/usr/local/mgi/live/dbutils/mgd/mgddbschema
 
 source $SCHEMADIR/Configuration
 

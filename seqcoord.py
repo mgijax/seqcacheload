@@ -16,6 +16,9 @@
 #
 # History
 #
+# 07/07/2004	lec
+#	- Assembly (TR 5395)
+#
 # 10/23/2003	lec
 #	- new (TR 3404, JSAM)
 #
@@ -39,27 +42,41 @@ def createBCP():
 
 	outBCP = open('%s.bcp' % (table), 'w')
 
-        cmd = 'select mcf.startBP, mcf.endBP, mcf.strand, c.chromosome, sequenceKey = a2._Object_key ' + \
-              'from MAP_Coord_Feature mcf, MAP_Coordinate mc, VOC_Term t, MRK_Chromosome c, MRK_Acc_View a1, SEQ_Acc_View a2 ' + \
-	      'where mcf._Map_key = mc._Map_key ' + \
-	      'and mc._MapType_key = t._Term_key ' + \
+	cmds = []
+
+        cmds.append('select mc._Map_key, mc.seqRetrievalParam, ' + \
+	      'mcf._Object_key, mcf.startCoordinate, mcf.endCoordinate, mcf.strand, c.chromosome ' + \
+	      'into #sequences ' + \
+              'from MAP_Coordinate mc, VOC_Term t, MAP_Coord_Feature mcf, MRK_Chromosome c ' + \
+	      'where mc._MapType_key = t._Term_key ' + \
 	      'and t.term = "Assembly" ' + \
-	      'and mc._Chromosome_key = c._Chromosome_key ' + \
-	      'and mcf._MGIType_key = 2 ' + \
-	      'and mcf._Object_key = a1._Object_key ' + \
-	      'and a1.accID = a2.accID ' + \
-	      'and a1._LogicalDB_key = a2._LogicalDB_key ' + \
-	      'and a1._LogicalDB_key in ()'
+	      'and mc._MGIType_key = type for chromosome ' + \
+	      'and mc._Object_key = c._Chromosome_key ' + \
+	      'and mc._Map_key = mcf._Map_key ' + \
+	      'and mcf._MGIType_key = 19')
 
-	results = db.sql(cmd, 'auto')
+	cmds.append('create index idx_object on #sequences(_Object_key)')
 
-	for r in results:
+	cmds.append('select m.*, s.version, s.description, provider = t.term ' + \
+              'from #sequences s, ACC_Accession a, SEQ_Sequence s, VOC_Term t ' + \
+	      'where m._Object_key = a._Object_key ' + \
+	      'and a._MGIType_key = 19 ' + \
+	      'and a._Object_key = s._Sequence_key ' + \
+	      'and s._SequenceProvider_key = t._Term_key')
 
-		outBCP.write(str(r['sequenceKey']) + DL + \
+	results = db.sql(cmds, 'auto')
+
+	for r in results[-1]:
+
+		outBCP.write(str(r['_Map_key']) + DL + \
+			str(r['_Object_key']) + DL + \
 			r['chromosome'] + DL + \
-			str(r['startBP']) + DL + \
-			str(r['endBP']) + DL + \
+			str(r['startCoordinate']) + DL + \
+			str(r['endCoordinate']) + DL + \
 			str(r['strand']) + DL + \
+			str(r['provider']) + DL + \
+			str(r['version']) + DL + \
+			str(r['description']) + DL + \
 			str(userKey) + DL + str(userKey) + DL + \
 			loaddate + DL + loaddate + NL)
 
@@ -70,11 +87,6 @@ def createBCP():
 #
 
 userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
-
-if len(sys.argv) == 2:
-	coordKey = sys.argv[1]
-else:
-	coordKey = None
 
 print '%s' % mgi_utils.date()
 createBCP()

@@ -11,9 +11,9 @@
 
 cd `dirname $0` && source ./Configuration
 
-cd ${SEQCACHEBCPDIR}
+cd ${CACHEBCPDIR}
 
-setenv LOG	${SEQCACHEBCPDIR}/`basename $0`.log
+setenv LOG	${CACHEBCPDIR}/`basename $0`.log
 rm -rf ${LOG}
 touch ${LOG}
 
