@@ -1,0 +1,13 @@
+#!/bin/csh
+
+#
+# Install
+#
+# Installs product "seqcacheload" in the appropriate directory
+#
+# 1. cvs export -r seqcacheload-#-#-# -d seqcacheload-#-#-# seqcacheload
+# 2. ln -s seqcacheload-#-#-# seqcacheload
+# 3. Copy Configuration.default Configuration
+# 4. Edit Configuration
+# 5. Install
+#

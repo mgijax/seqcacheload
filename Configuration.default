@@ -1,0 +1,23 @@
+#!/bin/csh
+
+#
+# Configuration.default
+#
+# Source this file from any csh script to set the
+# env variables
+#
+
+# install directory
+setenv SEQCACHEINSTALLDIR	/usr/local/mgi/dbutils/seqcacheload
+
+# bcp output directory
+setenv SEQCACHEBCPDIR		${SEQCACHEINSTALLDIR}/output
+
+# schema product directory
+setenv SCHEMADIR		/usr/local/mgi/dbutils/mgd/mgddbschema
+
+source $SCHEMADIR/Configuration
+
+setenv DSQUERY	$DBSERVER
+setenv MGD	$DBNAME
+
