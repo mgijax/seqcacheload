@@ -40,16 +40,23 @@ def createBCP():
 	outBCP = open('%s.bcp' % (table), 'w')
 
 	cmds = []
+
+	# only mouse markers
+
+	cmds.append('select _Marker_key into #mouse from MRK_Marker where _Organism_key = 1 and _Marker_Status_key in (1,3)')
+	cmds.append('create nonclustered index idx_key on #mouse (_Marker_key)')
+
 	cmds.append('select sequenceKey = s._Object_key, ' + \
 		'markerKey = m._Object_key, refsKey = ar._Refs_key, ' + \
 		'mdate = convert(char(10), m.modification_date, 101) ' + \
 		'into #sequences ' + \
-		'from ACC_Accession s, ACC_Accession m, ACC_AccessionReference ar ' + \
-		'where s._MGIType_key = 19 ' + \
-		'and s.accID = m.accID ' + \
+		'from #mouse mm, ACC_Accession m, ACC_Accession s, ACC_AccessionReference ar ' + \
+		'where mm._Marker_key = m._Object_key ' + \
 		'and m._MGIType_key = 2 ' + \
-		'and s._LogicalDB_key = m._LogicalDB_key ' + \
-		'and m._Accession_key = ar._Accession_key')
+		'and m.accID = s.accID ' + \
+		'and m._LogicalDB_key = s._LogicalDB_key ' + \
+		'and s._MGIType_key = 19 ' + \
+		'and m._Accession_key = ar._Accession_key ')
 
 	cmds.append('create nonclustered index idx_seq on #sequences (sequenceKey)')
 	cmds.append('create nonclustered index idx_mrk on #sequences (markerKey)')
