@@ -129,57 +129,30 @@ def createBCP():
 	db.sql('create nonclustered index idx1 on #allannot (sequenceKey)', None)
 	db.sql('create nonclustered index idx2 on #allannot (markerKey)', None)
 
-	# select annotations to nondummy sequences
+	# select annotations to all sequences
 
 	db.sql('select a.sequenceKey, a.markerKey, a.refsKey, a.mdate, a.accID ' + \
-		'into #nondummyannot ' + \
+		'into #allseqannot ' + \
 		'from #allannot a, SEQ_Sequence ss ' + \
-		'where a.sequenceKey = ss._Sequence_key ' + \
-		'and ss._SequenceStatus_key != 316345', None)
+		'where a.sequenceKey = ss._Sequence_key ', None)
 
-	# it's okay to use dummy SWISS-PROT/TrEMBL
-
-	db.sql('insert into #nondummyannot ' + \
-		'select a.sequenceKey, a.markerKey, a.refsKey, a.mdate, a.accID ' + \
-		'from #allannot a, SEQ_Sequence ss ' + \
-		'where a.sequenceKey = ss._Sequence_key ' + \
-		'and ss._SequenceProvider_key in (316384, 316385)', None)
-
-	db.sql('create nonclustered index idx1 on #nondummyannot (sequenceKey)', None)
-	db.sql('create nonclustered index idx2 on #nondummyannot (markerKey)', None)
-	db.sql('create nonclustered index idx3 on #nondummyannot (refsKey)', None)
-	db.sql('create nonclustered index idx4 on #nondummyannot (mdate)', None)
-
-	# select annotations to dummy sequences which are not also in non-dummy sequences
-	# exclude SWISS-PROT/TrEMBL because they are included in the non-dummy list
-
-	db.sql('select a.sequenceKey, a.markerKey, a.refsKey, a.mdate ' + \
-		'into #dummyannot ' + \
-		'from #allannot a, SEQ_Sequence ss ' + \
-		'where a.sequenceKey = ss._Sequence_key ' + \
-		'and ss._SequenceStatus_key = 316345 ' + \
-		'and ss._SequenceProvider_key not in (316384, 316385) ' + \
-		'and not exists (select 1 from #nondummyannot n ' + \
-		'where a.sequenceKey = n.sequenceKey ' + \
-		'and a.markerKey = n.markerKey)', None)
-
-	db.sql('create nonclustered index idx1 on #dummyannot (sequenceKey)', None)
-	db.sql('create nonclustered index idx2 on #dummyannot (markerKey)', None)
-	db.sql('create nonclustered index idx3 on #dummyannot (refsKey)', None)
-	db.sql('create nonclustered index idx4 on #dummyannot (mdate)', None)
+	db.sql('create nonclustered index idx1 on #allseqannot (sequenceKey)', None)
+	db.sql('create nonclustered index idx2 on #allseqannot (markerKey)', None)
+	db.sql('create nonclustered index idx3 on #allseqannot (refsKey)', None)
+	db.sql('create nonclustered index idx4 on #allseqannot (mdate)', None)
 
 	# select records, grouping by sequence, marker and reference
 
 	db.sql('select sequenceKey, markerKey, refsKey, mdate = max(mdate), accID ' + 
-		'into #finalnondummy ' + \
-		'from #nondummyannot group by sequenceKey, markerKey, refsKey', None)
-	db.sql('create nonclustered index idx1 on #finalnondummy (sequenceKey)', None)
-	db.sql('create nonclustered index idx2 on #finalnondummy (markerKey)', None)
-	db.sql('create nonclustered index idx3 on #finalnondummy (refsKey)', None)
-	db.sql('create nonclustered index idx4 on #finalnondummy (mdate)', None)
+		'into #finalannot ' + \
+		'from #allseqannot group by sequenceKey, markerKey, refsKey', None)
+	db.sql('create nonclustered index idx1 on #finalannot (sequenceKey)', None)
+	db.sql('create nonclustered index idx2 on #finalannot (markerKey)', None)
+	db.sql('create nonclustered index idx3 on #finalannot (refsKey)', None)
+	db.sql('create nonclustered index idx4 on #finalannot (mdate)', None)
 
 	db.sql('select distinct sequenceKey, markerKey, accID into #deriveQuality ' + \
-		'from #finalnondummy order by markerKey', None)
+		'from #finalannot order by markerKey', None)
 	db.sql('create nonclustered index idx1 on #deriveQuality (sequenceKey)', None)
 	db.sql('create nonclustered index idx2 on #deriveQuality (markerKey)', None)
 
@@ -226,7 +199,6 @@ def createBCP():
 	    else:
 		seqlength = int(r['length'])
 
-	    print a + ':' + `seqlength`
 	    provider = seqProviders[r['_SequenceProvider_key']]
 	    sType = seqTypes[r['_SequenceType_key']]
 
@@ -314,17 +286,10 @@ def createBCP():
 	print 'qualifier end...%s' % (mgi_utils.date())
 
 	print 'final results begin...%s' % (mgi_utils.date())
-	cmds = []
-	cmds.append('select distinct sequenceKey, markerKey, refsKey, mdate from #finalnondummy')
-	cmds.append('select sequenceKey, markerKey, refsKey, mdate = max(mdate) ' + 
-		'from #dummyannot group by sequenceKey, markerKey, refsKey')
-	results = db.sql(cmds, 'auto')
+	results = db.sql('select distinct sequenceKey, markerKey, refsKey, mdate from #finalannot', 'auto')
 	print 'final results end...%s' % (mgi_utils.date())
 
-	for r in results[-1]:
-	    writeRecord(r)
-
-	for r in results[-2]:
+	for r in results:
 	    writeRecord(r)
 
 	outBCP.close()
