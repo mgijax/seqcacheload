@@ -42,41 +42,39 @@ def createBCP():
 
 	outBCP = open('%s.bcp' % (table), 'w')
 
-	cmds = []
-
-        cmds.append('select mc._Map_key, mc.seqRetrievalParam, ' + \
-	      'mcf._Object_key, mcf.startCoordinate, mcf.endCoordinate, mcf.strand, c.chromosome ' + \
-	      'into #sequences ' + \
-              'from MAP_Coordinate mc, VOC_Term t, MAP_Coord_Feature mcf, MRK_Chromosome c ' + \
-	      'where mc._MapType_key = t._Term_key ' + \
-	      'and t.term = "Assembly" ' + \
-	      'and mc._MGIType_key = type for chromosome ' + \
+        cmd = 'select distinct mc._Map_key, mc.version, mapUnits = t2.term, ' + \
+	      'mcf._Object_key, mcf.startCoordinate, mcf.endCoordinate, mcf.strand, ' + \
+	      'c.chromosome, provider = t2.term ' + \
+              'from MAP_Coordinate mc, MAP_Coord_Feature mcf, ' + \
+	      'MRK_Chromosome c, SEQ_Sequence s, VOC_Term t1, VOC_Term t2, VOC_Term t3 ' + \
+	      'where mc._MapType_key = t1._Term_key ' + \
+	      'and t1.term = "Assembly" ' + \
+	      'and mc._Units_key = t2._Term_key ' + \
+	      'and mc._MGIType_key = 27 ' + \
 	      'and mc._Object_key = c._Chromosome_key ' + \
 	      'and mc._Map_key = mcf._Map_key ' + \
-	      'and mcf._MGIType_key = 19')
+	      'and mcf._MGIType_key = 19 ' + \
+	      'and mcf._Object_key = s._Sequence_key ' + \
+	      'and s._SequenceProvider_key = t3._Term_key'
 
-	cmds.append('create index idx_object on #sequences(_Object_key)')
+	results = db.sql(cmd, 'auto')
 
-	cmds.append('select m.*, s.version, s.description, provider = t.term ' + \
-              'from #sequences s, ACC_Accession a, SEQ_Sequence s, VOC_Term t ' + \
-	      'where m._Object_key = a._Object_key ' + \
-	      'and a._MGIType_key = 19 ' + \
-	      'and a._Object_key = s._Sequence_key ' + \
-	      'and s._SequenceProvider_key = t._Term_key')
+	for r in results:
 
-	results = db.sql(cmds, 'auto')
-
-	for r in results[-1]:
+		description = `r['startCoordinate']` + ' - ' + `r['endCoordinate']` + ' ' + r['mapUnits'] + \
+			',' + r['strand'] + 'strand' + NL + \
+			'(From ' + r['provider'] + ' annotation of ' + r['version'] + ')'
 
 		outBCP.write(str(r['_Map_key']) + DL + \
 			str(r['_Object_key']) + DL + \
 			r['chromosome'] + DL + \
 			str(r['startCoordinate']) + DL + \
 			str(r['endCoordinate']) + DL + \
+			str(r['mapUnits']) + DL + \
 			str(r['strand']) + DL + \
 			str(r['provider']) + DL + \
 			str(r['version']) + DL + \
-			str(r['description']) + DL + \
+			str(description) + DL + \
 			str(userKey) + DL + str(userKey) + DL + \
 			loaddate + DL + loaddate + NL)
 
