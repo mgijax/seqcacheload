@@ -226,6 +226,9 @@ def createBCP():
 	    elif qualifiers2[q] == 'polypeptide':
 		allpolypeptide[0][m] = s
 
+	# process representative values
+	# bucket 0 = highest priority sequence
+
 	for r in results[-1]:
 
 	    m = r['markerKey']
