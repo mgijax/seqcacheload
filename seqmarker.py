@@ -84,6 +84,7 @@ def createBCP():
 		'and s._MGIType_key = 19 ')
 
 	cmds.append('create nonclustered index idx1 on #allannot (sequenceKey)')
+	cmds.append('create nonclustered index idx2 on #allannot (markerKey)')
 	db.sql(cmds, None)
 	print 'all annotations end...%s' % (mgi_utils.date())
 
@@ -104,40 +105,25 @@ def createBCP():
 	db.sql(cmds, None)
 	print 'non-dummy end...%s' % (mgi_utils.date())
 
-	# select annotations to dummy sequences
+	# select annotations to dummy sequences which are not also in non-dummy sequences
 
 	print 'dummy begin...%s' % (mgi_utils.date())
 	cmds = []
 	cmds.append('select a.sequenceKey, a.markerKey, a.refsKey, a.mdate ' + \
-		'into #dummyannot1 ' + \
+		'into #dummyannot ' + \
 		'from #allannot a, SEQ_Sequence ss ' + \
 		'where a.sequenceKey = ss._Sequence_key ' + \
-		'and ss._SequenceStatus_key = 316345')
-
-	cmds.append('create nonclustered index idx1 on #dummyannot1 (sequenceKey)')
-	cmds.append('create nonclustered index idx2 on #dummyannot1 (markerKey)')
-	cmds.append('create nonclustered index idx3 on #dummyannot1 (refsKey)')
-	cmds.append('create nonclustered index idx4 on #dummyannot1 (mdate)')
-	db.sql(cmds, None)
-	print 'dummy end...%s' % (mgi_utils.date())
-
-	# select annotations to dummy sequences which are not also in non-dummy sequences
-
-	print 'dummy2 begin...%s' % (mgi_utils.date())
-	cmds = []
-	cmds.append('select d.sequenceKey, d.markerKey, d.refsKey, d.mdate ' + \
-		'into #dummyannot ' + \
-		'from #dummyannot1 d ' + \
-		'where not exists (select 1 from #nondummyannot n ' + \
-		'where d.sequenceKey = n.sequenceKey ' + \
-		'and d.markerKey = n.markerKey)')
+		'and ss._SequenceStatus_key = 316345 ' + \
+		'and not exists (select 1 from #nondummyannot n ' + \
+		'where a.sequenceKey = n.sequenceKey ' + \
+		'and a.markerKey = n.markerKey)')
 
 	cmds.append('create nonclustered index idx1 on #dummyannot (sequenceKey)')
 	cmds.append('create nonclustered index idx2 on #dummyannot (markerKey)')
 	cmds.append('create nonclustered index idx3 on #dummyannot (refsKey)')
 	cmds.append('create nonclustered index idx4 on #dummyannot (mdate)')
 	db.sql(cmds, None)
-	print 'dummy2 end...%s' % (mgi_utils.date())
+	print 'dummy end...%s' % (mgi_utils.date())
 
 	# select records, grouping by sequence, marker and reference
 
