@@ -207,12 +207,15 @@ def createBCP():
 
 	results = db.sql(cmds, 'auto')
 
-	allgenomic = [{}, {}]
-	alltranscript = [{}, {}, {}, {}, {}]
-	allpolypeptide = [{}, {}]
+	allgenomic = [{}, {}, {}]
+	alltranscript = [{}, {}, {}, {}, {}, {}]
+	allpolypeptide = [{}, {}, {}]
 	prevMarker = ''
 
 	# process manually curated representative values
+	# bucket 0 = highest priority sequence (manually curated)
+	# bucket 1 = next highest priority sequence
+	# etc.
 
 	for r in results[-2]:
 	    m = r['_Marker_key']
@@ -227,7 +230,6 @@ def createBCP():
 		allpolypeptide[0][m] = s
 
 	# process representative values
-	# bucket 0 = highest priority sequence
 
 	for r in results[-1]:
 
@@ -239,24 +241,24 @@ def createBCP():
 	    sType = seqTypes[r['_SequenceType_key']]
 
 	    if prevMarker != m:
-	        glengths = [0, 0]
-		tlengths = [0,0,0,0,0]
-		plengths = [0,0]
+	        glengths = [0, 0, 0]
+		tlengths = [0, 0,0,0,0,0]
+		plengths = [0, 0,0]
 
 		if prevMarker != '':
 
 		    # determine the one and only representative w/in each group
-		    for i in range(2):
+		    for i in range(3):
 			if allgenomic[i].has_key(prevMarker):
 			    genomic[prevMarker] = allgenomic[i][prevMarker]
 			    break
 
-		    for i in range(5):
+		    for i in range(6):
 			if alltranscript[i].has_key(prevMarker):
 			    transcript[prevMarker] = alltranscript[i][prevMarker]
 			    break
 
-		    for i in range(2):
+		    for i in range(3):
 			if allpolypeptide[i].has_key(prevMarker):
 			    polypeptide[prevMarker] = allpolypeptide[i][prevMarker]
 			    break
@@ -265,56 +267,56 @@ def createBCP():
 	    # longest NCBI/Ensembl coordinate OR longest GenBank DNA
 	    # tie goes to NCBI
 
-	    if (provider == 'NCBI Gene Model' or provider == 'Ensembl Gene Model') and seqlength > glengths[0]:
-		allgenomic[0][m] = s
-	        glengths[0] = seqlength
-	    elif provider == 'NCBI Gene Model' and seqlength == glengths[0]:
-		allgenomic[0][m] = s
-	        glengths[0] = seqlength
-	    elif string.find(provider, 'GenBank') > -1 and sType == 'DNA' and seqlength > glengths[1]:
+	    if (provider == 'NCBI Gene Model' or provider == 'Ensembl Gene Model') and seqlength > glengths[1]:
 		allgenomic[1][m] = s
 	        glengths[1] = seqlength
+	    elif provider == 'NCBI Gene Model' and seqlength == glengths[1]:
+		allgenomic[1][m] = s
+	        glengths[1] = seqlength
+	    elif string.find(provider, 'GenBank') > -1 and sType == 'DNA' and seqlength > glengths[2]:
+		allgenomic[2][m] = s
+	        glengths[2] = seqlength
 
 	    # longest RefSeq (NM_), or longest GenBank RNA, or longest TIGR, DoTS, NIA Mouse Gene Index,
 
-	    elif provider == 'RefSeq' and string.find(a, 'NM_') > -1 and seqlength > tlengths[0]:
-		alltranscript[0][m] = s
-	        tlengths[0] = seqlength
-	    elif string.find(provider, 'GenBank') > -1 and sType == 'RNA' and seqlength > tlengths[1]:
+	    elif provider == 'RefSeq' and string.find(a, 'NM_') > -1 and seqlength > tlengths[1]:
 		alltranscript[1][m] = s
 	        tlengths[1] = seqlength
-	    elif provider == 'TIGR Mouse Gene Index' and seqlength > tlengths[2]:
+	    elif string.find(provider, 'GenBank') > -1 and sType == 'RNA' and seqlength > tlengths[2]:
 		alltranscript[2][m] = s
 	        tlengths[2] = seqlength
-	    elif provider == 'DoTS' and seqlength > tlengths[3]:
+	    elif provider == 'TIGR Mouse Gene Index' and seqlength > tlengths[3]:
 		alltranscript[3][m] = s
 	        tlengths[3] = seqlength
-	    elif provider == 'NIA Mouse Gene Index' and seqlength > tlengths[4]:
+	    elif provider == 'DoTS' and seqlength > tlengths[4]:
 		alltranscript[4][m] = s
 	        tlengths[4] = seqlength
+	    elif provider == 'NIA Mouse Gene Index' and seqlength > tlengths[5]:
+		alltranscript[5][m] = s
+	        tlengths[5] = seqlength
 
-	    if provider == 'SWISS-PROT' and seqlength > plengths[0]:
-		allpolypeptide[0][m] = s
-	        plengths[0] = seqlength
-	    elif provider == 'TrEMBL' and seqlength > plengths[1]:
+	    if provider == 'SWISS-PROT' and seqlength > plengths[1]:
 		allpolypeptide[1][m] = s
 	        plengths[1] = seqlength
+	    elif provider == 'TrEMBL' and seqlength > plengths[2]:
+		allpolypeptide[2][m] = s
+	        plengths[2] = seqlength
 
 	    prevMarker = m
 
 	# last record
         # determine the one and only representative w/in each group
-        for i in range(2):
+        for i in range(3):
             if allgenomic[i].has_key(prevMarker):
                 genomic[prevMarker] = allgenomic[i][prevMarker]
                 break
 
-        for i in range(5):
+        for i in range(6):
             if alltranscript[i].has_key(prevMarker):
                 transcript[prevMarker] = alltranscript[i][prevMarker]
                 break
 
-        for i in range(2):
+        for i in range(3):
             if allpolypeptide[i].has_key(prevMarker):
                 polypeptide[prevMarker] = allpolypeptide[i][prevMarker]
                 break
