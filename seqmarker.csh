@@ -24,6 +24,8 @@ date | tee -a ${LOG}
 
 ../seqmarker.py | tee -a ${LOG}
 
+date | tee -a ${LOG}
+
 if ( -z ${TABLE}.bcp ) then
 echo 'BCP Files are empty' >>& $LOG
 exit 0
@@ -44,5 +46,24 @@ cat ${DBPASSWORDFILE} | bcp ${DBNAME}..${TABLE} in ${TABLE}.bcp -c -t\| -S${DBSE
 ${SCHEMADIR}/index/${TABLE}_create.object | tee -a ${LOG}
 
 ${DBUTILSBINDIR}/updateStatistics.csh ${DBSERVER} ${DBNAME} ${TABLE} | tee -a ${LOG}
+
+# derive representative sequences
+
+date | tee -a ${LOG}
+
+cat - <<EOSQL | doisql.csh $0 | tee -a $LOG
+
+use ${DBNAME}
+go
+
+exec SEQ_deriveRepAll
+go
+
+checkpoint
+go
+
+quit
+
+EOSQL
 
 date | tee -a ${LOG}
