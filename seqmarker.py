@@ -54,7 +54,7 @@ def createBCP():
 		'markerKey = m._Object_key, refsKey = ar._Refs_key, ' + \
 		'mdate = convert(char(10), m.modification_date, 101) ' + \
 		'into #dummy ' + \
-		'from #mouse mm, ACC_Accession m, ACC_Accession s, ACC_AccessionReference ar,
+		'from #mouse mm, ACC_Accession m, ACC_Accession s, ACC_AccessionReference ar, ' + \
 		'SEQ_Sequence ss, VOC_Term t ' + \
 		'where mm._Marker_key = m._Object_key ' + \
 		'and m._MGIType_key = 2 ' + \
