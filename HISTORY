@@ -1,3 +1,4 @@
+TAG: seqcacheload-1-0-7
 TAG: seqcacheload-1-0-6
 TAG: seqcacheload-1-0-5
 DATE: 03/30/2004
@@ -5,6 +6,7 @@ STAFF: lec
 RELEASE: A
 CHANGES: 
 1) added "annotation" date to cache tables
+2) added seqdescription.csh seqdescription.py
 
 TAG: seqcacheload-1-0-4
 DATE: 03/26/2004
