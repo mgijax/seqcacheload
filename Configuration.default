@@ -8,7 +8,7 @@
 #
 
 # install directory
-setenv CACHEINSTALLDIR		/usr/local/mgi/dbutils/seqcacheload
+setenv CACHEINSTALLDIR		/usr/local/mgi/live/dbutils/seqcacheload
 
 # data directory
 setenv CACHEDATADIR		${CACHEINSTALLDIR}/data
