@@ -56,7 +56,8 @@ def createBCP():
 	cmds.append('create nonclustered index idx_ref on #sequences (refsKey)')
 	cmds.append('create nonclustered index idx_mdt on #sequences (mdate)')
 
-	cmds.append('select distinct sequenceKey, probeKey, refsKey, mdate from #sequences')
+	cmds.append('select distinct sequenceKey, probeKey, refsKey, min(mdate) from #sequences ' + \
+		'group by sequenceKey, probeKey, refsKey')
 
 	results = db.sql(cmds, 'auto')
 
