@@ -39,7 +39,7 @@ def createBCP(probeKey):
 
 	outBCP = open('%s.bcp' % (table), 'w')
 
-	cmd = 'select sequenceKey = s._Object_key, probeKey = p._Object_key, ' + \
+	cmd = 'select distinct sequenceKey = s._Object_key, probeKey = p._Object_key, ' + \
 		'refsKey = ar._Refs_key, ' + \
 		'mdate = convert(char(10), p.modification_date, 101) ' + \
 		'from ACC_Accession s, ACC_Accession p, ACC_AccessionReference ar ' + \
