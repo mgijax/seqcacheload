@@ -42,7 +42,7 @@ def createBCP():
 
 	outBCP = open('%s.bcp' % (table), 'w')
 
-        cmd = 'select distinct mc._Map_key, mc.version, mapUnits = t2.term, ' + \
+        cmd = 'select distinct mc._Map_key, mc.version, mapUnits = t2.abbreviation, ' + \
 	      'mcf._Object_key, mcf.startCoordinate, mcf.endCoordinate, mcf.strand, ' + \
 	      'c.chromosome, provider = t3.term ' + \
               'from MAP_Coordinate mc, MAP_Coord_Feature mcf, ' + \
