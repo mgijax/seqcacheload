@@ -98,7 +98,7 @@ def createBCP():
 
 	db.sql('select _Marker_key into #mouse from MRK_Marker ' + \
 		'where _Organism_key = 1 and _Marker_Status_key in (1,3)', None)
-#		'where _Organism_key = 1 and _Marker_Status_key in (1,3) and _Marker_key = 52291', None)
+#		'where _Organism_key = 1 and _Marker_Status_key in (1,3) and _Marker_key = 31999', None)
 	db.sql('create nonclustered index idx_key on #mouse (_Marker_key)', None)
 
 	# select all non-MGI accession ids for mouse markers 
@@ -137,18 +137,28 @@ def createBCP():
 		'where a.sequenceKey = ss._Sequence_key ' + \
 		'and ss._SequenceStatus_key != 316345', None)
 
+	# it's okay to use dummy SWISS-PROT/TrEMBL
+
+	db.sql('insert into #nondummyannot ' + \
+		'select a.sequenceKey, a.markerKey, a.refsKey, a.mdate, a.accID ' + \
+		'from #allannot a, SEQ_Sequence ss ' + \
+		'where a.sequenceKey = ss._Sequence_key ' + \
+		'and ss._SequenceProvider_key in (316384, 316385)', None)
+
 	db.sql('create nonclustered index idx1 on #nondummyannot (sequenceKey)', None)
 	db.sql('create nonclustered index idx2 on #nondummyannot (markerKey)', None)
 	db.sql('create nonclustered index idx3 on #nondummyannot (refsKey)', None)
 	db.sql('create nonclustered index idx4 on #nondummyannot (mdate)', None)
 
 	# select annotations to dummy sequences which are not also in non-dummy sequences
+	# exclude SWISS-PROT/TrEMBL because they are included in the non-dummy list
 
 	db.sql('select a.sequenceKey, a.markerKey, a.refsKey, a.mdate ' + \
 		'into #dummyannot ' + \
 		'from #allannot a, SEQ_Sequence ss ' + \
 		'where a.sequenceKey = ss._Sequence_key ' + \
 		'and ss._SequenceStatus_key = 316345 ' + \
+		'and ss._SequenceProvider_key not in (316384, 316385) ' + \
 		'and not exists (select 1 from #nondummyannot n ' + \
 		'where a.sequenceKey = n.sequenceKey ' + \
 		'and a.markerKey = n.markerKey)', None)
@@ -210,14 +220,20 @@ def createBCP():
 	    m = r['markerKey']
 	    s = r['sequenceKey']
 	    a = r['accID']
-	    seqlength = int(r['length'])
+
+	    if r['length'] is None:
+		seqlength = 0
+	    else:
+		seqlength = int(r['length'])
+
+	    print a + ':' + `seqlength`
 	    provider = seqProviders[r['_SequenceProvider_key']]
 	    sType = seqTypes[r['_SequenceType_key']]
 
 	    if prevMarker != m:
-	        glengths = [0, 0, 0]
-		tlengths = [0, 0,0,0,0,0]
-		plengths = [0, 0,0]
+	        glengths = [-1,-1,-1]
+		tlengths = [-1,-1,-1,-1,-1,-1]
+		plengths = [-1,-1,-1]
 
 		if prevMarker != '':
 
