@@ -44,7 +44,7 @@ def createBCP():
 
         cmd = 'select distinct mc._Map_key, mc.version, mapUnits = t2.term, ' + \
 	      'mcf._Object_key, mcf.startCoordinate, mcf.endCoordinate, mcf.strand, ' + \
-	      'c.chromosome, provider = t2.term ' + \
+	      'c.chromosome, provider = t3.term ' + \
               'from MAP_Coordinate mc, MAP_Coord_Feature mcf, ' + \
 	      'MRK_Chromosome c, SEQ_Sequence s, VOC_Term t1, VOC_Term t2, VOC_Term t3 ' + \
 	      'where mc._MapType_key = t1._Term_key ' + \
