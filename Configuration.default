@@ -11,7 +11,10 @@
 setenv CACHEINSTALLDIR		/usr/local/mgi/live/dbutils/seqcacheload
 
 # data directory
-setenv CACHEDATADIR		${CACHEINSTALLDIR}/data
+setenv CACHEDATADIR		/data/loads/mgi/seqcacheload/output
+
+# logs directory
+setenv CACHELOGSDIR		/data/loads/mgi/seqcacheload/logs
 
 # schema product directory
 setenv SCHEMADIR		/usr/local/mgi/live/dbutils/mgd/mgddbschema

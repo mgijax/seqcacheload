@@ -12,7 +12,7 @@ cd `dirname $0` && source ./Configuration
 
 cd ${CACHEDATADIR}
 
-setenv LOG	${CACHEDATADIR}/`basename $0`.log
+setenv LOG      ${CACHELOGSDIR}/`basename $0`.log
 rm -rf ${LOG}
 touch ${LOG}
 
@@ -22,7 +22,7 @@ date | tee -a ${LOG}
 
 # Create the bcp file
 
-../seqprobe.py | tee -a ${LOG}
+${CACHEINSTALLDIR}/seqprobe.py | tee -a ${LOG}
 
 if ( -z ${TABLE}.bcp ) then
 echo 'BCP Files are empty' >>& $LOG

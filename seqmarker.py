@@ -77,8 +77,6 @@ def createBCP():
 
 	db.useOneConnection(1)
 
-	print 'Creating %s.bcp...%s' % (table, mgi_utils.date())
-
 	outBCP = open('%s.bcp' % (table), 'w')
 
 	results = db.sql('select _Term_key, term from VOC_Term_RepQualifier_View', 'auto')
@@ -98,114 +96,84 @@ def createBCP():
 
 	# only mouse markers
 
-	print 'markers begin...%s' % (mgi_utils.date())
-	cmds = []
-	cmds.append('select _Marker_key into #mouse from MRK_Marker ' + \
-		'where _Organism_key = 1 and _Marker_Status_key in (1,3)')
-#		'where _Organism_key = 1 and _Marker_Status_key in (1,3) and _Marker_key = 52291')
-	cmds.append('create nonclustered index idx_key on #mouse (_Marker_key)')
-	db.sql(cmds, None)
-	print 'markers end...%s' % (mgi_utils.date())
+	db.sql('select _Marker_key into #mouse from MRK_Marker ' + \
+		'where _Organism_key = 1 and _Marker_Status_key in (1,3)', None)
+#		'where _Organism_key = 1 and _Marker_Status_key in (1,3) and _Marker_key = 52291', None)
+	db.sql('create nonclustered index idx_key on #mouse (_Marker_key)', None)
 
 	# select all non-MGI accession ids for mouse markers 
 
-	print 'accessions begin...%s' % (mgi_utils.date())
-	cmds = []
-	cmds.append('select m._Marker_key, a._LogicalDB_key, a.accID, r._Refs_key, ' + \
+	db.sql('select m._Marker_key, a._LogicalDB_key, a.accID, r._Refs_key, ' + \
 		'mdate = convert(char(10), a.modification_date, 101) ' + \
 		'into #mouseAccs ' + \
 		'from #mouse m, ACC_Accession a, ACC_AccessionReference r ' + \
 		'where m._Marker_key = a._Object_key ' + \
 		'and a._MGIType_key = 2 ' + \
 		'and a._LogicalDB_key != 1 ' + \
-		'and a._Accession_key = r._Accession_key')
+		'and a._Accession_key = r._Accession_key', None)
 
-	cmds.append('create nonclustered index idx1 on #mouseAccs (_Marker_key)')
-	cmds.append('create nonclustered index idx2 on #mouseAccs (_LogicalDB_key)')
-	cmds.append('create nonclustered index idx3 on #mouseAccs (accID)')
-	cmds.append('create nonclustered index idx4 on #mouseAccs (mdate)')
-	db.sql(cmds, None)
-	print 'accessions end...%s' % (mgi_utils.date())
+	db.sql('create nonclustered index idx1 on #mouseAccs (_Marker_key)', None)
+	db.sql('create nonclustered index idx2 on #mouseAccs (_LogicalDB_key)', None)
+	db.sql('create nonclustered index idx3 on #mouseAccs (accID)', None)
+	db.sql('create nonclustered index idx4 on #mouseAccs (mdate)', None)
 
 	# select all mouse annotations
 
-	print 'all annotations begin...%s' % (mgi_utils.date())
-	cmds = []
-	cmds.append('select sequenceKey = s._Object_key, markerKey = m._Marker_key, refsKey = m._Refs_key, m.mdate, m.accID ' + \
+	db.sql('select sequenceKey = s._Object_key, markerKey = m._Marker_key, refsKey = m._Refs_key, m.mdate, m.accID ' + \
 		'into #allannot ' + \
 		'from #mouseAccs m, ACC_Accession s ' + \
 		'where m.accID = s.accID ' + \
 		'and m._LogicalDB_key = s._LogicalDB_key ' + \
-		'and s._MGIType_key = 19 ')
+		'and s._MGIType_key = 19 ', None)
 
-	cmds.append('create nonclustered index idx1 on #allannot (sequenceKey)')
-	cmds.append('create nonclustered index idx2 on #allannot (markerKey)')
-	db.sql(cmds, None)
-	print 'all annotations end...%s' % (mgi_utils.date())
+	db.sql('create nonclustered index idx1 on #allannot (sequenceKey)', None)
+	db.sql('create nonclustered index idx2 on #allannot (markerKey)', None)
 
 	# select annotations to nondummy sequences
 
-	print 'non-dummy begin...%s' % (mgi_utils.date())
-	cmds = []
-	cmds.append('select a.sequenceKey, a.markerKey, a.refsKey, a.mdate, a.accID ' + \
+	db.sql('select a.sequenceKey, a.markerKey, a.refsKey, a.mdate, a.accID ' + \
 		'into #nondummyannot ' + \
 		'from #allannot a, SEQ_Sequence ss ' + \
 		'where a.sequenceKey = ss._Sequence_key ' + \
-		'and ss._SequenceStatus_key != 316345')
+		'and ss._SequenceStatus_key != 316345', None)
 
-	cmds.append('create nonclustered index idx1 on #nondummyannot (sequenceKey)')
-	cmds.append('create nonclustered index idx2 on #nondummyannot (markerKey)')
-	cmds.append('create nonclustered index idx3 on #nondummyannot (refsKey)')
-	cmds.append('create nonclustered index idx4 on #nondummyannot (mdate)')
-	db.sql(cmds, None)
-	print 'non-dummy end...%s' % (mgi_utils.date())
+	db.sql('create nonclustered index idx1 on #nondummyannot (sequenceKey)', None)
+	db.sql('create nonclustered index idx2 on #nondummyannot (markerKey)', None)
+	db.sql('create nonclustered index idx3 on #nondummyannot (refsKey)', None)
+	db.sql('create nonclustered index idx4 on #nondummyannot (mdate)', None)
 
 	# select annotations to dummy sequences which are not also in non-dummy sequences
 
-	print 'dummy begin...%s' % (mgi_utils.date())
-	cmds = []
-	cmds.append('select a.sequenceKey, a.markerKey, a.refsKey, a.mdate ' + \
+	db.sql('select a.sequenceKey, a.markerKey, a.refsKey, a.mdate ' + \
 		'into #dummyannot ' + \
 		'from #allannot a, SEQ_Sequence ss ' + \
 		'where a.sequenceKey = ss._Sequence_key ' + \
 		'and ss._SequenceStatus_key = 316345 ' + \
 		'and not exists (select 1 from #nondummyannot n ' + \
 		'where a.sequenceKey = n.sequenceKey ' + \
-		'and a.markerKey = n.markerKey)')
+		'and a.markerKey = n.markerKey)', None)
 
-	cmds.append('create nonclustered index idx1 on #dummyannot (sequenceKey)')
-	cmds.append('create nonclustered index idx2 on #dummyannot (markerKey)')
-	cmds.append('create nonclustered index idx3 on #dummyannot (refsKey)')
-	cmds.append('create nonclustered index idx4 on #dummyannot (mdate)')
-	db.sql(cmds, None)
-	print 'dummy end...%s' % (mgi_utils.date())
+	db.sql('create nonclustered index idx1 on #dummyannot (sequenceKey)', None)
+	db.sql('create nonclustered index idx2 on #dummyannot (markerKey)', None)
+	db.sql('create nonclustered index idx3 on #dummyannot (refsKey)', None)
+	db.sql('create nonclustered index idx4 on #dummyannot (mdate)', None)
 
 	# select records, grouping by sequence, marker and reference
 
-	print 'qualifier begin...%s' % (mgi_utils.date())
-	cmds = []
-	cmds.append('select sequenceKey, markerKey, refsKey, mdate = max(mdate), accID ' + 
+	db.sql('select sequenceKey, markerKey, refsKey, mdate = max(mdate), accID ' + 
 		'into #finalnondummy ' + \
-		'from #nondummyannot group by sequenceKey, markerKey, refsKey')
-	cmds.append('create nonclustered index idx1 on #finalnondummy (sequenceKey)')
-	cmds.append('create nonclustered index idx2 on #finalnondummy (markerKey)')
-	cmds.append('create nonclustered index idx3 on #finalnondummy (refsKey)')
-	cmds.append('create nonclustered index idx4 on #finalnondummy (mdate)')
+		'from #nondummyannot group by sequenceKey, markerKey, refsKey', None)
+	db.sql('create nonclustered index idx1 on #finalnondummy (sequenceKey)', None)
+	db.sql('create nonclustered index idx2 on #finalnondummy (markerKey)', None)
+	db.sql('create nonclustered index idx3 on #finalnondummy (refsKey)', None)
+	db.sql('create nonclustered index idx4 on #finalnondummy (mdate)', None)
 
-	cmds.append('select distinct sequenceKey, markerKey, accID into #deriveQuality ' + \
-		'from #finalnondummy order by markerKey')
-	cmds.append('create nonclustered index idx1 on #deriveQuality (sequenceKey)')
-	cmds.append('create nonclustered index idx2 on #deriveQuality (markerKey)')
+	db.sql('select distinct sequenceKey, markerKey, accID into #deriveQuality ' + \
+		'from #finalnondummy order by markerKey', None)
+	db.sql('create nonclustered index idx1 on #deriveQuality (sequenceKey)', None)
+	db.sql('create nonclustered index idx2 on #deriveQuality (markerKey)', None)
 
-	cmds.append('select _Sequence_key, _Marker_key, _Qualifier_key from MRK_CuratedRepSequence')
-
-	cmds.append('select q.sequenceKey, q.markerKey, q.accID, ' + \
-		's._SequenceProvider_key, s._SequenceType_key, s.length ' + \
-		'from #deriveQuality q, SEQ_Sequence s ' + \
-		'where q.sequenceKey = s._Sequence_key ' + \
-		'order by q.markerKey, s._SequenceProvider_key')
-
-	results = db.sql(cmds, 'auto')
+	results = db.sql('select _Sequence_key, _Marker_key, _Qualifier_key from MRK_CuratedRepSequence', 'auto')
 
 	allgenomic = [{}, {}, {}]
 	alltranscript = [{}, {}, {}, {}, {}, {}]
@@ -217,7 +185,7 @@ def createBCP():
 	# bucket 1 = next highest priority sequence
 	# etc.
 
-	for r in results[-2]:
+	for r in results:
 	    m = r['_Marker_key']
 	    s = r['_Sequence_key']
 	    q = r['_Qualifier_key']
@@ -231,7 +199,13 @@ def createBCP():
 
 	# process representative values
 
-	for r in results[-1]:
+	results = db.sql('select q.sequenceKey, q.markerKey, q.accID, ' + \
+		's._SequenceProvider_key, s._SequenceType_key, s.length ' + \
+		'from #deriveQuality q, SEQ_Sequence s ' + \
+		'where q.sequenceKey = s._Sequence_key ' + \
+		'order by q.markerKey, s._SequenceProvider_key', 'auto')
+
+	for r in results:
 
 	    m = r['markerKey']
 	    s = r['sequenceKey']
@@ -344,8 +318,6 @@ def createBCP():
 # Main Routine
 #
 
+db.set_sqlLogFunction(db.sqlLogAll)
 userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
-print '%s' % mgi_utils.date()
 createBCP()
-print '%s' % mgi_utils.date()
-
