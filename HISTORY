@@ -1,3 +1,10 @@
+TAG: seqcacheload-3-2-0-1
+DATE: 05/05/2005
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) store _CreatedBy_key, _ModifiedBy_key of user who created annotation
+
 TAG: seqcacheload-3-1-1-1
 DATE: 03/30/2005
 STAFF: lec

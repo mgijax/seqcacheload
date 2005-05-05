@@ -29,7 +29,6 @@ import loadlib
 NL = '\n'
 DL = '|'
 table = os.environ['TABLE']
-userKey = 0
 loaddate = loadlib.loaddate
 
 outBCP = None
@@ -67,7 +66,7 @@ def writeRecord(r):
         outBCP.write(mgi_utils.prvalue(qualifiers1['Not Specified']) + DL)
 
     outBCP.write(r['mdate'] + DL + \
-        str(userKey) + DL + str(userKey) + DL + \
+        mgi_utils.prvalue(r['userKey']) + DL + mgi_utils.prvalue(r['userKey']) + DL + \
         loaddate + DL + loaddate + NL)
 
 def createBCP():
@@ -103,7 +102,7 @@ def createBCP():
 
 	# select all non-MGI accession ids for mouse markers 
 
-	db.sql('select m._Marker_key, a._LogicalDB_key, a.accID, r._Refs_key, ' + \
+	db.sql('select m._Marker_key, a._LogicalDB_key, a.accID, r._Refs_key, a._ModifiedBy_key, ' + \
 		'mdate = convert(char(10), a.modification_date, 101) ' + \
 		'into #mouseAccs ' + \
 		'from #mouse m, ACC_Accession a, ACC_AccessionReference r ' + \
@@ -119,7 +118,8 @@ def createBCP():
 
 	# select all mouse annotations
 
-	db.sql('select sequenceKey = s._Object_key, markerKey = m._Marker_key, refsKey = m._Refs_key, m.mdate, m.accID ' + \
+	db.sql('select sequenceKey = s._Object_key, markerKey = m._Marker_key, ' + \
+		'refsKey = m._Refs_key, userKey = m._ModifiedBy_key, m.mdate, m.accID ' + \
 		'into #allannot ' + \
 		'from #mouseAccs m, ACC_Accession s ' + \
 		'where m.accID = s.accID ' + \
@@ -131,7 +131,7 @@ def createBCP():
 
 	# select annotations to all sequences
 
-	db.sql('select a.sequenceKey, a.markerKey, a.refsKey, a.mdate, a.accID ' + \
+	db.sql('select a.sequenceKey, a.markerKey, a.refsKey, a.userKey, a.mdate, a.accID ' + \
 		'into #allseqannot ' + \
 		'from #allannot a, SEQ_Sequence ss ' + \
 		'where a.sequenceKey = ss._Sequence_key ', None)
@@ -143,13 +143,14 @@ def createBCP():
 
 	# select records, grouping by sequence, marker and reference
 
-	db.sql('select sequenceKey, markerKey, refsKey, mdate = max(mdate), accID ' + 
+	db.sql('select sequenceKey, markerKey, refsKey, userKey, mdate = max(mdate), accID ' + 
 		'into #finalannot ' + \
 		'from #allseqannot group by sequenceKey, markerKey, refsKey', None)
 	db.sql('create nonclustered index idx1 on #finalannot (sequenceKey)', None)
 	db.sql('create nonclustered index idx2 on #finalannot (markerKey)', None)
 	db.sql('create nonclustered index idx3 on #finalannot (refsKey)', None)
-	db.sql('create nonclustered index idx4 on #finalannot (mdate)', None)
+	db.sql('create nonclustered index idx4 on #finalannot (userKey)', None)
+	db.sql('create nonclustered index idx5 on #finalannot (mdate)', None)
 
 	db.sql('select distinct sequenceKey, markerKey, accID into #deriveQuality ' + \
 		'from #finalannot order by markerKey', None)
@@ -286,7 +287,7 @@ def createBCP():
 	print 'qualifier end...%s' % (mgi_utils.date())
 
 	print 'final results begin...%s' % (mgi_utils.date())
-	results = db.sql('select distinct sequenceKey, markerKey, refsKey, mdate from #finalannot', 'auto')
+	results = db.sql('select distinct sequenceKey, markerKey, refsKey, userKey, mdate from #finalannot', 'auto')
 	print 'final results end...%s' % (mgi_utils.date())
 
 	for r in results:
@@ -300,5 +301,4 @@ def createBCP():
 #
 
 db.set_sqlLogFunction(db.sqlLogAll)
-userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
 createBCP()

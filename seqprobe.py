@@ -33,7 +33,6 @@ import loadlib
 NL = '\n'
 DL = '|'
 table = os.environ['TABLE']
-userKey = 0
 loaddate = loadlib.loaddate
 
 def createExcluded():
@@ -74,6 +73,7 @@ def createBCP():
 	print 'sequences2 begin...%s' % (mgi_utils.date())
 	cmds = []
 	cmds.append('select s.sequenceKey, s.probeKey, refsKey = ar._Refs_key, ' + \
+		'userKey = ar._ModifiedBy_key, ' + \
 		'mdate = convert(char(10), ar.modification_date, 101) ' + \
 		'into #sequences2 ' + \
 		'from #sequences1 s, ACC_AccessionReference ar ' + \
@@ -81,12 +81,13 @@ def createBCP():
 	cmds.append('create index idx1 on #sequences2 (sequenceKey)')
 	cmds.append('create index idx2 on #sequences2 (probeKey)')
 	cmds.append('create index idx3 on #sequences2 (refsKey)')
-	cmds.append('create index idx4 on #sequences2 (mdate)')
+	cmds.append('create index idx4 on #sequences2 (userKey)')
+	cmds.append('create index idx5 on #sequences2 (mdate)')
 	db.sql(cmds, None)
 	print 'sequences2 end...%s' % (mgi_utils.date())
 
 	print 'final begin...%s' % (mgi_utils.date())
-	results = db.sql('select distinct sequenceKey, probeKey, refsKey, mdate = max(mdate) from #sequences2 ' + \
+	results = db.sql('select distinct sequenceKey, probeKey, refsKey, userKey, mdate = max(mdate) from #sequences2 ' + \
 		'group by sequenceKey, probeKey, refsKey', 'auto')
 	print 'final end...%s' % (mgi_utils.date())
 
@@ -95,7 +96,7 @@ def createBCP():
 		       	mgi_utils.prvalue(r['probeKey']) + DL + \
 		       	mgi_utils.prvalue(r['refsKey']) + DL + \
 			r['mdate'] + DL + \
-			str(userKey) + DL + str(userKey) + DL + \
+        		mgi_utils.prvalue(r['userKey']) + DL + mgi_utils.prvalue(r['userKey']) + DL + \
 			loaddate + DL + loaddate + NL)
 	outBCP.close()
 
@@ -104,7 +105,6 @@ def createBCP():
 #
 
 db.useOneConnection(1)
-userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
 print '%s' % mgi_utils.date()
 createExcluded()
 createBCP()
