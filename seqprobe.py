@@ -87,7 +87,7 @@ def createBCP():
 	print 'sequences2 end...%s' % (mgi_utils.date())
 
 	print 'final begin...%s' % (mgi_utils.date())
-	results = db.sql('select distinct sequenceKey, probeKey, refsKey, userKey, mdate = max(mdate) from #sequences2 ' + \
+	results = db.sql('select distinct sequenceKey, probeKey, refsKey, userKey = max(userKey), mdate = max(mdate) from #sequences2 ' + \
 		'group by sequenceKey, probeKey, refsKey', 'auto')
 	print 'final end...%s' % (mgi_utils.date())
 
