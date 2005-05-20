@@ -157,11 +157,15 @@ def createBCP():
 	db.sql('create nonclustered index idx1 on #deriveQuality (sequenceKey)', None)
 	db.sql('create nonclustered index idx2 on #deriveQuality (markerKey)', None)
 
+	#
+	# manually curated sequences...
+	#
+
 	results = db.sql('select _Sequence_key, _Marker_key, _Qualifier_key from MRK_CuratedRepSequence', 'auto')
 
 	allgenomic = [{}, {}, {}]
-	alltranscript = [{}, {}, {}, {}, {}, {}]
-	allpolypeptide = [{}, {}, {}]
+	alltranscript = [{}, {}, {}, {}, {}, {}, {}, {}]
+	allpolypeptide = [{}, {}, {}, {}, {}]
 	prevMarker = ''
 
 	# process manually curated representative values
@@ -181,7 +185,7 @@ def createBCP():
 	    elif qualifiers2[q] == 'polypeptide':
 		allpolypeptide[0][m] = s
 
-	# process representative values
+	# process derived representative values
 
 	results = db.sql('select q.sequenceKey, q.markerKey, q.accID, ' + \
 		's._SequenceProvider_key, s._SequenceType_key, s.length ' + \
@@ -205,8 +209,8 @@ def createBCP():
 
 	    if prevMarker != m:
 	        glengths = [-1,-1,-1]
-		tlengths = [-1,-1,-1,-1,-1,-1]
-		plengths = [-1,-1,-1]
+		tlengths = [-1,-1,-1,-1,-1,-1,-1,-1]
+		plengths = [-1,-1,-1,-1,-1]
 
 		if prevMarker != '':
 
@@ -216,19 +220,22 @@ def createBCP():
 			    genomic[prevMarker] = allgenomic[i][prevMarker]
 			    break
 
-		    for i in range(6):
+		    for i in range(8):
 			if alltranscript[i].has_key(prevMarker):
 			    transcript[prevMarker] = alltranscript[i][prevMarker]
 			    break
 
-		    for i in range(3):
+		    for i in range(5):
 			if allpolypeptide[i].has_key(prevMarker):
 			    polypeptide[prevMarker] = allpolypeptide[i][prevMarker]
 			    break
 
+	    #
 	    # representative genomic
+	    #
 	    # longest NCBI/Ensembl coordinate OR longest GenBank DNA
 	    # tie goes to NCBI
+	    #
 
 	    if (provider == 'NCBI Gene Model' or provider == 'Ensembl Gene Model') and seqlength > glengths[1]:
 		allgenomic[1][m] = s
@@ -240,30 +247,59 @@ def createBCP():
 		allgenomic[2][m] = s
 	        glengths[2] = seqlength
 
-	    # longest RefSeq (NM_), or longest GenBank RNA, or longest TIGR, DoTS, NIA Mouse Gene Index,
+	    #
+	    # representative transcript
+	    #
+	    # longest NM_ or NR_ RefSeq
+	    # longest non-EST GenBank
+	    # longest XM_ or XR_ RefSeq
+	    # longest TIGR, DoTS, NIA Mouse Gene Index,
+	    # longest EST GenBank
+	    #
 
-	    elif provider == 'RefSeq' and string.find(a, 'NM_') > -1 and seqlength > tlengths[1]:
+	    elif provider == 'RefSeq' and (string.find(a, 'NM_') > -1 or string.find(a, 'NR_') > -1) and seqlength > tlengths[1]:
 		alltranscript[1][m] = s
 	        tlengths[1] = seqlength
-	    elif string.find(provider, 'GenBank') > -1 and sType == 'RNA' and seqlength > tlengths[2]:
+	    elif string.find(provider, 'GenBank') > -1 and provider != 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA' and seqlength > tlengths[2]:
 		alltranscript[2][m] = s
 	        tlengths[2] = seqlength
-	    elif provider == 'TIGR Mouse Gene Index' and seqlength > tlengths[3]:
+	    elif provider == 'RefSeq' and (string.find(a, 'XM_') > -1 or string.find(a, 'XR_') > -1) and seqlength > tlengths[3]:
 		alltranscript[3][m] = s
 	        tlengths[3] = seqlength
-	    elif provider == 'DoTS' and seqlength > tlengths[4]:
+	    elif provider == 'TIGR Mouse Gene Index' and seqlength > tlengths[4]:
 		alltranscript[4][m] = s
 	        tlengths[4] = seqlength
-	    elif provider == 'NIA Mouse Gene Index' and seqlength > tlengths[5]:
+	    elif provider == 'DoTS' and seqlength > tlengths[5]:
 		alltranscript[5][m] = s
 	        tlengths[5] = seqlength
+	    elif provider == 'NIA Mouse Gene Index' and seqlength > tlengths[6]:
+		alltranscript[6][m] = s
+	        tlengths[6] = seqlength
+	    elif provider == 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA' and seqlength > tlengths[7]:
+		alltranscript[7][m] = s
+	        tlengths[7] = seqlength
+
+	    #
+	    # representative polypeptide
+	    #
+	    # longest SWISS-PROT
+	    # longest NP_ RefSeq
+	    # longest TrEMBL
+	    # longest XP_ RefSeq
+	    #
 
 	    if provider == 'SWISS-PROT' and seqlength > plengths[1]:
 		allpolypeptide[1][m] = s
 	        plengths[1] = seqlength
-	    elif provider == 'TrEMBL' and seqlength > plengths[2]:
+	    elif provider == 'RefSeq' and string.find(a, 'NP_') > -1 and seqlength > plengths[2]:
 		allpolypeptide[2][m] = s
 	        plengths[2] = seqlength
+	    elif provider == 'TrEMBL' and seqlength > plengths[3]:
+		allpolypeptide[3][m] = s
+	        plengths[3] = seqlength
+	    elif provider == 'RefSeq' and string.find(a, 'XP_') > -1 and seqlength > plengths[4]:
+		allpolypeptide[4][m] = s
+	        plengths[4] = seqlength
 
 	    prevMarker = m
 
@@ -274,12 +310,12 @@ def createBCP():
                 genomic[prevMarker] = allgenomic[i][prevMarker]
                 break
 
-        for i in range(6):
+        for i in range(8):
             if alltranscript[i].has_key(prevMarker):
                 transcript[prevMarker] = alltranscript[i][prevMarker]
                 break
 
-        for i in range(3):
+        for i in range(5):
             if allpolypeptide[i].has_key(prevMarker):
                 polypeptide[prevMarker] = allpolypeptide[i][prevMarker]
                 break
