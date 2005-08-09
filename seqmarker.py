@@ -111,10 +111,7 @@ def createBCP():
 		'and a._LogicalDB_key != 1 ' + \
 		'and a._Accession_key = r._Accession_key', None)
 
-	db.sql('create nonclustered index idx1 on #mouseAccs (_Marker_key)', None)
-	db.sql('create nonclustered index idx2 on #mouseAccs (_LogicalDB_key)', None)
-	db.sql('create nonclustered index idx3 on #mouseAccs (accID)', None)
-	db.sql('create nonclustered index idx4 on #mouseAccs (mdate)', None)
+	db.sql('create nonclustered index idx1 on #mouseAccs (_LogicalDB_key, accID)', None)
 
 	# select all mouse annotations
 
@@ -127,7 +124,6 @@ def createBCP():
 		'and s._MGIType_key = 19 ', None)
 
 	db.sql('create nonclustered index idx1 on #allannot (sequenceKey)', None)
-	db.sql('create nonclustered index idx2 on #allannot (markerKey)', None)
 
 	# select annotations to all sequences
 
@@ -136,21 +132,15 @@ def createBCP():
 		'from #allannot a, SEQ_Sequence ss ' + \
 		'where a.sequenceKey = ss._Sequence_key ', None)
 
-	db.sql('create nonclustered index idx1 on #allseqannot (sequenceKey)', None)
-	db.sql('create nonclustered index idx2 on #allseqannot (markerKey)', None)
-	db.sql('create nonclustered index idx3 on #allseqannot (refsKey)', None)
-	db.sql('create nonclustered index idx4 on #allseqannot (mdate)', None)
+	db.sql('create nonclustered index idx1 on #allseqannot (sequenceKey, markerKey, refsKey)', None)
 
 	# select records, grouping by sequence, marker and reference
 
 	db.sql('select sequenceKey, markerKey, refsKey, userKey, mdate = max(mdate), accID ' + 
 		'into #finalannot ' + \
 		'from #allseqannot group by sequenceKey, markerKey, refsKey', None)
-	db.sql('create nonclustered index idx1 on #finalannot (sequenceKey)', None)
+	db.sql('create nonclustered index idx1 on #finalannot (sequenceKey, markerKey, refsKey, userKey, mdate)', None)
 	db.sql('create nonclustered index idx2 on #finalannot (markerKey)', None)
-	db.sql('create nonclustered index idx3 on #finalannot (refsKey)', None)
-	db.sql('create nonclustered index idx4 on #finalannot (userKey)', None)
-	db.sql('create nonclustered index idx5 on #finalannot (mdate)', None)
 
 	db.sql('select distinct sequenceKey, markerKey, accID into #deriveQuality ' + \
 		'from #finalannot order by markerKey', None)

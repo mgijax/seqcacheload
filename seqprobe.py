@@ -78,11 +78,9 @@ def createBCP():
 		'into #sequences2 ' + \
 		'from #sequences1 s, ACC_AccessionReference ar ' + \
 		'where s._Accession_key = ar._Accession_key')
-	cmds.append('create index idx1 on #sequences2 (sequenceKey)')
-	cmds.append('create index idx2 on #sequences2 (probeKey)')
-	cmds.append('create index idx3 on #sequences2 (refsKey)')
-	cmds.append('create index idx4 on #sequences2 (userKey)')
-	cmds.append('create index idx5 on #sequences2 (mdate)')
+	cmds.append('create index idx1 on #sequences2 (sequenceKey, probeKey, refsKey, userKey, mdate)')
+	cmds.append('create index idx2 on #sequences2 (userKey)')
+	cmds.append('create index idx3 on #sequences2 (mdate)')
 	db.sql(cmds, None)
 	print 'sequences2 end...%s' % (mgi_utils.date())
 
