@@ -65,7 +65,9 @@ def writeRecord(r):
     if not printedQualifier:
         outBCP.write(mgi_utils.prvalue(qualifiers1['Not Specified']) + DL)
 
-    outBCP.write(r['mdate'] + DL + \
+    outBCP.write(mgi_utils.prvalue(r['providerKey']) + DL + \
+	mgi_utils.prvalue(r['typeKey']) + DL + \
+	r['mdate'] + DL + \
         mgi_utils.prvalue(r['userKey']) + DL + mgi_utils.prvalue(r['userKey']) + DL + \
         loaddate + DL + loaddate + NL)
 
@@ -116,18 +118,20 @@ def createBCP():
 	# select all mouse annotations
 
 	db.sql('select sequenceKey = s._Object_key, markerKey = m._Marker_key, ' + \
+		'providerKey = ss._SequenceProvider_key, typeKey = ss._SequenceType_key, ' + \
 		'refsKey = m._Refs_key, userKey = m._ModifiedBy_key, m.mdate, m.accID ' + \
 		'into #allannot ' + \
-		'from #mouseAccs m, ACC_Accession s ' + \
+		'from #mouseAccs m, ACC_Accession s, SEQ_Sequence ss ' + \
 		'where m.accID = s.accID ' + \
 		'and m._LogicalDB_key = s._LogicalDB_key ' + \
-		'and s._MGIType_key = 19 ', None)
+		'and s._MGIType_key = 19 ' + \
+		'and s._Object_key = ss._Sequence_key', None)
 
 	db.sql('create nonclustered index idx1 on #allannot (sequenceKey)', None)
 
 	# select annotations to all sequences
 
-	db.sql('select a.sequenceKey, a.markerKey, a.refsKey, a.userKey, a.mdate, a.accID ' + \
+	db.sql('select a.sequenceKey, a.markerKey, a.providerKey, a.typeKey, a.refsKey, a.userKey, a.mdate, a.accID ' + \
 		'into #allseqannot ' + \
 		'from #allannot a, SEQ_Sequence ss ' + \
 		'where a.sequenceKey = ss._Sequence_key ', None)
@@ -136,7 +140,7 @@ def createBCP():
 
 	# select records, grouping by sequence, marker and reference
 
-	db.sql('select sequenceKey, markerKey, refsKey, userKey, mdate = max(mdate), accID ' + 
+	db.sql('select sequenceKey, markerKey, providerKey, typeKey, refsKey, userKey, mdate = max(mdate), accID ' + 
 		'into #finalannot ' + \
 		'from #allseqannot group by sequenceKey, markerKey, refsKey', None)
 	db.sql('create nonclustered index idx1 on #finalannot (sequenceKey, markerKey, refsKey, userKey, mdate)', None)
@@ -313,7 +317,7 @@ def createBCP():
 	print 'qualifier end...%s' % (mgi_utils.date())
 
 	print 'final results begin...%s' % (mgi_utils.date())
-	results = db.sql('select distinct sequenceKey, markerKey, refsKey, userKey, mdate from #finalannot', 'auto')
+	results = db.sql('select distinct sequenceKey, markerKey, providerKey, typeKey, refsKey, userKey, mdate from #finalannot', 'auto')
 	print 'final results end...%s' % (mgi_utils.date())
 
 	for r in results:
