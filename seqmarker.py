@@ -14,6 +14,10 @@
 #
 # History
 #
+# 09/08/2005	lec
+#	- PIRSF (TR 5972)
+#	- add human/rat
+#
 # 10/23/2003	lec
 #	- new (TR 3404, JSAM)
 #
@@ -44,6 +48,7 @@ def writeRecord(r):
 
     outBCP.write(mgi_utils.prvalue(r['sequenceKey']) + DL + \
 	       	mgi_utils.prvalue(r['markerKey']) + DL + \
+	       	mgi_utils.prvalue(r['organismKey']) + DL + \
 	       	mgi_utils.prvalue(r['refsKey']) + DL)
 
     printedQualifier = 0
@@ -67,6 +72,7 @@ def writeRecord(r):
 
     outBCP.write(mgi_utils.prvalue(r['providerKey']) + DL + \
 	mgi_utils.prvalue(r['typeKey']) + DL + \
+	mgi_utils.prvalue(r['logicalDBKey']) + DL + \
 	r['mdate'] + DL + \
         mgi_utils.prvalue(r['userKey']) + DL + mgi_utils.prvalue(r['userKey']) + DL + \
         loaddate + DL + loaddate + NL)
@@ -95,33 +101,34 @@ def createBCP():
 	for r in results:
 	    seqTypes[r['_Term_key']] = r['term']
 
-	# only mouse markers
+	# only mouse, human and rat markers
 
-	db.sql('select _Marker_key into #mouse from MRK_Marker ' + \
-		'where _Organism_key = 1 and _Marker_Status_key in (1,3)', None)
-#		'where _Organism_key = 1 and _Marker_Status_key in (1,3) and _Marker_key = 31999', None)
-	db.sql('create nonclustered index idx_key on #mouse (_Marker_key)', None)
+	db.sql('select _Marker_key, _Organism_key into #markers from MRK_Marker ' + \
+		'where _Organism_key in (1, 2, 40) and _Marker_Status_key in (1,3)', None)
+#		'where _Organism_key in (1, 2, 40) and _Marker_Status_key in (1,3) and _Marker_key = 31999', None)
+	db.sql('create nonclustered index idx_key on #markers (_Marker_key)', None)
 
-	# select all non-MGI accession ids for mouse markers 
+	# select all non-MGI accession ids for markers 
 
-	db.sql('select m._Marker_key, a._LogicalDB_key, a.accID, r._Refs_key, a._ModifiedBy_key, ' + \
+	db.sql('select m._Marker_key, m._Organism_key, a._LogicalDB_key, a.accID, r._Refs_key, a._ModifiedBy_key, ' + \
 		'mdate = convert(char(10), a.modification_date, 101) ' + \
-		'into #mouseAccs ' + \
-		'from #mouse m, ACC_Accession a, ACC_AccessionReference r ' + \
+		'into #markerAccs ' + \
+		'from #markers m, ACC_Accession a, ACC_AccessionReference r ' + \
 		'where m._Marker_key = a._Object_key ' + \
 		'and a._MGIType_key = 2 ' + \
 		'and a._LogicalDB_key != 1 ' + \
 		'and a._Accession_key = r._Accession_key', None)
 
-	db.sql('create nonclustered index idx1 on #mouseAccs (_LogicalDB_key, accID)', None)
+	db.sql('create nonclustered index idx1 on #markerAccs (_LogicalDB_key, accID)', None)
 
-	# select all mouse annotations
+	# select all sequence annotations
 
-	db.sql('select sequenceKey = s._Object_key, markerKey = m._Marker_key, ' + \
+	db.sql('select sequenceKey = s._Object_key, markerKey = m._Marker_key, organismKey = m._Organism_key, ' + \
 		'providerKey = ss._SequenceProvider_key, typeKey = ss._SequenceType_key, ' + \
+		'logicalDBKey = m._LogicalDB_key, ' + \
 		'refsKey = m._Refs_key, userKey = m._ModifiedBy_key, m.mdate, m.accID ' + \
 		'into #allannot ' + \
-		'from #mouseAccs m, ACC_Accession s, SEQ_Sequence ss ' + \
+		'from #markerAccs m, ACC_Accession s, SEQ_Sequence ss ' + \
 		'where m.accID = s.accID ' + \
 		'and m._LogicalDB_key = s._LogicalDB_key ' + \
 		'and s._MGIType_key = 19 ' + \
@@ -131,7 +138,8 @@ def createBCP():
 
 	# select annotations to all sequences
 
-	db.sql('select a.sequenceKey, a.markerKey, a.providerKey, a.typeKey, a.refsKey, a.userKey, a.mdate, a.accID ' + \
+	db.sql('select a.sequenceKey, a.markerKey, a.organismKey, a.providerKey, a.typeKey, a.logicalDBKey, a.refsKey, ' + \
+		'a.userKey, a.mdate, a.accID ' + \
 		'into #allseqannot ' + \
 		'from #allannot a, SEQ_Sequence ss ' + \
 		'where a.sequenceKey = ss._Sequence_key ', None)
@@ -140,7 +148,7 @@ def createBCP():
 
 	# select records, grouping by sequence, marker and reference
 
-	db.sql('select sequenceKey, markerKey, providerKey, typeKey, refsKey, userKey, mdate = max(mdate), accID ' + 
+	db.sql('select sequenceKey, markerKey, organismKey, providerKey, typeKey, logicalDBKey, refsKey, userKey, mdate = max(mdate), accID ' + 
 		'into #finalannot ' + \
 		'from #allseqannot group by sequenceKey, markerKey, refsKey', None)
 	db.sql('create nonclustered index idx1 on #finalannot (sequenceKey, markerKey, refsKey, userKey, mdate)', None)
@@ -317,7 +325,8 @@ def createBCP():
 	print 'qualifier end...%s' % (mgi_utils.date())
 
 	print 'final results begin...%s' % (mgi_utils.date())
-	results = db.sql('select distinct sequenceKey, markerKey, providerKey, typeKey, refsKey, userKey, mdate from #finalannot', 'auto')
+	results = db.sql('select distinct sequenceKey, markerKey, organismKey, providerKey, typeKey, logicalDBKey, refsKey, userKey, mdate ' + \
+		'from #finalannot', 'auto')
 	print 'final results end...%s' % (mgi_utils.date())
 
 	for r in results:
