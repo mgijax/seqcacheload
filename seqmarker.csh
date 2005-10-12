@@ -45,6 +45,4 @@ cat ${DBPASSWORDFILE} | bcp ${DBNAME}..${TABLE} in ${TABLE}.bcp -c -t\| -S${DBSE
 # Create indexes
 ${SCHEMADIR}/index/${TABLE}_create.object | tee -a ${LOG}
 
-${DBUTILSBINDIR}/updateStatistics.csh ${DBSERVER} ${DBNAME} ${TABLE} | tee -a ${LOG}
-
 date | tee -a ${LOG}
