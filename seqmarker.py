@@ -14,6 +14,9 @@
 #
 # History
 #
+# 10/12/2005	lec
+#	- add primary acc id
+#
 # 09/08/2005	lec
 #	- PIRSF (TR 5972)
 #	- add human/rat
@@ -73,6 +76,7 @@ def writeRecord(r):
     outBCP.write(mgi_utils.prvalue(r['providerKey']) + DL + \
 	mgi_utils.prvalue(r['typeKey']) + DL + \
 	mgi_utils.prvalue(r['logicalDBKey']) + DL + \
+	r['accID'] + DL + \
 	r['mdate'] + DL + \
         mgi_utils.prvalue(r['userKey']) + DL + mgi_utils.prvalue(r['userKey']) + DL + \
         loaddate + DL + loaddate + NL)
@@ -136,13 +140,16 @@ def createBCP():
 
 	db.sql('create nonclustered index idx1 on #allannot (sequenceKey)', None)
 
-	# select annotations to all sequences
+	# select annotations to all sequences; grab sequence's primary accID
 
 	db.sql('select a.sequenceKey, a.markerKey, a.organismKey, a.providerKey, a.typeKey, a.logicalDBKey, a.refsKey, ' + \
-		'a.userKey, a.mdate, a.accID ' + \
+		'a.userKey, a.mdate, ac.accID ' + \
 		'into #allseqannot ' + \
-		'from #allannot a, SEQ_Sequence ss ' + \
-		'where a.sequenceKey = ss._Sequence_key ', None)
+		'from #allannot a, SEQ_Sequence ss, ACC_Accession ac ' + \
+		'where a.sequenceKey = ss._Sequence_key ' + \
+		'and ss._Sequence_key = ac._Object_key ' + \
+		'and ac._MGIType_key = 19 ' + \
+		'and ac.preferred = 1', None)
 
 	db.sql('create nonclustered index idx1 on #allseqannot (sequenceKey, markerKey, refsKey)', None)
 
@@ -325,7 +332,7 @@ def createBCP():
 	print 'qualifier end...%s' % (mgi_utils.date())
 
 	print 'final results begin...%s' % (mgi_utils.date())
-	results = db.sql('select distinct sequenceKey, markerKey, organismKey, providerKey, typeKey, logicalDBKey, refsKey, userKey, mdate ' + \
+	results = db.sql('select distinct sequenceKey, markerKey, organismKey, providerKey, typeKey, logicalDBKey, refsKey, userKey, mdate, accID ' + \
 		'from #finalannot', 'auto')
 	print 'final results end...%s' % (mgi_utils.date())
 
