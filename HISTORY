@@ -1,3 +1,10 @@
+TAG: seqcacheload-3-4-0-3
+DATE: 10/27/2005
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) added seqdummy.csh, seqdummy.py
+
 TAG: seqcacheload-BP-tr7962
 DATE: 10/25/2005
 STAFF: lec
