@@ -25,7 +25,7 @@ date | tee -a ${LOG}
 ${CACHEINSTALLDIR}/seqprobe.py | tee -a ${LOG}
 
 if ( -z ${TABLE}.bcp ) then
-echo 'BCP Files are empty' >>& $LOG
+echo 'BCP Files are empty' | tee -a ${LOG}
 exit 0
 endif
 

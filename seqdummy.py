@@ -83,10 +83,9 @@ nonmouseSourceKey = 48166
 createdBy = 'mgd_dbo'
 notLoaded = 'Not Loaded'
 
-typeDict = {"Not Loaded":316349, "RNA":316346, "Polypeptide":316348}
-qualityDict = {"Not Loaded":316341, "High":316338, "Low":316340}
-providerDict = {"GenBank/EMBL/DDBJ":316380, "RefSeq":316372, "TIGR Mouse Gene Index":316381, "DoTS":316382,
-                "SWISS-PROT":316384, "TrEMBL":316385, "NIA Mouse Gene Index":316383}
+typeDict = {}
+qualityDict = {}
+providerDict = {}
 
 loaddate = loadlib.loaddate
 
@@ -123,6 +122,7 @@ def exit(
 
 def init():
     global seqFile, sourceFile, accFile
+    global typeDict, qualityDict, providerDict
  
     db.useOneConnection(1)
  
@@ -143,6 +143,18 @@ def init():
 
     # Log all SQL
     db.set_sqlLogFunction(db.sqlLogAll)
+
+    results = db.sql('select _Term_key, term from VOC_Term_SequenceType_View', 'auto')
+    for r in results:
+        typeDict[r['term']] = r['_Term_key']
+
+    results = db.sql('select _Term_key, term from VOC_Term_SequenceQuality_View', 'auto')
+    for r in results:
+        qualityDict[r['term']] = r['_Term_key']
+
+    results = db.sql('select _Term_key, term from VOC_Term_SequenceProvider_View', 'auto')
+    for r in results:
+        providerDict[r['term']] = r['_Term_key']
 
     return
 
