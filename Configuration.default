@@ -17,10 +17,7 @@ setenv CACHEDATADIR		/data/loads/mgi/seqcacheload/output
 setenv CACHELOGSDIR		/data/loads/mgi/seqcacheload/logs
 
 # schema product directory
-setenv SCHEMADIR		/usr/local/mgi/live/dbutils/mgd/mgddbschema
+setenv MGD_DBSCHEMADIR		/usr/local/mgi/live/dbutils/mgd/mgddbschema
 
-source $SCHEMADIR/Configuration
-
-setenv DSQUERY	$DBSERVER
-setenv MGD	$DBNAME
+source ${MGD_DBSCHEMADIR}/Configuration
 

@@ -12,7 +12,6 @@
 #	To load new Sequences into:
 #
 #	SEQ_Sequence
-#	SEQ_Sequence_Raw
 #	SEQ_Source_Assoc
 #	ACC_Accession
 #
@@ -28,7 +27,6 @@
 #       BCP files:
 #
 #       SEQ_Sequence.bcp                master Sequence records
-#       SEQ_Sequence_Raw.bcp            raw Sequence records
 #	SEQ_Source_Assoc.bcp		Sequence/Source Association records
 #       ACC_Accession.bcp               Accession records
 #
@@ -49,25 +47,27 @@
 import sys
 import os
 import string
+import getopt
 import accessionlib
 import db
 import mgi_utils
 import loadlib
+import sourceloadlib
 
 #globals
 
-seqFile = ''		# file descriptor
-rawFile = ''		# file descriptor
+TAB = '\t'		# tab
+CRT = '\n'		# carriage return/newline
+
+seqFile = ''          # file descriptor
 sourceFile = ''		# file descriptor
 accFile = ''            # file descriptor
 
 seqTable = 'SEQ_Sequence'
-rawTable = 'SEQ_Sequence_Raw'
 sourceTable = 'SEQ_Source_Assoc'
 accTable = 'ACC_Accession'
 
 seqFileName = seqTable + '.bcp'
-rawFileName = rawTable + '.bcp'
 sourceFileName = sourceTable + '.bcp'
 accFileName = accTable + '.bcp'
 
@@ -83,10 +83,9 @@ nonmouseSourceKey = 48166
 createdBy = 'mgd_dbo'
 notLoaded = 'Not Loaded'
 
-typeDict = {"Not Loaded":316349, "RNA":316346, "Polypeptide":316348}
-qualityDict = {"Not Loaded":316341, "High":316338, "Low":316340}
-providerDict = {"GenBank/EMBL/DDBJ":316380, "RefSeq":316372, "TIGR Mouse Gene Index":316381, "DoTS":316382,
-                "SWISS-PROT":316384, "TrEMBL":316385, "NIA Mouse Gene Index":316383}
+typeDict = {}
+qualityDict = {}
+providerDict = {}
 
 loaddate = loadlib.loaddate
 
@@ -106,7 +105,6 @@ def exit(
  
     try:
 	seqFile.close()
-	rawFile.close()
 	sourceFile.close()
 	accFile.close()
     except:
@@ -123,7 +121,8 @@ def exit(
 # Throws: nothing
 
 def init():
-    global seqFile, rawFile, sourceFile, accFile
+    global seqFile, sourceFile, accFile
+    global typeDict, qualityDict, providerDict
  
     db.useOneConnection(1)
  
@@ -131,11 +130,6 @@ def init():
         seqFile = open(seqFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % seqFileName)
-
-    try:
-        rawFile = open(rawFileName, 'w')
-    except:
-        exit(1, 'Could not open file %s\n' % rawFileName)
 
     try:
         sourceFile = open(sourceFileName, 'w')
@@ -149,6 +143,18 @@ def init():
 
     # Log all SQL
     db.set_sqlLogFunction(db.sqlLogAll)
+
+    results = db.sql('select _Term_key, term from VOC_Term_SequenceType_View', 'auto')
+    for r in results:
+        typeDict[r['term']] = r['_Term_key']
+
+    results = db.sql('select _Term_key, term from VOC_Term_SequenceQuality_View', 'auto')
+    for r in results:
+        qualityDict[r['term']] = r['_Term_key']
+
+    results = db.sql('select _Term_key, term from VOC_Term_SequenceProvider_View', 'auto')
+    for r in results:
+        providerDict[r['term']] = r['_Term_key']
 
     return
 
@@ -186,7 +192,7 @@ def process():
     # generate table of all mouse molecular segments Acc IDs whose GenBank SeqIDs
     # are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key, ps._Organism_key ' + \
+    db.sql('select distinct a.accID, a._LogicalDB_key ' + \
 	'into #probeaccs1 ' + \
 	'from ACC_Accession a, PRB_Probe p, PRB_Source ps ' + \
 	'where a._MGIType_key = 3 ' + \
@@ -200,7 +206,7 @@ def process():
     # generate table of all mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # TIGR, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
+    db.sql('select distinct a.accID, a._LogicalDB_key ' + \
 	'into #markeraccs1 ' + \
 	'from ACC_Accession a, MRK_Marker m ' + \
 	'where a._MGIType_key = 2 ' + \
@@ -213,7 +219,7 @@ def process():
     # generate table of all non-mouse molecular segments Acc IDs whose GenBank SeqIDs
     # are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key, s._Organism_key ' + \
+    db.sql('select distinct a.accID, a._LogicalDB_key ' + \
 	'into #probeaccs2 ' + \
 	'from ACC_Accession a, PRB_Probe p, PRB_Source s ' + \
 	'where a._MGIType_key = 3 ' + \
@@ -227,7 +233,7 @@ def process():
     # generate table of all non-mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # TIGR, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
+    db.sql('select distinct a.accID, a._LogicalDB_key ' + \
 	'into #markeraccs2 ' + \
 	'from ACC_Accession a, MRK_Marker m ' + \
 	'where a._MGIType_key = 2 ' + \
@@ -239,17 +245,17 @@ def process():
 
     # union these 4 sets together to form one unique set
 
-    db.sql('select accID, _LogicalDB_key, _Organism_key ' + \
+    db.sql('select accID, _LogicalDB_key, isMouse = 1 ' + \
 	'into #allaccs ' + \
 	'from #probeaccs1 ' + \
 	'union ' + \
-	'select accID, _LogicalDB_key, _Organism_key ' + \
+	'select accID, _LogicalDB_key, isMouse = 1 ' + \
 	'from #markeraccs1 ' + \
 	'union ' + \
-	'select accID, _LogicalDB_key, _Organism_key ' + \
+	'select accID, _LogicalDB_key, isMouse = 0 ' + \
 	'from #probeaccs2 ' + \
 	'union ' + \
-	'select accID, _LogicalDB_key, _Organism_key ' + \
+	'select accID, _LogicalDB_key, isMouse = 0 ' + \
 	'from #markeraccs2', None)
 
     results = db.sql('select * from #allaccs', 'auto')
@@ -257,9 +263,8 @@ def process():
 
 	accID = r['accID']
 	logicalDB = r['_LogicalDB_key']
-	organismKey = r['_Organism_key']
 
-	if organismKey == 1:
+	if r['isMouse'] == 1:
 	    sourceKey = mouseSourceKey
         else:
 	    sourceKey = nonmouseSourceKey
@@ -304,13 +309,10 @@ def process():
             qualityKey = qualityDict["Low"]
             providerKey = providerDict["NIA Mouse Gene Index"]
 
-        seqFile.write('%d|%d|%d|%d|%d|%s|||||%d||%s|%s|%s|%s|%s|%s\n' \
-            % (seqKey, typeKey, qualityKey, statusKey, providerKey, organismKey, virtual, \
+        seqFile.write('%d|%d|%d|%d|%d|||||%d|%s|%s|%s|%s|%s|%s|%s|%s||%s|%s|%s|%s|%s|%s\n' \
+            % (seqKey, typeKey, qualityKey, statusKey, providerKey, virtual, \
+               notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, \
 	       loaddate, loaddate, userKey, userKey, loaddate, loaddate))
-
-        rawFile.write('%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
-            % (seqKey, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, \
-	       userKey, userKey, loaddate, loaddate))
 
         sourceFile.write('%d|%d|%d|%s|%s|%s|%s\n' % (assocKey, seqKey, sourceKey, userKey, userKey, loaddate, loaddate))
 
