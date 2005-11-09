@@ -103,6 +103,7 @@ def createBCP():
 #
 
 db.useOneConnection(1)
+db.set_sqlLogFunction(db.sqlLogAll)
 print '%s' % mgi_utils.date()
 createExcluded()
 createBCP()

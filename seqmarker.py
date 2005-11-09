@@ -86,8 +86,6 @@ def createBCP():
 	global genomic, transcript, polypeptide
 	global outBCP
 
-	db.useOneConnection(1)
-
 	outBCP = open('%s.bcp' % (table), 'w')
 
 	results = db.sql('select _Term_key, term from VOC_Term_RepQualifier_View', 'auto')
@@ -340,11 +338,12 @@ def createBCP():
 	    writeRecord(r)
 
 	outBCP.close()
-	db.useOneConnection(0)
 
 #
 # Main Routine
 #
 
+db.useOneConnection(1)
 db.set_sqlLogFunction(db.sqlLogAll)
 createBCP()
+db.useOneConnection(0)

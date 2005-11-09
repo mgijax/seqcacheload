@@ -84,7 +84,6 @@ mgiTypeKey = 19		# Sequence
 statusKey = 316345	# "Not Loaded" Sequence Status
 mouseSourceKey = 47395
 nonmouseSourceKey = 48166
-createdBy = 'mgd_dbo'
 notLoaded = 'Not Loaded'
 
 typeDict = {}
@@ -188,7 +187,7 @@ def setPrimaryKeys():
     results = db.sql('select maxKey = max(_Accession_key) + 1 from %s' % (accTable), 'auto')
     accKey = results[0]['maxKey']
 
-    userKey = loadlib.verifyUser(createdBy, 0, None)
+    userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
 
 # Purpose:  processes data
 # Returns:  nothing
