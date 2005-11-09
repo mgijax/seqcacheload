@@ -79,7 +79,10 @@ def createBCP():
 
 userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
 
+db.useOneConnection(1)
+db.set_sqlLogFunction(db.sqlLogAll)
 print '%s' % mgi_utils.date()
 createBCP()
 print '%s' % mgi_utils.date()
+db.useOneConnection(0)
 

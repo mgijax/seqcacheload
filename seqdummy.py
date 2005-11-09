@@ -130,6 +130,7 @@ def init():
     global typeDict, qualityDict, providerDict
  
     db.useOneConnection(1)
+    db.set_sqlLogFunction(db.sqlLogAll)
  
     try:
         seqFile = open(seqFileName, 'w')
