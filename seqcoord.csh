@@ -24,18 +24,22 @@ date | tee -a ${LOG}
 
 ${CACHEINSTALLDIR}/seqcoord.py | tee -a ${LOG}
 
-# Allow bcp into database and truncate tables
+if ( -z ${TABLE}.bcp ) then
+echo 'BCP Files are empty' | tee -a ${LOG}
+exit 0
+endif
 
-${DBUTILSBINDIR}/turnonbulkcopy.csh ${DBSERVER} ${DBNAME} | tee -a ${LOG}
-${SCHEMADIR}/table/${TABLE}_truncate.object | tee -a ${LOG}
+# Truncate table
+
+${MGD_DBSCHEMADIR}/table/${TABLE}_truncate.object | tee -a ${LOG}
 
 # Drop indexes
-${SCHEMADIR}/index/${TABLE}_drop.object | tee -a ${LOG}
+${MGD_DBSCHEMADIR}/index/${TABLE}_drop.object | tee -a ${LOG}
 
 # BCP new data into tables
-cat ${DBPASSWORDFILE} | bcp ${DBNAME}..${TABLE} in ${TABLE}.bcp -c -t\| -S${DBSERVER} -U${DBUSER} | tee -a ${LOG}
+cat ${MGD_DBPASSWORDFILE} | bcp ${MGD_DBNAME}..${TABLE} in ${TABLE}.bcp -c -t\| -S${MGD_DBSERVER} -U${MGD_DBUSER} | tee -a ${LOG}
 
 # Create indexes
-${SCHEMADIR}/index/${TABLE}_create.object | tee -a ${LOG}
+${MGD_DBSCHEMADIR}/index/${TABLE}_create.object | tee -a ${LOG}
 
 date | tee -a ${LOG}
