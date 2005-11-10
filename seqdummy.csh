@@ -34,7 +34,7 @@ date | tee -a ${LOG}
 
 # Drop index and triggers
 
-${MGD_DBSCHEMADIR}/index/SEQ_Sequence_drop.object | tee -a ${LOG}
+#${MGD_DBSCHEMADIR}/index/SEQ_Sequence_drop.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/trigger/SEQ_Sequence_drop.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/trigger/SEQ_Source_Assoc_drop.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/trigger/ACC_Accession_drop.object | tee -a ${LOG}
@@ -47,7 +47,7 @@ cat ${MGD_DBPASSWORDFILE} | bcp ${MGD_DBNAME}..ACC_Accession in ACC_Accession.bc
 
 # Re-create index and triggers
 
-${MGD_DBSCHEMADIR}/index/SEQ_Sequence_create.object | tee -a ${LOG}
+#${MGD_DBSCHEMADIR}/index/SEQ_Sequence_create.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/trigger/SEQ_Sequence_create.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/trigger/SEQ_Source_Assoc_create.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/trigger/ACC_Accession_create.object | tee -a ${LOG}
