@@ -10,11 +10,14 @@
 # install directory
 setenv CACHEINSTALLDIR		/usr/local/mgi/live/dbutils/seqcacheload
 
+# directory
+setenv CACHEDIR			/data/loads/mgi/seqcacheload
+
 # data directory
-setenv CACHEDATADIR		/data/loads/mgi/seqcacheload/output
+setenv CACHEDATADIR		${CACHEDIR}/output
 
 # logs directory
-setenv CACHELOGSDIR		/data/loads/mgi/seqcacheload/logs
+setenv CACHELOGSDIR		${CACHEDIR}/logs
 
 # schema product directory
 setenv MGD_DBSCHEMADIR		/usr/local/mgi/live/dbutils/mgd/mgddbschema
