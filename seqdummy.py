@@ -57,6 +57,7 @@ import sourceloadlib
 
 #globals
 
+NL = '\n'
 DL = os.environ['FIELDDELIM']
 datadir = os.environ['CACHEDATADIR']
 
@@ -320,19 +321,49 @@ def process():
             qualityKey = qualityDict["Low"]
             providerKey = providerDict["NIA Mouse Gene Index"]
 
-        seqFile.write('%d|%d|%d|%d|%d|%d|||||%d||%s|%s|%s|%s|%s|%s\n' \
-            % (seqKey, typeKey, qualityKey, statusKey, providerKey, organism, virtual, \
-	       loaddate, loaddate, userKey, userKey, loaddate, loaddate))
+        seqFile.write(mgi_utils.prvalue(seqKey) + DL + \
+        	mgi_utils.prvalue(typeKey) + DL + \
+        	mgi_utils.prvalue(qualityKey) + DL + \
+        	mgi_utils.prvalue(statusKey) + DL + \
+        	mgi_utils.prvalue(providerKey) + DL + \
+        	mgi_utils.prvalue(organism) + DL + \
+		DL + DL + DL + DL + \
+        	mgi_utils.prvalue(virtual) + DL + \
+		DL + \
+		loaddate + DL + loaddate + DL + \
+		str(userKey) + DL + str(userKey) + DL + \
+		loaddate + DL + loaddate + NL)
 
-        rawFile.write('%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s\n' \
-            % (seqKey, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, \
-	       userKey, userKey, loaddate, loaddate))
+        rawFile.write(mgi_utils.prvalue(seqKey) + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		str(userKey) + DL + str(userKey) + DL + \
+		loaddate + DL + loaddate + NL)
 
-        sourceFile.write('%d|%d|%d|%s|%s|%s|%s\n' % (assocKey, seqKey, sourceKey, userKey, userKey, loaddate, loaddate))
+        sourceFile.write(mgi_utils.prvalue(assocKey) + DL + \
+        	mgi_utils.prvalue(seqKey) + DL + \
+        	mgi_utils.prvalue(sourceKey) + DL + \
+		str(userKey) + DL + str(userKey) + DL + \
+		loaddate + DL + loaddate + NL)
 
 	prefixPart, numericPart = accessionlib.split_accnum(accID)
-        accFile.write('%s|%s|%s|%s|%s|%d|%d|0|1|%s|%s|%s|%s\n' \
-                % (accKey, accID, prefixPart, numericPart, logicalDB, seqKey, mgiTypeKey, userKey, userKey, loaddate, loaddate))
+        accFile.write(mgi_utils.prvalue(accKey) + DL + \
+        	mgi_utils.prvalue(accID) + DL + \
+        	mgi_utils.prvalue(prefixPart) + DL + \
+        	mgi_utils.prvalue(numericPart) + DL + \
+        	mgi_utils.prvalue(logicalDB) + DL + \
+        	mgi_utils.prvalue(seqKey) + DL + \
+        	mgi_utils.prvalue(mgiTypeKey) + DL + \
+		'0' + DL + \
+		'1' + DL + \
+		str(userKey) + DL + str(userKey) + DL + \
+		loaddate + DL + loaddate + NL)
 
         seqKey = seqKey + 1
 	assocKey = assocKey + 1

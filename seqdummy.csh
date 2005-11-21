@@ -30,7 +30,7 @@ endif
 
 date | tee -a ${LOG}
 
-set a=`wc -l SEQ_Sequence.bcp`
+set a=`wc -l ${CACHEDATADIR}/SEQ_Sequence.bcp`
 set b=`echo $a | cut -f1 -d " "`
 
 if ( $b > 2000 ) then
