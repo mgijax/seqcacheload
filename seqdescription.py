@@ -26,8 +26,9 @@ import mgi_utils
 import loadlib
 
 NL = '\n'
-DL = os.environ['COLDELIM']
+DL = os.environ['FIELDDELIM']
 table = os.environ['TABLE']
+datadir = os.environ['CACHEDATADIR']
 userKey = 0
 loaddate = loadlib.loaddate
 
@@ -35,7 +36,7 @@ def createBCP():
 
 	print 'Creating %s.bcp...%s' % (table, mgi_utils.date())
 
-	outBCP = open('%s.bcp' % (table), 'w')
+	outBCP = open('%s/%s.bcp' % (datadir, table), 'w')
 
 	cmds = []
 

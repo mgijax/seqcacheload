@@ -22,5 +22,7 @@ setenv CACHELOGSDIR		${CACHEDIR}/logs
 # schema product directory
 setenv MGD_DBSCHEMADIR		/usr/local/mgi/live/dbutils/mgd/mgddbschema
 
+setenv FIELDDELIM       "|"
+
 source ${MGD_DBSCHEMADIR}/Configuration
 

@@ -57,8 +57,8 @@ import sourceloadlib
 
 #globals
 
-TAB = '\t'		# tab
-CRT = '\n'		# carriage return/newline
+DL = os.environ['FIELDDELIM']
+datadir = os.environ['CACHEDATADIR']
 
 seqFile = ''          	# file descriptor
 rawFile = ''		# file descriptor
@@ -70,10 +70,10 @@ rawTable = 'SEQ_Sequence_Raw'
 sourceTable = 'SEQ_Source_Assoc'
 accTable = 'ACC_Accession'
 
-seqFileName = seqTable + '.bcp'
-rawFileName = rawTable + '.bcp'
-sourceFileName = sourceTable + '.bcp'
-accFileName = accTable + '.bcp'
+seqFileName = datadir + '/' + seqTable + '.bcp'
+rawFileName = datadir + '/' + rawTable + '.bcp'
+sourceFileName = datadir + '/' + sourceTable + '.bcp'
+accFileName = datadir + '/' + accTable + '.bcp'
 
 seqKey = 0              # SEQ_Sequence._Sequence_key
 assocKey = 0		# SEQ_Source_Assoc._Assoc_key

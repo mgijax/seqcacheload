@@ -31,8 +31,9 @@ import mgi_utils
 import loadlib
 
 NL = '\n'
-DL = '|'
+DL = os.environ['FIELDDELIM']
 table = os.environ['TABLE']
+datadir = os.environ['CACHEDATADIR']
 loaddate = loadlib.loaddate
 
 def createExcluded():
@@ -49,7 +50,7 @@ def createExcluded():
 
 def createBCP():
 
-	outBCP = open('%s.bcp' % (table), 'w')
+	outBCP = open('%s/%s.bcp' % (datadir, table), 'w')
 
 	print 'sequences1 begin...%s' % (mgi_utils.date())
 	cmds = []

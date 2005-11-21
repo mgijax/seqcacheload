@@ -34,8 +34,9 @@ import mgi_utils
 import loadlib
 
 NL = '\n'
-DL = '|'
+DL = os.environ['FIELDDELIM']
 table = os.environ['TABLE']
+datadir = os.environ['CACHEDATADIR']
 loaddate = loadlib.loaddate
 
 outBCP = None
@@ -86,7 +87,7 @@ def createBCP():
 	global genomic, transcript, polypeptide
 	global outBCP
 
-	outBCP = open('%s.bcp' % (table), 'w')
+	outBCP = open('%s/%s.bcp' % (datadir, table), 'w')
 
 	results = db.sql('select _Term_key, term from VOC_Term_RepQualifier_View', 'auto')
 	for r in results:
