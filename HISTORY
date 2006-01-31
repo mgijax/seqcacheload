@@ -1,3 +1,10 @@
+TAG: seqcacheload-3-4-0-5
+DATE: 01/31/2006
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) seqmarker.py; split up a query to better performance
+
 TAG: seqcacheload-3-4-0-4
 DATE: 11/17/2005
 STAFF: lec
