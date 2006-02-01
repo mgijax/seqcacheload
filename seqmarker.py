@@ -127,15 +127,22 @@ def createBCP():
 	# select all sequence annotations
 
 	db.sql('select sequenceKey = s._Object_key, markerKey = m._Marker_key, organismKey = m._Organism_key, ' + \
-		'providerKey = ss._SequenceProvider_key, typeKey = ss._SequenceType_key, ' + \
 		'logicalDBKey = m._LogicalDB_key, ' + \
 		'refsKey = m._Refs_key, userKey = m._ModifiedBy_key, m.mdate, m.accID ' + \
-		'into #allannot ' + \
-		'from #markerAccs m, ACC_Accession s, SEQ_Sequence ss ' + \
+		'into #preallannot ' + \
+		'from #markerAccs m, ACC_Accession s ' + \
 		'where m.accID = s.accID ' + \
 		'and m._LogicalDB_key = s._LogicalDB_key ' + \
-		'and s._MGIType_key = 19 ' + \
-		'and s._Object_key = ss._Sequence_key', None)
+		'and s._MGIType_key = 19 ', None)
+
+	db.sql('create nonclustered index idx1 on #preallannot (sequenceKey)', None)
+
+	db.sql('select m.sequenceKey, m.markerKey, m.organismKey, ' + \
+		'providerKey = ss._SequenceProvider_key, typeKey = ss._SequenceType_key, ' + \
+		'm.logicalDBKey, m.refsKey, m.userKey, m.mdate, m.accID ' + \
+		'into #allannot ' + \
+		'from #preallannot m, SEQ_Sequence ss ' + \
+		'where m.sequenceKey = ss._Sequence_key', None)
 
 	db.sql('create nonclustered index idx1 on #allannot (sequenceKey)', None)
 
@@ -144,9 +151,8 @@ def createBCP():
 	db.sql('select a.sequenceKey, a.markerKey, a.organismKey, a.providerKey, a.typeKey, a.logicalDBKey, a.refsKey, ' + \
 		'a.userKey, a.mdate, ac.accID ' + \
 		'into #allseqannot ' + \
-		'from #allannot a, SEQ_Sequence ss, ACC_Accession ac ' + \
-		'where a.sequenceKey = ss._Sequence_key ' + \
-		'and ss._Sequence_key = ac._Object_key ' + \
+		'from #allannot a, ACC_Accession ac ' + \
+		'where a.sequenceKey = ac._Object_key ' + \
 		'and ac._MGIType_key = 19 ' + \
 		'and ac.preferred = 1', None)
 
