@@ -12,6 +12,7 @@
 #	To load new Sequences into:
 #
 #	SEQ_Sequence
+#	SEQ_Sequence_Raw
 #	SEQ_Source_Assoc
 #	ACC_Accession
 #
@@ -56,20 +57,24 @@ import sourceloadlib
 
 #globals
 
-TAB = '\t'		# tab
-CRT = '\n'		# carriage return/newline
+NL = '\n'
+DL = os.environ['FIELDDELIM']
+datadir = os.environ['CACHEDATADIR']
 
-seqFile = ''          # file descriptor
+seqFile = ''          	# file descriptor
+rawFile = ''		# file descriptor
 sourceFile = ''		# file descriptor
 accFile = ''            # file descriptor
 
 seqTable = 'SEQ_Sequence'
+rawTable = 'SEQ_Sequence_Raw'
 sourceTable = 'SEQ_Source_Assoc'
 accTable = 'ACC_Accession'
 
-seqFileName = seqTable + '.bcp'
-sourceFileName = sourceTable + '.bcp'
-accFileName = accTable + '.bcp'
+seqFileName = datadir + '/' + seqTable + '.bcp'
+rawFileName = datadir + '/' + rawTable + '.bcp'
+sourceFileName = datadir + '/' + sourceTable + '.bcp'
+accFileName = datadir + '/' + accTable + '.bcp'
 
 seqKey = 0              # SEQ_Sequence._Sequence_key
 assocKey = 0		# SEQ_Source_Assoc._Assoc_key
@@ -80,7 +85,6 @@ mgiTypeKey = 19		# Sequence
 statusKey = 316345	# "Not Loaded" Sequence Status
 mouseSourceKey = 47395
 nonmouseSourceKey = 48166
-createdBy = 'mgd_dbo'
 notLoaded = 'Not Loaded'
 
 typeDict = {}
@@ -105,6 +109,7 @@ def exit(
  
     try:
 	seqFile.close()
+	rawFile.close()
 	sourceFile.close()
 	accFile.close()
     except:
@@ -121,15 +126,21 @@ def exit(
 # Throws: nothing
 
 def init():
-    global seqFile, sourceFile, accFile
+    global seqFile, rawFile, sourceFile, accFile
     global typeDict, qualityDict, providerDict
  
     db.useOneConnection(1)
+    db.set_sqlLogFunction(db.sqlLogAll)
  
     try:
         seqFile = open(seqFileName, 'w')
     except:
         exit(1, 'Could not open file %s\n' % seqFileName)
+
+    try:
+        rawFile = open(rawFileName, 'w')
+    except:
+        exit(1, 'Could not open file %s\n' % rawFileName)
 
     try:
         sourceFile = open(sourceFileName, 'w')
@@ -177,7 +188,7 @@ def setPrimaryKeys():
     results = db.sql('select maxKey = max(_Accession_key) + 1 from %s' % (accTable), 'auto')
     accKey = results[0]['maxKey']
 
-    userKey = loadlib.verifyUser(createdBy, 0, None)
+    userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
 
 # Purpose:  processes data
 # Returns:  nothing
@@ -192,7 +203,7 @@ def process():
     # generate table of all mouse molecular segments Acc IDs whose GenBank SeqIDs
     # are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key ' + \
+    db.sql('select distinct a.accID, a._LogicalDB_key, ps._Organism_key ' + \
 	'into #probeaccs1 ' + \
 	'from ACC_Accession a, PRB_Probe p, PRB_Source ps ' + \
 	'where a._MGIType_key = 3 ' + \
@@ -206,7 +217,7 @@ def process():
     # generate table of all mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # TIGR, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key ' + \
+    db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
 	'into #markeraccs1 ' + \
 	'from ACC_Accession a, MRK_Marker m ' + \
 	'where a._MGIType_key = 2 ' + \
@@ -219,7 +230,7 @@ def process():
     # generate table of all non-mouse molecular segments Acc IDs whose GenBank SeqIDs
     # are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key ' + \
+    db.sql('select distinct a.accID, a._LogicalDB_key, s._Organism_key ' + \
 	'into #probeaccs2 ' + \
 	'from ACC_Accession a, PRB_Probe p, PRB_Source s ' + \
 	'where a._MGIType_key = 3 ' + \
@@ -233,7 +244,7 @@ def process():
     # generate table of all non-mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # TIGR, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key ' + \
+    db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
 	'into #markeraccs2 ' + \
 	'from ACC_Accession a, MRK_Marker m ' + \
 	'where a._MGIType_key = 2 ' + \
@@ -245,17 +256,17 @@ def process():
 
     # union these 4 sets together to form one unique set
 
-    db.sql('select accID, _LogicalDB_key, isMouse = 1 ' + \
+    db.sql('select accID, _LogicalDB_key, _Organism_key ' + \
 	'into #allaccs ' + \
 	'from #probeaccs1 ' + \
 	'union ' + \
-	'select accID, _LogicalDB_key, isMouse = 1 ' + \
+	'select accID, _LogicalDB_key, _Organism_key ' + \
 	'from #markeraccs1 ' + \
 	'union ' + \
-	'select accID, _LogicalDB_key, isMouse = 0 ' + \
+	'select accID, _LogicalDB_key, _Organism_key ' + \
 	'from #probeaccs2 ' + \
 	'union ' + \
-	'select accID, _LogicalDB_key, isMouse = 0 ' + \
+	'select accID, _LogicalDB_key, _Organism_key ' + \
 	'from #markeraccs2', None)
 
     results = db.sql('select * from #allaccs', 'auto')
@@ -263,8 +274,9 @@ def process():
 
 	accID = r['accID']
 	logicalDB = r['_LogicalDB_key']
+	organism = r['_Organism_key']
 
-	if r['isMouse'] == 1:
+	if organism == 1:
 	    sourceKey = mouseSourceKey
         else:
 	    sourceKey = nonmouseSourceKey
@@ -309,16 +321,49 @@ def process():
             qualityKey = qualityDict["Low"]
             providerKey = providerDict["NIA Mouse Gene Index"]
 
-        seqFile.write('%d|%d|%d|%d|%d|||||%d|%s|%s|%s|%s|%s|%s|%s|%s||%s|%s|%s|%s|%s|%s\n' \
-            % (seqKey, typeKey, qualityKey, statusKey, providerKey, virtual, \
-               notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, notLoaded, \
-	       loaddate, loaddate, userKey, userKey, loaddate, loaddate))
+        seqFile.write(mgi_utils.prvalue(seqKey) + DL + \
+        	mgi_utils.prvalue(typeKey) + DL + \
+        	mgi_utils.prvalue(qualityKey) + DL + \
+        	mgi_utils.prvalue(statusKey) + DL + \
+        	mgi_utils.prvalue(providerKey) + DL + \
+        	mgi_utils.prvalue(organism) + DL + \
+		DL + DL + DL + DL + \
+        	mgi_utils.prvalue(virtual) + DL + \
+		DL + \
+		loaddate + DL + loaddate + DL + \
+		str(userKey) + DL + str(userKey) + DL + \
+		loaddate + DL + loaddate + NL)
 
-        sourceFile.write('%d|%d|%d|%s|%s|%s|%s\n' % (assocKey, seqKey, sourceKey, userKey, userKey, loaddate, loaddate))
+        rawFile.write(mgi_utils.prvalue(seqKey) + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		notLoaded + DL + \
+		str(userKey) + DL + str(userKey) + DL + \
+		loaddate + DL + loaddate + NL)
+
+        sourceFile.write(mgi_utils.prvalue(assocKey) + DL + \
+        	mgi_utils.prvalue(seqKey) + DL + \
+        	mgi_utils.prvalue(sourceKey) + DL + \
+		str(userKey) + DL + str(userKey) + DL + \
+		loaddate + DL + loaddate + NL)
 
 	prefixPart, numericPart = accessionlib.split_accnum(accID)
-        accFile.write('%s|%s|%s|%s|%s|%d|%d|0|1|%s|%s|%s|%s\n' \
-                % (accKey, accID, prefixPart, numericPart, logicalDB, seqKey, mgiTypeKey, userKey, userKey, loaddate, loaddate))
+        accFile.write(mgi_utils.prvalue(accKey) + DL + \
+        	mgi_utils.prvalue(accID) + DL + \
+        	mgi_utils.prvalue(prefixPart) + DL + \
+        	mgi_utils.prvalue(numericPart) + DL + \
+        	mgi_utils.prvalue(logicalDB) + DL + \
+        	mgi_utils.prvalue(seqKey) + DL + \
+        	mgi_utils.prvalue(mgiTypeKey) + DL + \
+		'0' + DL + \
+		'1' + DL + \
+		str(userKey) + DL + str(userKey) + DL + \
+		loaddate + DL + loaddate + NL)
 
         seqKey = seqKey + 1
 	assocKey = assocKey + 1

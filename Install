@@ -1,13 +1,27 @@
 #!/bin/csh
 
 #
-# Install
+# Instseq
 #
-# Installs product "seqcacheload" in the appropriate directory
+# Instseqs product "seqcacheload" in the appropriate directory
 #
-# 1. cvs export -r seqcacheload-#-#-# -d seqcacheload-#-#-# seqcacheload
-# 2. ln -s seqcacheload-#-#-# seqcacheload
-# 3. Copy Configuration.default Configuration
-# 4. Edit Configuration
-# 5. Install
+# 1. cvs export -r seqcacheload-#-#-# seqcacheload
+# 2. Copy Configuration.default Configuration
+# 3. Edit Configuration
+# 4. Instseq
 #
+
+cd `dirname $0` && source ./Configuration
+
+if ( ! -d ${CACHEDIR} ) then
+	mkdir ${CACHEDIR}
+endif
+
+if ( ! -d ${CACHEDATADIR} ) then
+	mkdir ${CACHEDATADIR}
+endif
+
+if ( ! -d ${CACHELOGSDIR} ) then
+	mkdir ${CACHELOGSDIR}
+endif
+

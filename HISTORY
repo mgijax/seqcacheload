@@ -1,3 +1,10 @@
+TAG: seqcacheload-3-5-0-1
+DATE: 04/20/2006
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) MGI 3.5; merge tr7062 branch
+
 TAG: seqcacheload-3-4-0-5
 DATE: 01/31/2006
 STAFF: lec
@@ -20,6 +27,42 @@ CHANGES:
 1) added seqdummy.csh, seqdummy.py
 
 TAG: seqcacheload-BP-tr7962
+TAG: seqcacheload-tr7062-5
+DATE: 04/20/2006
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) MGI 3.5
+
+TAG: seqcacheload-tr7062-4
+DATE: 11/21/2005
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) MGI 3.5
+
+TAG: seqcacheload-tr7062-3
+DATE: 11/17/2005
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) MGI 3.5
+
+TAG: seqcacheload-tr7062-2
+DATE: 11/10/2005
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) MGI 3.5
+
+TAG: seqcacheload-tr7062-1
+DATE: 11/08/2005
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) MGI 3.5
+
+TAG: seqcacheload-BP-tr7062
 DATE: 10/25/2005
 STAFF: lec
 RELEASE: A
