@@ -8,7 +8,7 @@
 #
 
 # install directory
-setenv CACHEINSTALLDIR		/usr/local/mgi/live/dbutils/seqcacheload
+setenv CACHEINSTALLDIR		${USRLOCALMGI}/dbutils/seqcacheload
 
 # directory
 setenv CACHEDIR			/data/loads/mgi/seqcacheload
@@ -20,7 +20,7 @@ setenv CACHEDATADIR		${CACHEDIR}/output
 setenv CACHELOGSDIR		${CACHEDIR}/logs
 
 # schema product directory
-setenv MGD_DBSCHEMADIR		/usr/local/mgi/live/dbutils/mgd/mgddbschema
+setenv MGD_DBSCHEMADIR		${USRLOCALMGI}/dbutils/mgd/mgddbschema
 
 setenv FIELDDELIM       "&=&"
 
