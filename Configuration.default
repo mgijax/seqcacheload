@@ -12,6 +12,7 @@ if ( ${?MGICONFIG} == 0 ) then
 endif
 
 source ${MGICONFIG}/master.config.csh
+source ${MGD_DBSCHEMADIR}/Configuration
 
 # install directory
 setenv CACHEINSTALLDIR		${USRLOCALMGI}/dbutils/seqcacheload
@@ -26,6 +27,4 @@ setenv CACHEDATADIR		${CACHEDIR}/output
 setenv CACHELOGSDIR		${CACHEDIR}/logs
 
 setenv FIELDDELIM       "&=&"
-
-source ${MGD_DBSCHEMADIR}/Configuration
 
