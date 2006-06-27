@@ -27,5 +27,5 @@ setenv CACHELOGSDIR		${CACHEDIR}/logs
 
 setenv FIELDDELIM       "&=&"
 
-source ${MGD_DBSCHEMA}/Configuration
+source ${MGD_DBSCHEMADIR}/Configuration
 
