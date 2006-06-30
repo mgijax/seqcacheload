@@ -1,3 +1,11 @@
+TAG: seqcacheload-3-5-0-7
+DATE: 06/30/2006
+STAFF: lec
+RELEASE: A
+CHANGES: 
+1) MGI 3.5
+2) removed source of schema configuration; can be installed post-mgiconfig (TR 7750)
+
 TAG: seqcacheload-3-5-0-6
 TAG: seqcacheload-3-5-0-5
 DATE: 06/27/2006

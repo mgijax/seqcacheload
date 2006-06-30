@@ -14,6 +14,9 @@
 #
 # History
 #
+# 06/28/2006	lec
+#	- add dog & chimpanzee (TR 7508)
+#
 # 10/12/2005	lec
 #	- add primary acc id
 #
@@ -104,11 +107,11 @@ def createBCP():
 	for r in results:
 	    seqTypes[r['_Term_key']] = r['term']
 
-	# only mouse, human and rat markers
+	# only mouse, human, rat, dog & chimpanzee markers
 
 	db.sql('select _Marker_key, _Organism_key into #markers from MRK_Marker ' + \
-		'where _Organism_key in (1, 2, 40) and _Marker_Status_key in (1,3)', None)
-#		'where _Organism_key in (1, 2, 40) and _Marker_Status_key in (1,3) and _Marker_key = 31999', None)
+		'where _Organism_key in (1, 2, 40, 10, 13) and _Marker_Status_key in (1,3)', None)
+#		'where _Organism_key in (1, 2, 40, 10, 13) and _Marker_Status_key in (1,3) and _Marker_key = 31999', None)
 	db.sql('create nonclustered index idx_key on #markers (_Marker_key)', None)
 
 	# select all non-MGI accession ids for markers 
