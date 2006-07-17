@@ -25,5 +25,6 @@ setenv CACHEDATADIR		${CACHEDIR}/output
 # logs directory
 setenv CACHELOGSDIR		${CACHEDIR}/logs
 
-setenv FIELDDELIM       "&=&"
+setenv COLDELIM       "&=&"
+setenv LINEDELIM      "\n"
 
