@@ -58,7 +58,7 @@ import sourceloadlib
 #globals
 
 NL = '\n'
-DL = os.environ['FIELDDELIM']
+DL = os.environ['COLDELIM']
 datadir = os.environ['CACHEDATADIR']
 
 seqFile = ''          	# file descriptor

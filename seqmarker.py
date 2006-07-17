@@ -37,7 +37,7 @@ import mgi_utils
 import loadlib
 
 NL = '\n'
-DL = os.environ['FIELDDELIM']
+DL = os.environ['COLDELIM']
 table = os.environ['TABLE']
 datadir = os.environ['CACHEDATADIR']
 loaddate = loadlib.loaddate
