@@ -250,11 +250,13 @@ def createBCP():
 	    #
 	    # representative genomic
 	    #
-	    # longest NCBI/Ensembl coordinate OR longest GenBank DNA
-	    # tie goes to NCBI
+	    # VEGA
+	    # longest NCBI/Ensembl coordinate OR longest GenBank DNA (tie goes to NCBI)
 	    #
 
-	    if (provider == 'NCBI Gene Model' or provider == 'Ensembl Gene Model') and seqlength > glengths[1]:
+	    if provider == 'VEGA':
+		allgenomic[1][m] = s
+	    elif (provider == 'NCBI Gene Model' or provider == 'Ensembl Gene Model') and seqlength > glengths[1]:
 		allgenomic[1][m] = s
 	        glengths[1] = seqlength
 	    elif provider == 'NCBI Gene Model' and seqlength == glengths[1]:
