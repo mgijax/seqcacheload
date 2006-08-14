@@ -225,7 +225,8 @@ def createBCP():
 	    sType = seqTypes[r['_SequenceType_key']]
 
 	    if prevMarker != m:
-	        glengths = [-1,-1,-1]
+
+		glengths = [-1,-1,-1,-1]
 		tlengths = [-1,-1,-1,-1,-1,-1,-1,-1]
 		plengths = [-1,-1,-1,-1,-1]
 
@@ -254,15 +255,19 @@ def createBCP():
 	    # longest NCBI/Ensembl coordinate OR longest GenBank DNA (tie goes to NCBI)
 	    #
 
-	    if provider == 'VEGA Gene Model' and seqlength > glengths[1]:
-		allgenomic[1][m] = s
-	        glengths[1] = seqlength
+	    if provider == 'VEGA Gene Model':
+		if seqlength > glengths[3]:
+		    allgenomic[1][m] = s
+	            glengths[3] = seqlength
+
 	    elif (provider == 'NCBI Gene Model' or provider == 'Ensembl Gene Model') and seqlength > glengths[1]:
 		allgenomic[1][m] = s
 	        glengths[1] = seqlength
+
 	    elif provider == 'NCBI Gene Model' and seqlength == glengths[1]:
 		allgenomic[1][m] = s
 	        glengths[1] = seqlength
+
 	    elif string.find(provider, 'GenBank') > -1 and sType == 'DNA' and seqlength > glengths[2]:
 		allgenomic[2][m] = s
 	        glengths[2] = seqlength

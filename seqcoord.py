@@ -78,7 +78,7 @@ def createBCP():
 # Main Routine
 #
 
-userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
+userKey = loadlib.verifyUser(os.environ['MGI_DBUSER'], 1, None)
 
 db.useOneConnection(1)
 db.set_sqlLogFunction(db.sqlLogAll)
