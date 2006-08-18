@@ -51,8 +51,6 @@ genomic = {}
 transcript = {}
 polypeptide = {}
 
-microRNA = 11
-
 def writeRecord(r):
 
     outBCP.write(mgi_utils.prvalue(r['sequenceKey']) + DL + \
@@ -340,22 +338,22 @@ def createBCP():
 	    # store all representative transcript for markers that can have more than one
 	    #
 
-	    if markerType == microRNA and \
-		((provider == 'RefSeq' and (string.find(a, 'NM_') > -1 or string.find(a, 'NR_') > -1)) \
-		or \
-	        (string.find(provider, 'GenBank') > -1 and provider != 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA') \
-		or \
-	        (provider == 'RefSeq' and (string.find(a, 'XM_') > -1 or string.find(a, 'XR_') > -1)) \
-		or \
-	        (provider == 'TIGR Mouse Gene Index') \
-		or \
-	        (provider == 'DoTS') \
-		or \
-	        (provider == 'NIA Mouse Gene Index') \
-		or \
-	        (provider == 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA')):
-
-                multitranscript.append(s)
+#	    if markerType == microRNA and \
+#		((provider == 'RefSeq' and (string.find(a, 'NM_') > -1 or string.find(a, 'NR_') > -1)) \
+#		or \
+#	        (string.find(provider, 'GenBank') > -1 and provider != 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA') \
+#		or \
+#	        (provider == 'RefSeq' and (string.find(a, 'XM_') > -1 or string.find(a, 'XR_') > -1)) \
+#		or \
+#	        (provider == 'TIGR Mouse Gene Index') \
+#		or \
+#	        (provider == 'DoTS') \
+#		or \
+#	        (provider == 'NIA Mouse Gene Index') \
+#		or \
+#	        (provider == 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA')):
+#
+#                multitranscript.append(s)
 
 	    prevMarker = m
 
