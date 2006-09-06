@@ -36,7 +36,7 @@ ${MGD_DBSCHEMADIR}/table/${TABLE}_truncate.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/index/${TABLE}_drop.object | tee -a ${LOG}
 
 # BCP new data into tables
-cat ${MGD_DBPASSWORDFILE} | bcp ${MGD_DBNAME}..${TABLE} in ${CACHEDATADIR}/${TABLE}.bcp -c -t"${FIELDDELIM}" -e ${CACHEDATADIR}/${TABLE}.bcp.error -S${MGD_DBSERVER} -U${MGD_DBUSER} | tee -a ${LOG}
+${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} ${TABLE} ${CACHEDATADIR} ${TABLE}.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
 
 # Create indexes
 ${MGD_DBSCHEMADIR}/index/${TABLE}_create.object | tee -a ${LOG}

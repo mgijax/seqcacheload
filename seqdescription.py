@@ -26,7 +26,7 @@ import mgi_utils
 import loadlib
 
 NL = '\n'
-DL = os.environ['FIELDDELIM']
+DL = os.environ['COLDELIM']
 table = os.environ['TABLE']
 datadir = os.environ['CACHEDATADIR']
 userKey = 0
@@ -64,7 +64,7 @@ def createBCP():
 
 db.useOneConnection(1)
 db.set_sqlLogFunction(db.sqlLogAll)
-userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
+userKey = loadlib.verifyUser(os.environ['MGI_DBUSER'], 1, None)
 print '%s' % mgi_utils.date()
 createBCP()
 print '%s' % mgi_utils.date()

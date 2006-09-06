@@ -37,7 +37,7 @@ import mgi_utils
 import loadlib
 
 NL = '\n'
-DL = os.environ['FIELDDELIM']
+DL = os.environ['COLDELIM']
 table = os.environ['TABLE']
 datadir = os.environ['CACHEDATADIR']
 loaddate = loadlib.loaddate
@@ -65,7 +65,7 @@ def writeRecord(r):
 	    printedQualifier = 1
 
     if transcript.has_key(r['markerKey']):
-       if transcript[r['markerKey']] == r['sequenceKey']:
+       if r['sequenceKey'] in transcript[r['markerKey']]:
 	    outBCP.write(mgi_utils.prvalue(qualifiers1['transcript']) + DL)
 	    printedQualifier = 1
 
@@ -109,14 +109,15 @@ def createBCP():
 
 	# only mouse, human, rat, dog & chimpanzee markers
 
-	db.sql('select _Marker_key, _Organism_key into #markers from MRK_Marker ' + \
+	db.sql('select _Marker_key, _Organism_key, _Marker_Type_key into #markers from MRK_Marker ' + \
 		'where _Organism_key in (1, 2, 40, 10, 13) and _Marker_Status_key in (1,3)', None)
 #		'where _Organism_key in (1, 2, 40, 10, 13) and _Marker_Status_key in (1,3) and _Marker_key = 31999', None)
 	db.sql('create nonclustered index idx_key on #markers (_Marker_key)', None)
 
 	# select all non-MGI accession ids for markers 
 
-	db.sql('select m._Marker_key, m._Organism_key, a._LogicalDB_key, a.accID, r._Refs_key, a._ModifiedBy_key, ' + \
+	db.sql('select m._Marker_key, m._Organism_key, m._Marker_Type_key, ' + \
+		'a._LogicalDB_key, a.accID, r._Refs_key, a._ModifiedBy_key, ' + \
 		'mdate = convert(char(10), a.modification_date, 101) ' + \
 		'into #markerAccs ' + \
 		'from #markers m, ACC_Accession a, ACC_AccessionReference r ' + \
@@ -129,7 +130,8 @@ def createBCP():
 
 	# select all sequence annotations
 
-	db.sql('select sequenceKey = s._Object_key, markerKey = m._Marker_key, organismKey = m._Organism_key, ' + \
+	db.sql('select sequenceKey = s._Object_key, ' + \
+		'markerKey = m._Marker_key, organismKey = m._Organism_key, markerType = m._Marker_Type_key, ' + \
 		'logicalDBKey = m._LogicalDB_key, ' + \
 		'refsKey = m._Refs_key, userKey = m._ModifiedBy_key, m.mdate, m.accID ' + \
 		'into #preallannot ' + \
@@ -140,7 +142,7 @@ def createBCP():
 
 	db.sql('create nonclustered index idx1 on #preallannot (sequenceKey)', None)
 
-	db.sql('select m.sequenceKey, m.markerKey, m.organismKey, ' + \
+	db.sql('select m.sequenceKey, m.markerKey, m.organismKey, m.markerType, ' + \
 		'providerKey = ss._SequenceProvider_key, typeKey = ss._SequenceType_key, ' + \
 		'm.logicalDBKey, m.refsKey, m.userKey, m.mdate, m.accID ' + \
 		'into #allannot ' + \
@@ -151,7 +153,8 @@ def createBCP():
 
 	# select annotations to all sequences; grab sequence's primary accID
 
-	db.sql('select a.sequenceKey, a.markerKey, a.organismKey, a.providerKey, a.typeKey, a.logicalDBKey, a.refsKey, ' + \
+	db.sql('select a.sequenceKey, a.markerKey, a.organismKey, a.markerType, ' + \
+		'a.providerKey, a.typeKey, a.logicalDBKey, a.refsKey, ' + \
 		'a.userKey, a.mdate, ac.accID ' + \
 		'into #allseqannot ' + \
 		'from #allannot a, ACC_Accession ac ' + \
@@ -163,48 +166,29 @@ def createBCP():
 
 	# select records, grouping by sequence, marker and reference
 
-	db.sql('select sequenceKey, markerKey, organismKey, providerKey, typeKey, logicalDBKey, refsKey, userKey, mdate = max(mdate), accID ' + 
+	db.sql('select sequenceKey, markerKey, organismKey, markerType, ' + \
+		'providerKey, typeKey, logicalDBKey, refsKey, userKey, mdate = max(mdate), accID ' + 
 		'into #finalannot ' + \
 		'from #allseqannot group by sequenceKey, markerKey, refsKey', None)
 	db.sql('create nonclustered index idx1 on #finalannot (sequenceKey, markerKey, refsKey, userKey, mdate)', None)
-	db.sql('create nonclustered index idx2 on #finalannot (markerKey)', None)
+	db.sql('create nonclustered index idx2 on #finalannot (sequenceKey, markerKey, markerType, accID)', None)
+	db.sql('create nonclustered index idx3 on #finalannot (markerKey)', None)
 
-	db.sql('select distinct sequenceKey, markerKey, accID into #deriveQuality ' + \
+	db.sql('select distinct sequenceKey, markerKey, markerType, accID into #deriveQuality ' + \
 		'from #finalannot order by markerKey', None)
 	db.sql('create nonclustered index idx1 on #deriveQuality (sequenceKey)', None)
 	db.sql('create nonclustered index idx2 on #deriveQuality (markerKey)', None)
 
-	#
-	# manually curated sequences...
-	#
+	allgenomic = [{}, {}]
+	alltranscript = [{}, {}, {}, {}, {}, {}, {}]
+	allpolypeptide = [{}, {}, {}, {}]
+        multitranscript = []
 
-	results = db.sql('select _Sequence_key, _Marker_key, _Qualifier_key from MRK_CuratedRepSequence', 'auto')
-
-	allgenomic = [{}, {}, {}]
-	alltranscript = [{}, {}, {}, {}, {}, {}, {}, {}]
-	allpolypeptide = [{}, {}, {}, {}, {}]
 	prevMarker = ''
-
-	# process manually curated representative values
-	# bucket 0 = highest priority sequence (manually curated)
-	# bucket 1 = next highest priority sequence
-	# etc.
-
-	for r in results:
-	    m = r['_Marker_key']
-	    s = r['_Sequence_key']
-	    q = r['_Qualifier_key']
-
-	    if qualifiers2[q] == 'genomic':
-		allgenomic[0][m] = s
-	    elif qualifiers2[q] == 'transcript':
-		alltranscript[0][m] = s
-	    elif qualifiers2[q] == 'polypeptide':
-		allpolypeptide[0][m] = s
 
 	# process derived representative values
 
-	results = db.sql('select q.sequenceKey, q.markerKey, q.accID, ' + \
+	results = db.sql('select q.sequenceKey, q.markerKey, q.markerType, q.accID, ' + \
 		's._SequenceProvider_key, s._SequenceType_key, s.length ' + \
 		'from #deriveQuality q, SEQ_Sequence s ' + \
 		'where q.sequenceKey = s._Sequence_key ' + \
@@ -215,6 +199,7 @@ def createBCP():
 	    m = r['markerKey']
 	    s = r['sequenceKey']
 	    a = r['accID']
+	    markerType = r['markerType']
 
 	    if r['length'] is None:
 		seqlength = 0
@@ -225,44 +210,59 @@ def createBCP():
 	    sType = seqTypes[r['_SequenceType_key']]
 
 	    if prevMarker != m:
-	        glengths = [-1,-1,-1]
-		tlengths = [-1,-1,-1,-1,-1,-1,-1,-1]
-		plengths = [-1,-1,-1,-1,-1]
+
+		glengths = [-1,-1,-1]
+		tlengths = [-1,-1,-1,-1,-1,-1,-1]
+		plengths = [-1,-1,-1,-1]
 
 		if prevMarker != '':
 
 		    # determine the one and only representative w/in each group
-		    for i in range(3):
+
+		    for i in range(2):
 			if allgenomic[i].has_key(prevMarker):
 			    genomic[prevMarker] = allgenomic[i][prevMarker]
 			    break
 
-		    for i in range(8):
+		    for i in range(7):
 			if alltranscript[i].has_key(prevMarker):
-			    transcript[prevMarker] = alltranscript[i][prevMarker]
+			    transcript[prevMarker] = []
+			    transcript[prevMarker].append(alltranscript[i][prevMarker])
 			    break
 
-		    for i in range(5):
+		    for i in range(4):
 			if allpolypeptide[i].has_key(prevMarker):
 			    polypeptide[prevMarker] = allpolypeptide[i][prevMarker]
 			    break
 
+		    # for markers that can have mulitple representative transcripts
+		    if len(multitranscript) > 0:
+			transcript[prevMarker] = multitranscript
+                        multitranscript = []
+
 	    #
 	    # representative genomic
 	    #
-	    # longest NCBI/Ensembl coordinate OR longest GenBank DNA
-	    # tie goes to NCBI
+	    # longest VEGA
+	    # longest NCBI/Ensembl coordinate OR longest GenBank DNA (tie goes to NCBI)
 	    #
 
-	    if (provider == 'NCBI Gene Model' or provider == 'Ensembl Gene Model') and seqlength > glengths[1]:
+	    if provider == 'VEGA Gene Model':
+		if seqlength > glengths[2]:
+		    allgenomic[0][m] = s
+	            glengths[2] = seqlength
+
+	    elif (provider == 'NCBI Gene Model' or provider == 'Ensembl Gene Model') and seqlength > glengths[0]:
+		allgenomic[0][m] = s
+	        glengths[0] = seqlength
+
+	    elif provider == 'NCBI Gene Model' and seqlength == glengths[0]:
+		allgenomic[0][m] = s
+	        glengths[0] = seqlength
+
+	    elif string.find(provider, 'GenBank') > -1 and sType == 'DNA' and seqlength > glengths[1]:
 		allgenomic[1][m] = s
 	        glengths[1] = seqlength
-	    elif provider == 'NCBI Gene Model' and seqlength == glengths[1]:
-		allgenomic[1][m] = s
-	        glengths[1] = seqlength
-	    elif string.find(provider, 'GenBank') > -1 and sType == 'DNA' and seqlength > glengths[2]:
-		allgenomic[2][m] = s
-	        glengths[2] = seqlength
 
 	    #
 	    # representative transcript
@@ -274,27 +274,40 @@ def createBCP():
 	    # longest EST GenBank
 	    #
 
-	    elif provider == 'RefSeq' and (string.find(a, 'NM_') > -1 or string.find(a, 'NR_') > -1) and seqlength > tlengths[1]:
-		alltranscript[1][m] = s
-	        tlengths[1] = seqlength
-	    elif string.find(provider, 'GenBank') > -1 and provider != 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA' and seqlength > tlengths[2]:
-		alltranscript[2][m] = s
-	        tlengths[2] = seqlength
-	    elif provider == 'RefSeq' and (string.find(a, 'XM_') > -1 or string.find(a, 'XR_') > -1) and seqlength > tlengths[3]:
-		alltranscript[3][m] = s
-	        tlengths[3] = seqlength
-	    elif provider == 'TIGR Mouse Gene Index' and seqlength > tlengths[4]:
-		alltranscript[4][m] = s
-	        tlengths[4] = seqlength
-	    elif provider == 'DoTS' and seqlength > tlengths[5]:
-		alltranscript[5][m] = s
-	        tlengths[5] = seqlength
-	    elif provider == 'NIA Mouse Gene Index' and seqlength > tlengths[6]:
-		alltranscript[6][m] = s
-	        tlengths[6] = seqlength
-	    elif provider == 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA' and seqlength > tlengths[7]:
-		alltranscript[7][m] = s
-	        tlengths[7] = seqlength
+	    if provider == 'RefSeq' and (string.find(a, 'NM_') > -1 or string.find(a, 'NR_') > -1):
+		if seqlength > tlengths[0]:
+		    alltranscript[0][m] = s
+	            tlengths[0] = seqlength
+
+	    elif string.find(provider, 'GenBank') > -1 and provider != 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA':
+		if seqlength > tlengths[1]:
+		    alltranscript[1][m] = s
+	            tlengths[1] = seqlength
+
+	    elif provider == 'RefSeq' and (string.find(a, 'XM_') > -1 or string.find(a, 'XR_') > -1):
+		if seqlength > tlengths[2]:
+		    alltranscript[2][m] = s
+	            tlengths[2] = seqlength
+
+	    elif provider == 'TIGR Mouse Gene Index':
+		if seqlength > tlengths[3]:
+		    alltranscript[3][m] = s
+	            tlengths[3] = seqlength
+
+	    elif provider == 'DoTS':
+		if seqlength > tlengths[4]:
+		    alltranscript[4][m] = s
+	            tlengths[4] = seqlength
+
+	    elif provider == 'NIA Mouse Gene Index':
+		if seqlength > tlengths[5]:
+		    alltranscript[5][m] = s
+	            tlengths[5] = seqlength
+
+	    elif provider == 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA':
+		if seqlength > tlengths[6]:
+		    alltranscript[6][m] = s
+	            tlengths[6] = seqlength
 
 	    #
 	    # representative polypeptide
@@ -305,37 +318,68 @@ def createBCP():
 	    # longest XP_ RefSeq
 	    #
 
-	    if provider == 'SWISS-PROT' and seqlength > plengths[1]:
+	    if provider == 'SWISS-PROT' and seqlength > plengths[0]:
+		allpolypeptide[0][m] = s
+	        plengths[0] = seqlength
+
+	    elif provider == 'RefSeq' and string.find(a, 'NP_') > -1 and seqlength > plengths[1]:
 		allpolypeptide[1][m] = s
 	        plengths[1] = seqlength
-	    elif provider == 'RefSeq' and string.find(a, 'NP_') > -1 and seqlength > plengths[2]:
+
+	    elif provider == 'TrEMBL' and seqlength > plengths[2]:
 		allpolypeptide[2][m] = s
 	        plengths[2] = seqlength
-	    elif provider == 'TrEMBL' and seqlength > plengths[3]:
+
+	    elif provider == 'RefSeq' and string.find(a, 'XP_') > -1 and seqlength > plengths[3]:
 		allpolypeptide[3][m] = s
 	        plengths[3] = seqlength
-	    elif provider == 'RefSeq' and string.find(a, 'XP_') > -1 and seqlength > plengths[4]:
-		allpolypeptide[4][m] = s
-	        plengths[4] = seqlength
+
+	    #
+	    # store all representative transcript for markers that can have more than one
+	    #
+
+#	    if markerType == microRNA and \
+#		((provider == 'RefSeq' and (string.find(a, 'NM_') > -1 or string.find(a, 'NR_') > -1)) \
+#		or \
+#	        (string.find(provider, 'GenBank') > -1 and provider != 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA') \
+#		or \
+#	        (provider == 'RefSeq' and (string.find(a, 'XM_') > -1 or string.find(a, 'XR_') > -1)) \
+#		or \
+#	        (provider == 'TIGR Mouse Gene Index') \
+#		or \
+#	        (provider == 'DoTS') \
+#		or \
+#	        (provider == 'NIA Mouse Gene Index') \
+#		or \
+#	        (provider == 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA')):
+#
+#                multitranscript.append(s)
 
 	    prevMarker = m
 
 	# last record
+
         # determine the one and only representative w/in each group
-        for i in range(3):
+
+        for i in range(2):
             if allgenomic[i].has_key(prevMarker):
                 genomic[prevMarker] = allgenomic[i][prevMarker]
                 break
 
-        for i in range(8):
+        for i in range(7):
             if alltranscript[i].has_key(prevMarker):
-                transcript[prevMarker] = alltranscript[i][prevMarker]
+		transcript[prevMarker] = []
+		transcript[prevMarker].append(alltranscript[i][prevMarker])
                 break
 
-        for i in range(5):
+        for i in range(4):
             if allpolypeptide[i].has_key(prevMarker):
                 polypeptide[prevMarker] = allpolypeptide[i][prevMarker]
                 break
+
+	# for markers that can have mulitple representative transcripts
+        if len(multitranscript) > 0:
+	    transcript[prevMarker] = multitranscript
 
 	print 'qualifier end...%s' % (mgi_utils.date())
 

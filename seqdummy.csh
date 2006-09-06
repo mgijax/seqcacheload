@@ -51,10 +51,10 @@ ${MGD_DBSCHEMADIR}/trigger/SEQ_Source_Assoc_drop.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/trigger/ACC_Accession_drop.object | tee -a ${LOG}
 
 # BCP new data into tables
-cat ${MGD_DBPASSWORDFILE} | bcp ${MGD_DBNAME}..SEQ_Sequence in ${CACHEDATADIR}/SEQ_Sequence.bcp -c -t"${FIELDDELIM}" -S${MGD_DBSERVER} -U${MGD_DBUSER} | tee -a ${LOG}
-cat ${MGD_DBPASSWORDFILE} | bcp ${MGD_DBNAME}..SEQ_Sequence_Raw in ${CACHEDATADIR}/SEQ_Sequence_Raw.bcp -c -t"${FIELDDELIM}" -S${MGD_DBSERVER} -U${MGD_DBUSER} | tee -a ${LOG}
-cat ${MGD_DBPASSWORDFILE} | bcp ${MGD_DBNAME}..SEQ_Source_Assoc in ${CACHEDATADIR}/SEQ_Source_Assoc.bcp -c -t"${FIELDDELIM}" -S${MGD_DBSERVER} -U${MGD_DBUSER} | tee -a ${LOG}
-cat ${MGD_DBPASSWORDFILE} | bcp ${MGD_DBNAME}..ACC_Accession in ${CACHEDATADIR}/ACC_Accession.bcp -c -t"${FIELDDELIM}" -S${MGD_DBSERVER} -U${MGD_DBUSER} | tee -a ${LOG}
+${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} SEQ_Sequence ${CACHEDATADIR} SEQ_Sequence.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
+${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} SEQ_Sequence_Raw ${CACHEDATADIR} SEQ_Sequence_Raw.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
+${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} SEQ_Source_Assoc ${CACHEDATADIR} SEQ_Source_Assoc.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
+${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} ACC_Accession ${CACHEDATADIR} ACC_Accession.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
 
 # Re-create index and triggers
 

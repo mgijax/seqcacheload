@@ -58,7 +58,7 @@ import sourceloadlib
 #globals
 
 NL = '\n'
-DL = os.environ['FIELDDELIM']
+DL = os.environ['COLDELIM']
 datadir = os.environ['CACHEDATADIR']
 
 seqFile = ''          	# file descriptor
@@ -188,7 +188,7 @@ def setPrimaryKeys():
     results = db.sql('select maxKey = max(_Accession_key) + 1 from %s' % (accTable), 'auto')
     accKey = results[0]['maxKey']
 
-    userKey = loadlib.verifyUser(os.environ['DBUSER'], 1, None)
+    userKey = loadlib.verifyUser(os.environ['MGI_DBUSER'], 1, None)
 
 # Purpose:  processes data
 # Returns:  nothing
