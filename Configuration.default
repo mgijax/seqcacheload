@@ -13,9 +13,6 @@ endif
 
 source ${MGICONFIG}/master.config.csh
 
-# install directory
-setenv CACHEINSTALLDIR		${USRLOCALMGI}/dbutils/seqcacheload
-
 # directory
 setenv CACHEDIR			/data/loads/mgi/seqcacheload
 

@@ -1,3 +1,9 @@
+TAG: seqcacheload-3-5-1-2
+DATE: 09/21/2006
+STAFF: lec
+CHANGES: 
+1) TR 7894;mgiconfig
+
 TAG: seqcacheload-3-5-1-1
 DATE: 09/06/2006
 STAFF: lec
@@ -7,7 +13,6 @@ CHANGES:
 TAG: seqcacheload-build36-7
 DATE: 08/18/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) build 36
 
@@ -15,56 +20,48 @@ TAG: seqcacheload-build36-6
 TAG: seqcacheload-build36-5
 DATE: 08/14/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) build 36
 
 TAG: seqcacheload-build36-4
 DATE: 08/11/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) build 36
 
 TAG: seqcacheload-build36-3
 DATE: 07/27/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) build 36
 
 TAG: seqcacheload-build36-2
 DATE: 07/17/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) build 36
 
 TAG: seqcacheload-build36-1
 DATE: 07/12/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) build 36
 
 TAG: seqcacheload-BP-build36
 DATE: 07/11/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) branch point tag for build 36
 
 TAG: seqcacheload-3-5-0-8
 DATE: 07/03/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5
 
 TAG: seqcacheload-3-5-0-7
 DATE: 06/30/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5
 2) removed source of schema configuration; can be installed post-mgiconfig (TR 7750)
@@ -73,14 +70,12 @@ TAG: seqcacheload-3-5-0-6
 TAG: seqcacheload-3-5-0-5
 DATE: 06/27/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5
 
 TAG: seqcacheload-3-5-0-4
 DATE: 05/10/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5
 
@@ -88,35 +83,30 @@ TAG: seqcacheload-3-5-0-3
 TAG: seqcacheload-3-5-0-2
 DATE: 05/05/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5; changed FIELDDELIM
 
 TAG: seqcacheload-3-5-0-1
 DATE: 04/20/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5; merge tr7062 branch
 
 TAG: seqcacheload-3-4-0-5
 DATE: 01/31/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) seqmarker.py; split up a query to better performance
 
 TAG: seqcacheload-3-4-0-4
 DATE: 11/17/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) seqdummy.csh; drop/re-create indexes based on # of records loaded
 
 TAG: seqcacheload-3-4-0-3
 DATE: 10/27/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) added seqdummy.csh, seqdummy.py
 
@@ -124,119 +114,102 @@ TAG: seqcacheload-BP-tr7962
 TAG: seqcacheload-tr7062-5
 DATE: 04/20/2006
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5
 
 TAG: seqcacheload-tr7062-4
 DATE: 11/21/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5
 
 TAG: seqcacheload-tr7062-3
 DATE: 11/17/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5
 
 TAG: seqcacheload-tr7062-2
 DATE: 11/10/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5
 
 TAG: seqcacheload-tr7062-1
 DATE: 11/08/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5
 
 TAG: seqcacheload-BP-tr7062
 DATE: 10/25/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.5 branch point tag
 
 TAG: seqcacheload-3-4-0-2
 DATE: 10/12/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.4 merge to trunk
 
 TAG: seqcacheload-3-4-0-1
 DATE: 09/21/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.4
 
 TAG: seqcacheload-pirsfload-BP
 DATE: 09/08/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) PIRSF branch point
 
 TAG: seqcacheload-3-3-0-1
 DATE: 08/23/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) OMIM branch merge
 
 TAG: seqcacheload-omim-1
 DATE: 08/09/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) OMIM
 
 TAG: seqcacheload-BP-omim
 DATE: 06/28/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) branch point for OMIM
 
 TAG: seqcacheload-3-2-0-3
 DATE: 05/20/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) TR 6046; change algorithm per EntrezGene load
 
 TAG: seqcacheload-3-2-0-2
 DATE: 05/10/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) get rid of duplicates
 
 TAG: seqcacheload-3-2-0-1
 DATE: 05/05/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) store _CreatedBy_key, _ModifiedBy_key of user who created annotation
 
 TAG: seqcacheload-3-1-1-1
 DATE: 03/30/2005
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) TR 6700
 
 TAG: seqcacheload-2-0-7
 DATE: 12/07/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.1
 2) TR 6118
@@ -244,7 +217,6 @@ CHANGES:
 TAG: seqcacheload-2-0-6
 DATE: 12/01/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.1
 2) TR 6118
@@ -252,7 +224,6 @@ CHANGES:
 TAG: seqcacheload-2-0-5
 DATE: 11/23/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.1
 2) TR 6118
@@ -260,14 +231,12 @@ CHANGES:
 TAG: seqcacheload-2-0-4
 DATE: 10/11/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) MGI 3.1
 
 TAG: seqcacheload-2-0-3
 DATE: 08/26/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) Assembly/Coordinate Cache
 
@@ -276,42 +245,36 @@ TAG: seqcacheload-2-0-1
 TAG: seqcacheload-2-0-0
 DATE: 08/24/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) Assembly/qualifier
 
 TAG: seqcacheload-1-0-12
 DATE: 08/24/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) improve performance of seqmarker.py
 
 TAG: seqcacheload-1-0-11
 DATE: 06/04/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) check bcp file before truncating/loading
 
 TAG: seqcacheload-1-0-10
 DATE: 06/03/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) don't cache dummy annotations if the real thing exists
 
 TAG: seqcacheload-1-0-9
 DATE: 06/02/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) don't cache dummy annotations if the real thing exists
 
 TAG: seqcacheload-1-0-8
 DATE: 05/13/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) added update statistics
 
@@ -320,7 +283,6 @@ TAG: seqcacheload-1-0-6
 TAG: seqcacheload-1-0-5
 DATE: 03/30/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) added "annotation" date to cache tables
 2) added seqdescription.csh seqdescription.py
@@ -328,7 +290,6 @@ CHANGES:
 TAG: seqcacheload-1-0-4
 DATE: 03/26/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) added "annotation" date to cache tables
 
@@ -336,20 +297,17 @@ TAG: seqcacheload-1-0-3
 TAG: seqcacheload-1-0-2
 DATE: 03/25/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) added "annotation" date to cache tables
 
 TAG: seqcacheload-1-0-1
 DATE: 02/06/2004
 STAFF: lec
-RELEASE: A
 CHANGES: 
 1) added "output" directory
 
 TAG: seqcacheload-1-0-0
 DATE: 12/02/2003
 STAFF: lec
-RELEASE: A
 CHANGES: New CVS repository
 
