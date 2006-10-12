@@ -14,14 +14,14 @@
 cd `dirname $0` && source ./Configuration
 
 if ( ! -d ${CACHEDIR} ) then
-	mkdir ${CACHEDIR}
+	mkdir -p ${CACHEDIR}
 endif
 
 if ( ! -d ${CACHEDATADIR} ) then
-	mkdir ${CACHEDATADIR}
+	mkdir -p ${CACHEDATADIR}
 endif
 
 if ( ! -d ${CACHELOGSDIR} ) then
-	mkdir ${CACHELOGSDIR}
+	mkdir -p ${CACHELOGSDIR}
 endif
 
