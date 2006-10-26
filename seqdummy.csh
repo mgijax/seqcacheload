@@ -40,7 +40,7 @@ set b=`echo $a | cut -f1 -d " "`
 
 # Drop index and triggers
 
-if ( $b > 2000 ) then
+if ( $b > 3000 ) then
     ${MGD_DBSCHEMADIR}/index/SEQ_Sequence_drop.object | tee -a ${LOG}
 endif
 
@@ -58,7 +58,7 @@ ${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} ACC_Accession ${CACHE
 
 # Re-create index and triggers
 
-if ( $b > 2000 ) then
+if ( $b > 3000 ) then
     ${MGD_DBSCHEMADIR}/index/SEQ_Sequence_create.object | tee -a ${LOG}
 endif
 
