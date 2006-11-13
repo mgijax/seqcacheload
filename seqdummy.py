@@ -87,10 +87,6 @@ mouseSourceKey = 47395
 nonmouseSourceKey = 48166
 notLoaded = 'Not Loaded'
 
-typeDict = {}
-qualityDict = {}
-providerDict = {}
-
 loaddate = loadlib.loaddate
 
 # Purpose: prints error message and exits
@@ -127,7 +123,6 @@ def exit(
 
 def init():
     global seqFile, rawFile, sourceFile, accFile
-    global typeDict, qualityDict, providerDict
  
     db.useOneConnection(1)
     db.set_sqlLogFunction(db.sqlLogAll)
@@ -154,18 +149,6 @@ def init():
 
     # Log all SQL
     db.set_sqlLogFunction(db.sqlLogAll)
-
-    results = db.sql('select _Term_key, term from VOC_Term_SequenceType_View', 'auto')
-    for r in results:
-        typeDict[r['term']] = r['_Term_key']
-
-    results = db.sql('select _Term_key, term from VOC_Term_SequenceQuality_View', 'auto')
-    for r in results:
-        qualityDict[r['term']] = r['_Term_key']
-
-    results = db.sql('select _Term_key, term from VOC_Term_SequenceProvider_View', 'auto')
-    for r in results:
-        providerDict[r['term']] = r['_Term_key']
 
     return
 
@@ -215,7 +198,7 @@ def process():
 	'where s._MGIType_key = 19 and s._LogicalDB_key = a._LogicalDB_key and s.accID = a.accID)', None)
 
     # generate table of all mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
-    # TIGR, DoTS, TrEMBL IDs are not represented as Sequence objects.
+    # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
     db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
 	'into #markeraccs1 ' + \
@@ -242,7 +225,7 @@ def process():
 	'where s._MGIType_key = 19 and s._LogicalDB_key = a._LogicalDB_key and s.accID = a.accID)', None)
 
     # generate table of all non-mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
-    # TIGR, DoTS, TrEMBL IDs are not represented as Sequence objects.
+    # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
     db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
 	'into #markeraccs2 ' + \
@@ -285,41 +268,46 @@ def process():
 
         # change values for specific cases
 
-        if logicalDB == 9:
-            typeKey = typeDict["Not Loaded"]
-            qualityKey = qualityDict["Not Loaded"]
-            providerKey = providerDict["GenBank/EMBL/DDBJ"]
+	# types:  316347 (DNA), 316346 (RNA), 316348 (polypeptide), 316349 (not loaded)
+	# quality:  316338 (high), 316339 (medium), 316340 (low), 316341 (not loaded)
+	# provider: 316380 (GenBank/EMBL/DDBJ), 316372 (RefSeq), 316381 (DFCI)
+	#           316382 (DoTS), 316384 (SwissProt), 316385 (TrEMBL), 316383 (NIA)
+
+        if logicalDB == 9:	# GenBank
+            typeKey = 316349
+            qualityKey = 316341
+            providerKey = 316380
             virtual = 0
 
         elif logicalDB == 27:     # RefSeq
-            typeKey = typeDict["RNA"]
-            qualityKey = qualityDict["High"]
-            providerKey = providerDict["RefSeq"]
+            typeKey = 316346
+            qualityKey = 316338
+            providerKey = 316372
 
-        elif logicalDB == 35:     # TIGR
-            typeKey = typeDict["RNA"]
-            qualityKey = qualityDict["Low"]
-            providerKey = providerDict["TIGR Mouse Gene Index"]
+        elif logicalDB == 35:     # DFCI
+            typeKey = 316346
+            qualityKey = 316340
+            providerKey = 316381
 
         elif logicalDB == 36:     # DoTS
-            typeKey = typeDict["RNA"]
-            qualityKey = qualityDict["Low"]
-            providerKey = providerDict["DoTS"]
+            typeKey = 316346
+            qualityKey = 316340
+            providerKey = 316382
 
         elif logicalDB == 13:     # SwissProt
-            typeKey = typeDict["Polypeptide"]
-            qualityKey = qualityDict["High"]
-            providerKey = providerDict["SWISS-PROT"]
+            typeKey = 316348
+            qualityKey = 316338
+            providerKey = 316384
 
         elif logicalDB == 41:     # TrEMBL
-            typeKey = typeDict["Polypeptide"]
-            qualityKey = qualityDict["Low"]
-            providerKey = providerDict["TrEMBL"]
+            typeKey = 316348
+            qualityKey = 316340
+            providerKey = 316385
 
         elif logicalDB == 53:     # NIA Mouse Gene Index
-            typeKey = typeDict["RNA"]
-            qualityKey = qualityDict["Low"]
-            providerKey = providerDict["NIA Mouse Gene Index"]
+            typeKey = 316346
+            qualityKey = 316340
+            providerKey = 316383
 
         seqFile.write(mgi_utils.prvalue(seqKey) + DL + \
         	mgi_utils.prvalue(typeKey) + DL + \

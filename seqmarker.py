@@ -45,8 +45,6 @@ loaddate = loadlib.loaddate
 outBCP = None
 qualifiers1 = {}
 qualifiers2 = {}
-seqProviders = {}
-seqTypes = {}
 genomic = {}
 transcript = {}
 polypeptide = {}
@@ -86,7 +84,7 @@ def writeRecord(r):
         loaddate + DL + loaddate + NL)
 
 def createBCP():
-	global qualifiers1, qualifiers2, seqProviders, seqTypes
+	global qualifiers1, qualifiers2
 	global genomic, transcript, polypeptide
 	global outBCP
 
@@ -96,16 +94,6 @@ def createBCP():
 	for r in results:
 	   qualifiers1[r['term']] = r['_Term_key']
 	   qualifiers2[r['_Term_key']] = r['term']
-
-	# sequence providers
-	results = db.sql('select _Term_key, term from VOC_Term_SequenceProvider_View', 'auto')
-	for r in results:
-	    seqProviders[r['_Term_key']] = r['term']
-
-	# sequence types
-	results = db.sql('select _Term_key, term from VOC_Term_SequenceType_View', 'auto')
-	for r in results:
-	    seqTypes[r['_Term_key']] = r['term']
 
 	# only mouse, human, rat, dog & chimpanzee markers
 
@@ -206,8 +194,8 @@ def createBCP():
 	    else:
 		seqlength = int(r['length'])
 
-	    provider = seqProviders[r['_SequenceProvider_key']]
-	    sType = seqTypes[r['_SequenceType_key']]
+	    providerKey = r['_SequenceProvider_key']
+	    seqTypeKey = r['_SequenceType_key']
 
 	    if prevMarker != m:
 
@@ -247,20 +235,24 @@ def createBCP():
 	    # longest NCBI/Ensembl coordinate OR longest GenBank DNA (tie goes to NCBI)
 	    #
 
-	    if provider == 'VEGA Gene Model':
+	    # VEGA
+	    if providerKey == 1865333:
 		if seqlength > glengths[2]:
 		    allgenomic[0][m] = s
 	            glengths[2] = seqlength
 
-	    elif (provider == 'NCBI Gene Model' or provider == 'Ensembl Gene Model') and seqlength > glengths[0]:
+	    # NCBI, Ensembl
+	    elif (providerKey in [706915,615429]) and seqlength > glengths[0]:
 		allgenomic[0][m] = s
 	        glengths[0] = seqlength
 
-	    elif provider == 'NCBI Gene Model' and seqlength == glengths[0]:
+	    # NCBI
+	    elif providerKey == 706915 and seqlength == glengths[0]:
 		allgenomic[0][m] = s
 	        glengths[0] = seqlength
 
-	    elif string.find(provider, 'GenBank') > -1 and sType == 'DNA' and seqlength > glengths[1]:
+	    # any GenBank; DNA
+	    elif providerKey in [316380,316376,316379,316375,316377,316374,316373,316378,492451] and seqTypeKey == 316347 and seqlength > glengths[1]:
 		allgenomic[1][m] = s
 	        glengths[1] = seqlength
 
@@ -270,41 +262,48 @@ def createBCP():
 	    # longest NM_ or NR_ RefSeq
 	    # longest non-EST GenBank
 	    # longest XM_ or XR_ RefSeq
-	    # longest TIGR, DoTS, NIA Mouse Gene Index,
+	    # longest DFCI, DoTS, NIA Mouse Gene Index,
 	    # longest EST GenBank
 	    #
 
-	    if provider == 'RefSeq' and (string.find(a, 'NM_') > -1 or string.find(a, 'NR_') > -1):
+	    # RefSeq
+	    if providerKey == 316372 and (string.find(a, 'NM_') > -1 or string.find(a, 'NR_') > -1):
 		if seqlength > tlengths[0]:
 		    alltranscript[0][m] = s
 	            tlengths[0] = seqlength
 
-	    elif string.find(provider, 'GenBank') > -1 and provider != 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA':
+	    # GenBank but not EST; RNA
+	    elif providerKey in [316380,316379,316375,316377,316374,316373,316378,492451'] and seqTypeKey == 316346:
 		if seqlength > tlengths[1]:
 		    alltranscript[1][m] = s
 	            tlengths[1] = seqlength
 
-	    elif provider == 'RefSeq' and (string.find(a, 'XM_') > -1 or string.find(a, 'XR_') > -1):
+	    # RefSeq
+	    elif providerKey == 316372 and (string.find(a, 'XM_') > -1 or string.find(a, 'XR_') > -1):
 		if seqlength > tlengths[2]:
 		    alltranscript[2][m] = s
 	            tlengths[2] = seqlength
 
-	    elif provider == 'TIGR Mouse Gene Index':
+	    # DFCI
+	    elif providerKey == 316381:
 		if seqlength > tlengths[3]:
 		    alltranscript[3][m] = s
 	            tlengths[3] = seqlength
 
-	    elif provider == 'DoTS':
+	    # DoTS
+	    elif providerKey == 316382:
 		if seqlength > tlengths[4]:
 		    alltranscript[4][m] = s
 	            tlengths[4] = seqlength
 
-	    elif provider == 'NIA Mouse Gene Index':
+	    # NIA
+	    elif providerKey == 316383:
 		if seqlength > tlengths[5]:
 		    alltranscript[5][m] = s
 	            tlengths[5] = seqlength
 
-	    elif provider == 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA':
+	    # GenBank EST; RNA
+	    elif providerKey == 316376 and seqTypeKey == 316346:
 		if seqlength > tlengths[6]:
 		    alltranscript[6][m] = s
 	            tlengths[6] = seqlength
@@ -318,42 +317,25 @@ def createBCP():
 	    # longest XP_ RefSeq
 	    #
 
-	    if provider == 'SWISS-PROT' and seqlength > plengths[0]:
+	    # SwissProt
+	    if providerKey == 316384 and seqlength > plengths[0]:
 		allpolypeptide[0][m] = s
 	        plengths[0] = seqlength
 
-	    elif provider == 'RefSeq' and string.find(a, 'NP_') > -1 and seqlength > plengths[1]:
+	    # RefSeq
+	    elif providerKey == 316372 and string.find(a, 'NP_') > -1 and seqlength > plengths[1]:
 		allpolypeptide[1][m] = s
 	        plengths[1] = seqlength
 
-	    elif provider == 'TrEMBL' and seqlength > plengths[2]:
+	    # TrEMBL
+	    elif providerKey == 316385 and seqlength > plengths[2]:
 		allpolypeptide[2][m] = s
 	        plengths[2] = seqlength
 
-	    elif provider == 'RefSeq' and string.find(a, 'XP_') > -1 and seqlength > plengths[3]:
+	    # RefSeq
+	    elif providerKey == 316372 and string.find(a, 'XP_') > -1 and seqlength > plengths[3]:
 		allpolypeptide[3][m] = s
 	        plengths[3] = seqlength
-
-	    #
-	    # store all representative transcript for markers that can have more than one
-	    #
-
-#	    if markerType == microRNA and \
-#		((provider == 'RefSeq' and (string.find(a, 'NM_') > -1 or string.find(a, 'NR_') > -1)) \
-#		or \
-#	        (string.find(provider, 'GenBank') > -1 and provider != 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA') \
-#		or \
-#	        (provider == 'RefSeq' and (string.find(a, 'XM_') > -1 or string.find(a, 'XR_') > -1)) \
-#		or \
-#	        (provider == 'TIGR Mouse Gene Index') \
-#		or \
-#	        (provider == 'DoTS') \
-#		or \
-#	        (provider == 'NIA Mouse Gene Index') \
-#		or \
-#	        (provider == 'GenBank/EMBL/DDBJ:EST' and sType == 'RNA')):
-#
-#                multitranscript.append(s)
 
 	    prevMarker = m
 
