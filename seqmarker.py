@@ -273,7 +273,7 @@ def createBCP():
 	            tlengths[0] = seqlength
 
 	    # GenBank but not EST; RNA
-	    elif providerKey in [316380,316379,316375,316377,316374,316373,316378,492451'] and seqTypeKey == 316346:
+	    elif providerKey in [316380,316379,316375,316377,316374,316373,316378,492451] and seqTypeKey == 316346:
 		if seqlength > tlengths[1]:
 		    alltranscript[1][m] = s
 	            tlengths[1] = seqlength
