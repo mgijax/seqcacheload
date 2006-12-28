@@ -10,7 +10,7 @@
 
 cd `dirname $0` && source ./Configuration
 
-setenv LOG	${CACHELOGSDIR}/`basename $0`.log
+setenv LOG	${CACHELOGSDIR}/`basename $0 .csh`.log
 rm -rf ${LOG}
 touch ${LOG}
 
