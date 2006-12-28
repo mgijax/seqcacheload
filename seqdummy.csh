@@ -1,4 +1,4 @@
-#!/bin/csh -fx
+#!/bin/csh -f
 
 #
 # Usage:  seqdummy.csh
