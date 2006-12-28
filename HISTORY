@@ -1,3 +1,10 @@
+TAG: seqcacheload-3-5-1-6
+DATE: 12/28/2006
+STAFF: sc
+CHANGES:
+1) from each *.csh removed ".csh" from log filename
+2) index.html -added
+
 TAG: seqcacheload-3-5-1-5
 TAG: seqcacheload-3-5-1-4
 DATE: 11/13/2006
