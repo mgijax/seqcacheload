@@ -1,3 +1,9 @@
+TAG: seqcacheload-3-5-1-8
+DATE: 02/02/2007
+STAFF: lec
+CHANGES:
+1) TR8072; excluded deleted sequences from rep algorithm; seqmarker.py
+
 TAG: seqcacheload-3-5-1-7
 TAG: seqcacheload-3-5-1-6
 DATE: 12/28/2006
