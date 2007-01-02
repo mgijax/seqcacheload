@@ -14,6 +14,9 @@
 #
 # History
 #
+# 02/02/2007	lec
+#	- TR 8072; exclude deleted sequences from representative algorithm
+#
 # 06/28/2006	lec
 #	- add dog & chimpanzee (TR 7508)
 #
@@ -174,12 +177,13 @@ def createBCP():
 
 	prevMarker = ''
 
-	# process derived representative values
+	# process derived representative values; do not include deleted sequences
 
 	results = db.sql('select q.sequenceKey, q.markerKey, q.markerType, q.accID, ' + \
 		's._SequenceProvider_key, s._SequenceType_key, s.length ' + \
 		'from #deriveQuality q, SEQ_Sequence s ' + \
 		'where q.sequenceKey = s._Sequence_key ' + \
+		'and s._SequenceStatus_key != 316343 ' + \
 		'order by q.markerKey, s._SequenceProvider_key', 'auto')
 
 	for r in results:
