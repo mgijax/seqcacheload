@@ -14,6 +14,9 @@
 #
 # History
 #
+# 01/18/2007	lec
+#	- include withdrawn markers as they may have sequence associations
+#
 # 02/02/2007	lec
 #	- TR 8072; exclude deleted sequences from representative algorithm
 #
@@ -99,9 +102,11 @@ def createBCP():
 	   qualifiers2[r['_Term_key']] = r['term']
 
 	# only mouse, human, rat, dog & chimpanzee markers
+	# include withdrawn markers
 
 	db.sql('select _Marker_key, _Organism_key, _Marker_Type_key into #markers from MRK_Marker ' + \
-		'where _Organism_key in (1, 2, 40, 10, 13) and _Marker_Status_key in (1,3)', None)
+		'where _Organism_key in (1, 2, 40, 10, 13)', None)
+#		'where _Organism_key in (1, 2, 40, 10, 13) and _Marker_Status_key in (1,3)', None)
 #		'where _Organism_key in (1, 2, 40, 10, 13) and _Marker_Status_key in (1,3) and _Marker_key = 31999', None)
 	db.sql('create nonclustered index idx_key on #markers (_Marker_key)', None)
 
