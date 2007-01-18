@@ -1,5 +1,11 @@
+TAG: seqcacheload-3-5-1-9
+DATE: 01/18/2007
+STAFF: lec
+CHANGES:
+1) seqmarker.py; include withdrawn markers
+
 TAG: seqcacheload-3-5-1-8
-DATE: 02/02/2007
+DATE: 01/02/2007
 STAFF: lec
 CHANGES:
 1) TR8072; excluded deleted sequences from rep algorithm; seqmarker.py
