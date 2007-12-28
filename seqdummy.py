@@ -280,7 +280,7 @@ def process():
             virtual = 0
 
         elif logicalDB == 27:     # RefSeq
-            typeKey = 316346
+            typeKey = 316349
             qualityKey = 316338
             providerKey = 316372
 

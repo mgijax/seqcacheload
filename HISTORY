@@ -1,3 +1,11 @@
+TAG: seqcacheload-3-5-4-1
+DATE: 12/28/2007
+STAFF: 
+CHANGES: TR8704
+1) seqdummy.py - Fix RefSeq dummy sequence type. 
+   Set to 'Not Loaded' (_SequenceType_key=316349)
+   it was inadvertently set to 'RNA' (_SequenceType_key=316346)
+
 TAG: seqcacheload-3-5-1-9
 DATE: 01/18/2007
 STAFF: lec
