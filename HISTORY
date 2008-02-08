@@ -1,6 +1,11 @@
+TAG: seqcacheload-tr8490-BP
+DATE: 02/08/2008
+STAFF:
+CHANGES: Branch point tag for change to rep genomic algorithm
+
 TAG: seqcacheload-3-5-4-1
 DATE: 12/28/2007
-STAFF: 
+STAFF: sc
 CHANGES: TR8704
 1) seqdummy.py - Fix RefSeq dummy sequence type. 
    Set to 'Not Loaded' (_SequenceType_key=316349)
