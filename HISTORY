@@ -1,6 +1,12 @@
+TAG: seqcacheload-tr8490-1
+DATE: 02/08/2008
+STAFF: sc
+CHANGES:
+1) seqcacheload - update representative sequence algorithm
+
 TAG: seqcacheload-tr8490-BP
 DATE: 02/08/2008
-STAFF:
+STAFF: sc
 CHANGES: Branch point tag for change to rep genomic algorithm
 
 TAG: seqcacheload-3-5-4-1
