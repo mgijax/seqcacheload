@@ -97,9 +97,9 @@ qualByTermKeyLookup = {}
 mkrsByGenomicSeqKeyLookup = {}
 
 # represents all genomic seqs for the current marker by provider - see indexes
-# each vega/genbank dictionary looks like {_Marker_key:[seqKey1, seqKeyN], ...}
-# each ensembl/ncbi dictionary looks like (_Marker_key:{}, ...} where {} is  
-# a db.sql result set
+# each vega dictionary looks like {_Marker_key:[seqKey1, seqKeyN], ...}
+# each ensembl/ncbi/genbank dictionary looks like (_Marker_key:{}, ...} 
+# where {} is a db.sql result set
 allgenomic = [{}, {}, {}, {}]
 
 # indexes of allgenomic
@@ -291,16 +291,23 @@ def determineRepresentative(prevMarker):
             currGenomicRep = ncbiKey
 
     # if we didn't get an Ensembl or an NCBI, look at GenBank
+    # picking longest not associated with another marker
     if currGenomicRep == '':
-        genbankKey = ''
-        if allgenomic[gGENBANK].has_key(prevMarker) and \
-		len(allgenomic[gGENBANK][prevMarker]) == 1:
-            genbankKey = allgenomic[gGENBANK][prevMarker][0]
-  	    #print 'GenBank: %s numMarkers: %s' % (genbankKey, len(mkrsByGenomicSeqKeyLookup[genbankKey]))
-
-            # it is representative if associated with only one marker
-            if len(mkrsByGenomicSeqKeyLookup[genbankKey]) == 1:
-		currGenomicRep = genbankKey
+        currentGenBankKey = ''
+	genbankLength = 0
+	currentLongest = 0
+        if allgenomic[gGENBANK].has_key(prevMarker):
+            genbankResults = allgenomic[gGENBANK][prevMarker]
+  	    #print 'GenBank: %s numMarkers: %s' % ( \
+		#currentGenBankKey, len(mkrsByGenomicSeqKeyLookup[currentGenBankKey]))
+            for r in genbankResults:
+		currentGenBankKey = r['_Sequence_key']
+		# if associated with only one marker
+		if len(mkrsByGenomicSeqKeyLookup[currentGenBankKey]) == 1:
+		    currentGenBankLength = int(r['length'])
+		    if currentGenBankLength > currentLongest:
+			currentLongest = currentGenBankLength
+		        currGenomicRep = currentGenBankKey
     if currGenomicRep != '':
 	genomic[prevMarker] = currGenomicRep
 
@@ -548,9 +555,9 @@ def createBCP():
 	      [316380,316376,316379,316375,316377,316374,316373,316378,492451] \
 	      and seqTypeKey == 316347:
             if allgenomic[gGENBANK].has_key(m):
-                allgenomic[gGENBANK][m].append(s)
+                allgenomic[gGENBANK][m].append(r)
             else:
-                allgenomic[gGENBANK][m] = [s]
+                allgenomic[gGENBANK][m] = [r]
 
 	#
 	# representative transcript

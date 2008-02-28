@@ -1,3 +1,10 @@
+TAG: seqcacheload-tr8490-2
+DATE: 02/28/2008
+STAFF: sc
+CHANGES:
+1) updated genbank rep algo to allow longest genbank DNA seq to be rep
+   genomic.
+
 TAG: seqcacheload-tr8490-1
 DATE: 02/08/2008
 STAFF: sc
