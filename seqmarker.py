@@ -230,6 +230,24 @@ def determineRepresentative(prevMarker):
     # Determine Representative Genomic Sequence
     #
 
+
+    # representative genomic
+    # a genomic sequence can be representative only if
+    # 1) it is not also associated with another marker
+    #    e.g. if OTTMUSG00000012345 is associated with Mkr1 and Mkr2
+    #    it cannot be a representative for either.
+    # 2) the marker is not associated with another sequence of the same
+    #    type .e.g. if Mkr1 is associated with OTTMUSG00000012345 (VEGA)
+    #      and Mkr1 is also associated with OTTMUSG00000098765 then
+    #      neither VEGA sequence can be the representative for Mkr1
+    # Within the above constraints pick:
+    # 1) VEGA
+    # 2) NCBI/Ensembl coordinate. Pick longest if both,
+    #    if both same length pick NCBI
+    # 3) GenBank DNA (constraint 2 excluded, pick longest, if tie
+    #       pick one of the longest)
+    #
+
     # the current choice for genomic rep
     currGenomicRep = ''
 
@@ -507,22 +525,6 @@ def createBCP():
 
 	    if prevMarker != '':
 		determineRepresentative(prevMarker)
-
-	# representative genomic
-	# a genomic sequence can be representative only if 
-	# 1) it is not also associated with another marker 
-	#    e.g. if OTTMUSG00000012345 is associated with Mkr1 and Mkr2
-	#    it cannot be a representative for either.
-	# 2) the marker is not alsociated with another sequence of the same
-	#    type .e.g. if Mkr1 is associated with OTTMUSG00000012345 (VEGA)
-	#      and Mkr1 is also associated with OTTMUSG00000098765 then
-	#      neither VEGA sequence can be the representative for Mkr1
-	# Within the above constraints pick:
-	# 1) VEGA
-	# 2) NCBI/Ensembl coordinate. Pick longest if both, 
-        #    if both same length pick NCBI
-	# 3) GenBank DNA
-	#
 
 	# VEGA
 	# for vega we don't care how  long it is
