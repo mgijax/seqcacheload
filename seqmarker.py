@@ -97,8 +97,7 @@ qualByTermKeyLookup = {}
 mkrsByGenomicSeqKeyLookup = {}
 
 # represents all genomic seqs for the current marker by provider - see indexes
-# each vega dictionary looks like {_Marker_key:[seqKey1, seqKeyN], ...}
-# each ensembl/ncbi/genbank dictionary looks like (_Marker_key:{}, ...} 
+# each dictionary looks like (_Marker_key:{}, ...} 
 # where {} is a db.sql result set
 allgenomic = [{}, {}, {}, {}]
 
@@ -107,6 +106,11 @@ VEGA = 0
 ENSEMBL = 1
 NCBI = 2
 gGENBANK = 3
+
+# indexes of genomic sequence dictionaries
+SEQKEY=0
+UNIQ=1
+LENGTH=2
 
 # represents the longest transcript for the current marker by provider 
 # each dictionary looks like {_Marker_key:_Sequence_key, ...}
@@ -169,12 +173,13 @@ def init ():
     # for VEGA Gene Model(85), Ensembl Gene Model (60),
     # NCBI Gene Model(59), GenBank DNA (9)
 
-    # get the set of all GenBank DNA sequences
+    # get the set of all preferred GenBank DNA sequences
     db.sql('select a.accID as seqID, a._Object_key as _Sequence_key ' + \
         'into #gbDNA ' + \
         'from ACC_Accession a, SEQ_Sequence s ' + \
         'where a._LogicalDB_key = 9  ' + \
         'and a._MGIType_key = 19  ' + \
+	'and a.preferred = 1 ' + \
         'and a._Object_key = s._Sequence_key  ' + \
         'and s._SequenceType_key = 316347', None)
     # get the set of all Ensembl, NCBI, VEGA gene models
@@ -182,6 +187,7 @@ def init ():
 	'into #gm ' + \
 	'from ACC_Accession a ' + \
         'where a._LogicalDB_key in (59, 60, 85) ' + \
+	'and a.preferred = 1 ' + \
         'and a._MGIType_key = 19', None)
     # union the set
     db.sql('select seqID, _Sequence_key ' + \
@@ -199,7 +205,6 @@ def init ():
 	'and a._LogicalDB_key in (59, 60, 85, 9) ' + \
 	'and s.seqID = a.accid ' + \
 	'order by _Sequence_key ', 'auto')
-    print 'length of results: %s ' % len(results)
 
     # load the lookup
     prevSeqKey = ''
@@ -223,128 +228,423 @@ def init ():
 # Effects: Nothing
 # Throws: Nothing
 
-def determineRepresentative(prevMarker):
+def determineRepresentative(marker):
     global genomic, transcript, polypeptide
-
-    #
-    # Determine Representative Genomic Sequence
-    #
-
-
-    # representative genomic
-    # a genomic sequence can be representative only if
-    # 1) it is not also associated with another marker
-    #    e.g. if OTTMUSG00000012345 is associated with Mkr1 and Mkr2
-    #    it cannot be a representative for either.
-    # 2) the marker is not associated with another sequence of the same
-    #    type .e.g. if Mkr1 is associated with OTTMUSG00000012345 (VEGA)
-    #      and Mkr1 is also associated with OTTMUSG00000098765 then
-    #      neither VEGA sequence can be the representative for Mkr1
-    # Within the above constraints pick:
-    # 1) VEGA
-    # 2) NCBI/Ensembl coordinate. Pick longest if both,
-    #    if both same length pick NCBI
-    # 3) GenBank DNA (constraint 2 excluded, pick longest, if tie
-    #       pick one of the longest)
-    #
-
-    # the current choice for genomic rep
-    currGenomicRep = ''
-
-    # If there is only one VEGA sequence for this marker and it is not
-    # associated with any other markers, it is representative
-    vegaKey = ''
-    if allgenomic[VEGA].has_key(prevMarker) and \
-	    len(allgenomic[VEGA][prevMarker]) == 1:
-        vegaKey = allgenomic[VEGA][prevMarker][0]
-	#print 'VEGA: %s numMarkers: %s' % (vegaKey, len(mkrsByGenomicSeqKeyLookup[vegaKey]))
-        # it is representative if associated with only one marker
-        if len(mkrsByGenomicSeqKeyLookup[vegaKey]) == 1:
-            currGenomicRep = vegaKey
-
-    # If we didnt' get a VEGA, look at Ensembl and NCBI
-    if currGenomicRep == '':
-        ensemblKey = ''
-        ensemblLength = 0
-        ncbiKey = ''
-        ncbiLength = 0
-        # get Ensembl id if only one Ensembl sequence for this marker
-        # and it is not associated with any other markers
-        if allgenomic[ENSEMBL].has_key(prevMarker) and \
-		len(allgenomic[ENSEMBL][prevMarker]) == 1:
-            ensemblResult = allgenomic[ENSEMBL][prevMarker][0]
-            ensemblKey =  ensemblResult['_Sequence_key']
-	    #print 'Ensembl: %s numMarkers: %s' % (ensemblKey, len(mkrsByGenomicSeqKeyLookup[ensemblKey]))
-
-            if len(mkrsByGenomicSeqKeyLookup[ensemblKey]) == 1:
-                ensemblLength = int(ensemblResult['length'])
-            else:
-                ensemblKey = ''
-
-        # get NCBI id if only one NCBI sequence for this marker
-        # and it is not associated with any other markers
-        if allgenomic[NCBI].has_key(prevMarker) and \
-		len(allgenomic[NCBI][prevMarker]) == 1:
-            ncbiResult = allgenomic[NCBI][prevMarker][0]
-            ncbiKey = ncbiResult['_Sequence_key']
-	    #print 'NCBI: %s numMarkers: %s' % (ncbiKey, len(mkrsByGenomicSeqKeyLookup[ncbiKey]))
-
-            if len(mkrsByGenomicSeqKeyLookup[ncbiKey]) == 1:
-                ncbiLength = int(ncbiResult['length'])
-            else:
-                ncbiKey = ''
-
-        # if there is an Ensembl AND an NCBI , take the longest
-        if ensemblKey != '' and ncbiKey != '':
-            # ensembl is rep if longest
-            if ensemblLength > ncbiLength:
-                currGenomicRep = ensemblKey
-            # ncbi is rep if 1) lengths are equal 2) ncbi longest
-            else:
-                currGenomicRep = ncbiKey
-        # take whichever is defined, if any
-        elif ensemblKey != '':
-            currGenomicRep = ensemblKey
-        elif ncbiKey != '':
-            currGenomicRep = ncbiKey
-
-    # if we didn't get an Ensembl or an NCBI, look at GenBank
-    # picking longest not associated with another marker
-    if currGenomicRep == '':
-        currentGenBankKey = ''
-	genbankLength = 0
-	currentLongest = 0
-        if allgenomic[gGENBANK].has_key(prevMarker):
-            genbankResults = allgenomic[gGENBANK][prevMarker]
-  	    #print 'GenBank: %s numMarkers: %s' % ( \
-		#currentGenBankKey, len(mkrsByGenomicSeqKeyLookup[currentGenBankKey]))
-            for r in genbankResults:
-		currentGenBankKey = r['_Sequence_key']
-		# if associated with only one marker
-		if len(mkrsByGenomicSeqKeyLookup[currentGenBankKey]) == 1:
-		    currentGenBankLength = int(r['length'])
-		    if currentGenBankLength > currentLongest:
-			currentLongest = currentGenBankLength
-		        currGenomicRep = currentGenBankKey
-    if currGenomicRep != '':
-	genomic[prevMarker] = currGenomicRep
-
+    print 'determineRep for marker: %s' % marker
     #
     # Determine Representative Transcript Sequence
     #
     for i in range(len(alltranscript)):
-        if alltranscript[i].has_key(prevMarker):
-            transcript[prevMarker] = []
-            transcript[prevMarker].append(alltranscript[i][prevMarker])
+        if alltranscript[i].has_key(marker):
+            transcript[marker] = []
+            transcript[marker].append(alltranscript[i][marker])
             break
     #
     # Determine Representative Protein Sequence
     #
     for i in range(len(allpolypeptide)):
-        if allpolypeptide[i].has_key(prevMarker):
-            polypeptide[prevMarker] = allpolypeptide[i][prevMarker]
+        if allpolypeptide[i].has_key(marker):
+            polypeptide[marker] = allpolypeptide[i][marker]
             break
+
+    #
+    # Determine Representative Genomic Sequence
+    #
+    # see algorithm here: 
+    # http://prodwww.informatics.jax.org/wiki/index.php/sw%
+    #          3ARepresentative_sequence_algorithm
+    # 
+
+    ##-------------------------------------------------------------
+    # Determine attributes for each provider and provider sequence
+    # for this marker
+    ##-------------------------------------------------------------
+
+    ##--------------------------------------
+    # The attributes
+    ##--------------------------------------
+
+    # * = VEGA|Ensembl|NCBI|GenBank
+    # True if this marker has a * sequence
+    # NOTE: we need these has* variables to determine multiple and not
+    # uniq because, for example,  a marker can still have a VEGA Gene Model
+    # if vegaIsSgl = False and vegaHasUniq = False 
+    hasVega = False
+    hasEnsembl = False
+    hasNCBI = False
+    hasGenBank = False
+
+    # True if this marker has only one * id
+    vegaIsSgl = False
+    ensemblIsSgl = False
+    ncbiIsSgl = False
+    genbankIsSgl = False
+
+    # True if this marker has a unique * sequence (associated with only
+    # this marker)
+    vegaHasUniq = False
+    ensemblHasUniq = False
+    ncbiHasUniq = False
+    genbankHasUniq = False
+
+    # list of dictionaries of * seqs for this marker
+    # looks like [{UNIQ:True/False, SEQKEY:key, LENGTH:length}, ...]
+    vegaSeqs = []
+    ensemblSeqs = []
+    ncbiSeqs = []
+    genbankSeqs = []
+
+    ##--------------------------------------
+    # Get VEGA attributes 
+    ##--------------------------------------    
+    if allgenomic[VEGA].has_key(marker):
+
+        hasVega = True
+
+	# if this marker has only one VEGA sequence flag it as single
+	if len(allgenomic[VEGA][marker]) == 1:
+	    vegaIsSgl = True
+
+	# get seqKey, seqLength, and uniqueness for each VEGA sequence 
+	for result in allgenomic[VEGA][marker]:
+	    seqDict =  {}
+	    seqKey = result['_Sequence_key']
+	    length = result['length']
+	    seqDict[SEQKEY] = seqKey
+	    seqDict[LENGTH] = length
+
+	    value = False
+	    if mkrsByGenomicSeqKeyLookup.has_key(seqKey) and \
+		    len(mkrsByGenomicSeqKeyLookup[seqKey]) == 1:
+		value = True
+		vegaHasUniq = True
+	    seqDict[UNIQ] = value
+	    vegaSeqs.append(seqDict)
+	print 'vegaseqs: %s' % vegaSeqs
+    ##--------------------------------------
+    # Get Ensembl attributes
+    ##--------------------------------------
+    if allgenomic[ENSEMBL].has_key(marker):
+	
+   	hasEnsembl = True
+	# if this marker has only one ENSEMBL sequence flag it as single
+	if len(allgenomic[ENSEMBL][marker]) == 1:
+	    ensemblIsSgl = True
+	# get seqKey, seqLength, and uniqueness for each ENSEMBL sequence
+	for result in allgenomic[ENSEMBL][marker]:
+	    seqDict =  {}
+	    seqKey = result['_Sequence_key']
+	    length = result['length']
+	    seqDict[SEQKEY] = seqKey
+	    seqDict[LENGTH] = length
+
+	    value = False
+	    if mkrsByGenomicSeqKeyLookup.has_key(seqKey) and \
+		    len(mkrsByGenomicSeqKeyLookup[seqKey]) == 1:
+		value = True
+		ensemblHasUniq = True
+	    seqDict[UNIQ] = value
+	    ensemblSeqs.append(seqDict)
+	print 'ensemblseqs: %s' % ensemblSeqs
+	#print 'marker: %s hasEnsembl = %s' % (marker, hasEnsembl)
+	#print 'marker: %s ensemblIsSgl = %s' % (marker, ensemblIsSgl)
+	#print 'marker %s ensemblHasUniq = %s' % (marker, ensemblHasUniq)
+    ##--------------------------------------
+    # Get NCBI attributes
+    ##--------------------------------------
+    if allgenomic[NCBI].has_key(marker):
+        
+	hasNCBI = True
+
+	# if this marker has only one NCBI sequence flag it as single
+	if len(allgenomic[NCBI][marker]) == 1:
+	    ncbiIsSgl = True
+
+	# get seqKey, seqLength, and uniqueness for each NCBI sequence
+	for result in allgenomic[NCBI][marker]:
+	    seqDict =  {}
+	    seqKey = result['_Sequence_key']
+	    length = result['length']
+	    seqDict[SEQKEY] = seqKey
+	    seqDict[LENGTH] = length
+
+	    value = False
+	    if mkrsByGenomicSeqKeyLookup.has_key(seqKey) and \
+		    len(mkrsByGenomicSeqKeyLookup[seqKey]) == 1:
+		value = True
+		ncbiHasUniq = True
+	    seqDict[UNIQ] = value
+	    ncbiSeqs.append(seqDict)
+	print 'ncbiseqs: %s' % ncbiSeqs
+    ##--------------------------------------
+    # Get GenBank attributes
+    ##--------------------------------------
+    if allgenomic[gGENBANK].has_key(marker):
+        hasGenBank = True 
+
+	# if this marker has only one GENBANK sequence flag it as single
+	if len(allgenomic[gGENBANK][marker]) == 1:
+	    genbankIsSgl = True
+
+	# get seqKey, seqLength, and uniqueness for each GENBANK sequence
+	for result in allgenomic[gGENBANK][marker]:
+	    seqDict =  {}
+	    seqKey = result['_Sequence_key']
+	    length = result['length']
+	    seqDict[SEQKEY] = seqKey
+	    seqDict[LENGTH] = length
+
+	    value = False
+	    if mkrsByGenomicSeqKeyLookup.has_key(seqKey) and \
+		    len(mkrsByGenomicSeqKeyLookup[seqKey]) == 1:
+		value = True
+		genbankHasUniq = True
+	    seqDict[UNIQ] = value
+	    genbankSeqs.append(seqDict)
+	print 'genbankseqs: %s' % genbankSeqs
+    ##-----------------------------------------------------------------
+    # Determine representative genomic for marker using provider
+    # and provider sequence attributes
+    ##-----------------------------------------------------------------
+
+    genomicRep = ''
+   
+    hasSglUniqEnsembl = False
+    hasSglUniqNCBI = False
+
+    # marker has no GMs
+    if not hasVega and not hasEnsembl and not hasNCBI: 
+	# is there a longest uniq
+	(s,l) = determineSeq(genbankSeqs, True, True)
+	# no sequence found that match parameters if s == 0
+	if s != 0:
+	    genomicRep = s
+	    print 'CASE 1'
+	# if no longest uniq get longest
+	if genomicRep == '':
+	    (s,l) = determineSeq(genbankSeqs, True, False)
+	    if s != 0:
+		genomicRep = s
+		print 'CASE 2'
+	# else NO REPRESENTATIVE SEQUENCE value of genomicRep is still ''
+
+    # marker has at least one GM, therefore WILL HAVE REP SEQUENCE
+    else: 
+	if vegaIsSgl and vegaHasUniq:
+	    genomicRep = vegaSeqs[0][SEQKEY]
+	    print 'CASE 3'
+	else:    # no single uniq Vega exists
+	    # check single uniq Ensembl and NCBI
+	    if ensemblIsSgl and ensemblHasUniq:
+		hasSglUniqEnsembl = True
+	    if ncbiIsSgl and ncbiHasUniq:
+		hasSglUniqNCBI = True
+	    if hasSglUniqEnsembl and hasSglUniqNCBI:
+		ensemblLen =   ensemblSeqs[0][LENGTH]
+		ncbiLen = ncbiSeqs[0][LENGTH]
+		value = determineShortest(ensemblLen, ncbiLen)
+		# if ensembl and ncbi length equal or ncbi shorter pick ncbi
+		if value == -1 or value == 1:
+		    genomicRep = ncbiSeqs[0][SEQKEY]
+		    print 'CASE 4'
+		else:
+		    genomicRep =  ensemblSeqs[0][SEQKEY]
+		    print 'CASE 5'
+	    elif hasSglUniqEnsembl:
+		genomicRep = ensemblSeqs[0][SEQKEY]
+		print 'CASE 6'
+	    elif hasSglUniqNCBI:
+		genomicRep = ncbiSeqs[0][SEQKEY]
+	  	print 'CASE 7'
+	    # only multiples (uniq or not) or single not-uniq left
+	    else:
+		# check uniq (must be multiple)
+                if vegaHasUniq or ensemblHasUniq or ncbiHasUniq:
+		    if vegaHasUniq:
+			# pick shortest uniq, if tie pick one
+			(s,l) = determineSeq(vegaSeqs, False, True)
+			genomicRep = s
+			print 'CASE 8'
+		    elif ensemblHasUniq and ncbiHasUniq:
+			# pick shortest uniq, if tie pick one
+			(s_e, l_e) = determineSeq(ensemblSeqs, False, True)
+			(s_n, l_n) = determineSeq(ncbiSeqs, False, True)
+			value = determineShortest(l_e, l_n)
+			if value == -1 or value == 1:
+			    genomicRep = s_n
+			    print 'CASE 9'
+			else:
+			    genomicRep = s_e
+			    print 'CASE 10'
+		    elif ensemblHasUniq:
+			(s_e, l_e) = determineSeq(ensemblSeqs, False, True)
+			genomicRep = s_e
+			print 'CASE 11'
+		    elif ncbiHasUniq:
+			(s_n, l_n) = determineSeq(ncbiSeqs, False, True)
+			genomicRep = s_n
+			print 'CASE 12'
+		# no uniques, only single or multiple non-uniq left
+		else:
+		    # check for vega sgl
+		    if vegaIsSgl:
+			genomicRep = vegaSeqs[0][SEQKEY]
+			print 'CASE 13'
+		    else:
+			# check for ensembl and ncbi sgl
+			if ensemblIsSgl or ncbiIsSgl:
+			    if ensemblIsSgl and ncbiIsSgl:
+				value = determineShortest( \
+				    ensemblSeqs[0][LENGTH], \
+				    ncbiSeqs[0][LENGTH])
+				if value == -1 or value == 1:
+				    genomicRep = ncbiSeqs[0][SEQKEY]
+				    print 'CASE 14'
+				else:
+				    genomicRep =  ensemblSeqs[0][SEQKEY]
+				    print 'CASE 15'
+			    elif ensemblIsSgl:
+				genomicRep = ensemblSeqs[0][SEQKEY]
+				print 'CASE 16'
+			    elif ncbiIsSgl:
+				genomicRep = ncbiSeqs[0][SEQKEY]
+				print 'CASE 17'
+			# no singles, must be multiple non-uniq
+			else:
+			    if hasVega:
+                                # pick shortest
+				(s,l) = determineSeq(vegaSeqs, False, False)
+				genomicRep = s
+				print 'CASE 18'
+                            elif hasEnsembl and hasNCBI:
+                                # pick shortest, NCBI if tie
+				(s_e, l_e) = determineSeq( \
+				    ensemblSeqs, False, False)
+				(s_n, l_n) = determineSeq( \
+				    ncbiSeqs, False, False)
+				value = determineShortest(l_e, l_n)
+				if value == -1 or value == 1:
+				    genomicRep = s_n
+				    print 'CASE 19'
+				else:
+				    genomicRep =  s_e
+				    print 'CASE 20'
+                            elif hasEnsembl:
+                                # pick shortest
+				(s_e, l_e) = determineSeq( \
+				    ensemblSeqs, False, False)
+				genomicRep = s_e
+				print 'CASE 21'
+			    # must be an NCBI
+                            else:
+                                # pick shortest NCBI
+				(s_n, l_n) = determineSeq( \
+                                    ncbiSeqs, False, False)
+				genomicRep = s_n
+				print 'CASE 22'
+    # if we found a genomicRep for this marker add it to the dictionary
+    print 'genomicRep: %s' % genomicRep
+    if genomicRep != '':
+        genomic[marker] = genomicRep
+    else:
+	print 'CASE 23'
     return
+
+# Purpose: Find the longest or shortest sequence given a dictionary like:
+#          [{UNIQ:True/False, SEQKEY:key, LENGTH:length}, ...]
+# Returns: tuple (seqKey, length) where sequence key is the longest/shortest 
+#          uniq/notuniq depending on value of 'getLongest' and 'useUniq', 
+#          else both members of the tuple are 0 
+# Assumes: Nothing
+# Throws: Nothing
+#
+def determineSeq(seqList, 	# list of dictionaries
+                getLongest,     # boolean, determine longest if True, else
+                                # shortest
+		useUniq): 	# boolean, consider uniq only if True
+    # current choice considering only uniq sequences
+    # based on value of getLongest
+
+    # a non-numeric default
+    currUniqLen = ''
+    currUniqSeqKey = 0
+    # current choice considering all sequences based on value of getLongest
+    currAllLen = ''
+    currAllSeqKey = 0
+    #print 'getLongest: %s, useUniq: %s' % (getLongest, useUniq)
+    for seq in seqList:
+        # if we are looking for the longest sequence
+	if getLongest == True:
+	     # current choice from the uniq set only
+	    if seq[UNIQ] == True:
+		l = determineLongest(currUniqLen, seq[LENGTH])
+		# if seq[LENGTH] is longest or equal
+		if l == 1 or l == -1:
+		    currUniqLen = seq[LENGTH]
+		    currUniqSeqKey = seq[SEQKEY]
+	    # current choice from the full set 
+	    l = determineLongest(currAllLen, seq[LENGTH])
+	    # if seq[LENGTH] is longest or equal
+	    if l == 1 or l == -1:
+		currAllLen = seq[LENGTH]
+		currAllSeqKey = seq[SEQKEY]
+	# if we are looking for the shortest sequence
+	else:
+            if seq[UNIQ] == True:
+                l = determineShortest(currUniqLen, seq[LENGTH])
+		#print 'shortest of %s and %s is %s' % (currUniqLen, seq[LENGTH], l)
+                # if seq[LENGTH] is shortest or equal
+                if l == 1  or l == -1:
+                    currUniqLen = seq[LENGTH]
+                    currUniqSeqKey = seq[SEQKEY]
+		#print 'currUniqLen: %s, currUniqSeqKey: %s' % (currUniqLen, currUniqSeqKey) 
+            # current choice from the full set
+            l = determineShortest(currAllLen, seq[LENGTH])
+            # if seq[LENGTH] is shortest or equal
+            if l == 1  or l == -1:
+                currAllLen = seq[LENGTH]
+                currAllSeqKey = seq[SEQKEY]
+   
+    if useUniq == True:
+	return (currUniqSeqKey, currUniqLen)
+    else:
+	return (currAllSeqKey, currAllLen)
+
+# Purpose: determine the longest length
+# Returns: 0 if len1 longest, 1 if len2, -1 for tie
+# Assumes: Nothing
+# Throws: Nothing
+def determineLongest (len1, len2): # integer sequence length
+    # first comparison for a given seq set, one value will be the default of '' 
+    if len1 == '':
+	return 1
+    elif len2 == '':
+	return 0
+    # 2nd - n comparisons both will be integers
+    if len1 == len2:
+	return -1
+    elif  len1 > len2:
+	return 0
+    else:
+	return 1
+
+# Purpose: determine the shortest length
+# Returns:  0 if len1 shortest, 1 if len2, -1 for tie
+# Assumes: Nothing
+# Throws: Nothing
+def determineShortest (len1, len2): # integer sequence length
+    # first comparison for a given seq set, one value will be the default of ''
+    if len1 == '':
+        return 1
+    elif len2 == '':
+        return 0
+    # 2nd - n comparisons both will be integers
+    if len1 == len2:
+        return -1
+    elif  len1 < len2:
+        return 0
+    else:
+        return 1
 
 # Purpose: formats and writes out record to bcp file
 # Returns: Nothing
@@ -403,10 +703,11 @@ def createBCP():
     #	
     # select only mouse, human, rat, dog & chimpanzee markers
     # with ANY marker status 
-
+    #db.sql('set rowcount 10000', None)
     db.sql('select _Marker_key, _Organism_key, _Marker_Type_key ' + \
 	'into #markers from MRK_Marker ' + \
 	'where _Organism_key in (1, 2, 40, 10, 13)', None)
+	#'and _Marker_key in (6005, 6385, 6644)', None)
     db.sql('create nonclustered index idx_key on ' + \
 	'#markers (_Marker_key)', None)
 
@@ -426,7 +727,7 @@ def createBCP():
 	'(_LogicalDB_key, accID)', None)
 
     # select all sequence annotations
-
+    
     db.sql('select _Sequence_key = s._Object_key, ' + \
 	'm._Marker_key, m._Organism_key, ' + \
 	'm._Marker_Type_key, ' + \
@@ -527,16 +828,13 @@ def createBCP():
 		determineRepresentative(prevMarker)
 
 	# VEGA
-	# for vega we don't care how  long it is
 	if providerKey == 1865333:
 	    if allgenomic[VEGA].has_key(m):
-		allgenomic[VEGA][m].append(s)
+		allgenomic[VEGA][m].append(r)
 	    else:
-		allgenomic[VEGA][m] = [s]
+		allgenomic[VEGA][m] = [r]
 
 	# Ensembl
-	# if there is both Ensembl and NCBI we need length
-	# so store the entire results in the dictionary
 	elif (providerKey in [615429]):
             if allgenomic[ENSEMBL].has_key(m):
                 allgenomic[ENSEMBL][m].append(r)
