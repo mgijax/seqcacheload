@@ -78,6 +78,11 @@ table = os.environ['TABLE']
 # output directory
 datadir = os.environ['CACHEDATADIR']
 
+# when selecting the representative genomic sequence 
+# prints case number, markerKey, four sets of genomic sequences and the
+# representative sequence selected
+debug = os.environ['SEQMARKER_DEBUG']
+
 # date with which to record stamp database records
 loaddate = loadlib.loaddate
 
@@ -215,7 +220,6 @@ def init ():
 	    mkrsByGenomicSeqKeyLookup[seqKey] = [markerKey]
         else:
 	    mkrsByGenomicSeqKeyLookup[seqKey].append(markerKey)
-	    #print 'appending marker %s to sequence %s' % (markerKey, seqKey)
 	prevSeqKey = seqKey
     # create file descriptor for bcp file
     outBCP = open('%s/%s.bcp' % (datadir, table), 'w')
@@ -230,7 +234,8 @@ def init ():
 
 def determineRepresentative(marker):
     global genomic, transcript, polypeptide
-    print 'determineRep for marker: %s' % marker
+    if debug == 'true':
+	print 'determineRep for marker: %s' % marker
     #
     # Determine Representative Transcript Sequence
     #
@@ -320,7 +325,8 @@ def determineRepresentative(marker):
 		vegaHasUniq = True
 	    seqDict[UNIQ] = value
 	    vegaSeqs.append(seqDict)
-	print 'vegaseqs: %s' % vegaSeqs
+	if debug == 'true':
+	    print 'vegaSeqs: %s' % vegaSeqs
     ##--------------------------------------
     # Get Ensembl attributes
     ##--------------------------------------
@@ -345,10 +351,8 @@ def determineRepresentative(marker):
 		ensemblHasUniq = True
 	    seqDict[UNIQ] = value
 	    ensemblSeqs.append(seqDict)
-	print 'ensemblseqs: %s' % ensemblSeqs
-	#print 'marker: %s hasEnsembl = %s' % (marker, hasEnsembl)
-	#print 'marker: %s ensemblIsSgl = %s' % (marker, ensemblIsSgl)
-	#print 'marker %s ensemblHasUniq = %s' % (marker, ensemblHasUniq)
+	if debug == 'true':
+	    print 'ensemblseqs: %s' % ensemblSeqs
     ##--------------------------------------
     # Get NCBI attributes
     ##--------------------------------------
@@ -375,7 +379,8 @@ def determineRepresentative(marker):
 		ncbiHasUniq = True
 	    seqDict[UNIQ] = value
 	    ncbiSeqs.append(seqDict)
-	print 'ncbiseqs: %s' % ncbiSeqs
+	if debug == 'true':
+	    print 'ncbiseqs: %s' % ncbiSeqs
     ##--------------------------------------
     # Get GenBank attributes
     ##--------------------------------------
@@ -401,7 +406,8 @@ def determineRepresentative(marker):
 		genbankHasUniq = True
 	    seqDict[UNIQ] = value
 	    genbankSeqs.append(seqDict)
-	print 'genbankseqs: %s' % genbankSeqs
+	if debug == 'true':
+	    print 'genbankseqs: %s' % genbankSeqs
     ##-----------------------------------------------------------------
     # Determine representative genomic for marker using provider
     # and provider sequence attributes
@@ -419,20 +425,23 @@ def determineRepresentative(marker):
 	# no sequence found that match parameters if s == 0
 	if s != 0:
 	    genomicRep = s
-	    print 'CASE 1'
+	    if debug == 'true':
+		print 'CASE 1'
 	# if no longest uniq get longest
 	if genomicRep == '':
 	    (s,l) = determineSeq(genbankSeqs, True, False)
 	    if s != 0:
 		genomicRep = s
-		print 'CASE 2'
+		if debug == 'true':
+		    print 'CASE 2'
 	# else NO REPRESENTATIVE SEQUENCE value of genomicRep is still ''
 
     # marker has at least one GM, therefore WILL HAVE REP SEQUENCE
     else: 
 	if vegaIsSgl and vegaHasUniq:
 	    genomicRep = vegaSeqs[0][SEQKEY]
-	    print 'CASE 3'
+	    if debug == 'true':
+		print 'CASE 3'
 	else:    # no single uniq Vega exists
 	    # check single uniq Ensembl and NCBI
 	    if ensemblIsSgl and ensemblHasUniq:
@@ -446,16 +455,20 @@ def determineRepresentative(marker):
 		# if ensembl and ncbi length equal or ncbi shorter pick ncbi
 		if value == -1 or value == 1:
 		    genomicRep = ncbiSeqs[0][SEQKEY]
-		    print 'CASE 4'
+		    if debug == 'true':
+			print 'CASE 4'
 		else:
 		    genomicRep =  ensemblSeqs[0][SEQKEY]
-		    print 'CASE 5'
+		    if debug == 'true':
+			print 'CASE 5'
 	    elif hasSglUniqEnsembl:
 		genomicRep = ensemblSeqs[0][SEQKEY]
-		print 'CASE 6'
+		if debug == 'true':
+		    print 'CASE 6'
 	    elif hasSglUniqNCBI:
 		genomicRep = ncbiSeqs[0][SEQKEY]
-	  	print 'CASE 7'
+		if debug == 'true':
+		    print 'CASE 7'
 	    # only multiples (uniq or not) or single not-uniq left
 	    else:
 		# check uniq (must be multiple)
@@ -464,7 +477,8 @@ def determineRepresentative(marker):
 			# pick shortest uniq, if tie pick one
 			(s,l) = determineSeq(vegaSeqs, False, True)
 			genomicRep = s
-			print 'CASE 8'
+			if debug == 'true':
+			    print 'CASE 8'
 		    elif ensemblHasUniq and ncbiHasUniq:
 			# pick shortest uniq, if tie pick one
 			(s_e, l_e) = determineSeq(ensemblSeqs, False, True)
@@ -472,24 +486,29 @@ def determineRepresentative(marker):
 			value = determineShortest(l_e, l_n)
 			if value == -1 or value == 1:
 			    genomicRep = s_n
-			    print 'CASE 9'
+			    if debug == 'true':
+				print 'CASE 9'
 			else:
 			    genomicRep = s_e
-			    print 'CASE 10'
+			    if debug == 'true':
+				print 'CASE 10'
 		    elif ensemblHasUniq:
 			(s_e, l_e) = determineSeq(ensemblSeqs, False, True)
 			genomicRep = s_e
-			print 'CASE 11'
+			if debug == 'true':
+			    print 'CASE 11'
 		    elif ncbiHasUniq:
 			(s_n, l_n) = determineSeq(ncbiSeqs, False, True)
 			genomicRep = s_n
-			print 'CASE 12'
+			if debug == 'true':
+			    print 'CASE 12'
 		# no uniques, only single or multiple non-uniq left
 		else:
 		    # check for vega sgl
 		    if vegaIsSgl:
 			genomicRep = vegaSeqs[0][SEQKEY]
-			print 'CASE 13'
+			if debug == 'true':
+			    print 'CASE 13'
 		    else:
 			# check for ensembl and ncbi sgl
 			if ensemblIsSgl or ncbiIsSgl:
@@ -499,23 +518,28 @@ def determineRepresentative(marker):
 				    ncbiSeqs[0][LENGTH])
 				if value == -1 or value == 1:
 				    genomicRep = ncbiSeqs[0][SEQKEY]
-				    print 'CASE 14'
+				    if debug == 'true':
+					print 'CASE 14'
 				else:
 				    genomicRep =  ensemblSeqs[0][SEQKEY]
-				    print 'CASE 15'
+			 	    if debug == 'true':
+					print 'CASE 15'
 			    elif ensemblIsSgl:
 				genomicRep = ensemblSeqs[0][SEQKEY]
-				print 'CASE 16'
+			 	if debug == 'true':
+				    print 'CASE 16'
 			    elif ncbiIsSgl:
 				genomicRep = ncbiSeqs[0][SEQKEY]
-				print 'CASE 17'
+				if debug == 'true':
+				    print 'CASE 17'
 			# no singles, must be multiple non-uniq
 			else:
 			    if hasVega:
                                 # pick shortest
 				(s,l) = determineSeq(vegaSeqs, False, False)
 				genomicRep = s
-				print 'CASE 18'
+				if debug == 'true':
+				    print 'CASE 18'
                             elif hasEnsembl and hasNCBI:
                                 # pick shortest, NCBI if tie
 				(s_e, l_e) = determineSeq( \
@@ -525,29 +549,35 @@ def determineRepresentative(marker):
 				value = determineShortest(l_e, l_n)
 				if value == -1 or value == 1:
 				    genomicRep = s_n
-				    print 'CASE 19'
+				    if debug == 'true':
+					print 'CASE 19'
 				else:
 				    genomicRep =  s_e
-				    print 'CASE 20'
+				    if debug == 'true':
+					print 'CASE 20'
                             elif hasEnsembl:
                                 # pick shortest
 				(s_e, l_e) = determineSeq( \
 				    ensemblSeqs, False, False)
 				genomicRep = s_e
-				print 'CASE 21'
+				if debug == 'true':
+				    print 'CASE 21'
 			    # must be an NCBI
                             else:
                                 # pick shortest NCBI
 				(s_n, l_n) = determineSeq( \
                                     ncbiSeqs, False, False)
 				genomicRep = s_n
-				print 'CASE 22'
+				if debug == 'true':
+				    print 'CASE 22'
     # if we found a genomicRep for this marker add it to the dictionary
-    print 'genomicRep: %s' % genomicRep
+    if debug == 'true':
+	print 'genomicRep: %s' % genomicRep
     if genomicRep != '':
         genomic[marker] = genomicRep
     else:
-	print 'CASE 23'
+	if debug == 'true':
+	    print 'CASE 23'
     return
 
 # Purpose: Find the longest or shortest sequence given a dictionary like:
@@ -571,7 +601,8 @@ def determineSeq(seqList, 	# list of dictionaries
     # current choice considering all sequences based on value of getLongest
     currAllLen = ''
     currAllSeqKey = 0
-    #print 'getLongest: %s, useUniq: %s' % (getLongest, useUniq)
+    if debug == 'true':
+	print 'getLongest: %s, useUniq: %s' % (getLongest, useUniq)
     for seq in seqList:
         # if we are looking for the longest sequence
 	if getLongest == True:
@@ -592,12 +623,10 @@ def determineSeq(seqList, 	# list of dictionaries
 	else:
             if seq[UNIQ] == True:
                 l = determineShortest(currUniqLen, seq[LENGTH])
-		#print 'shortest of %s and %s is %s' % (currUniqLen, seq[LENGTH], l)
                 # if seq[LENGTH] is shortest or equal
                 if l == 1  or l == -1:
                     currUniqLen = seq[LENGTH]
                     currUniqSeqKey = seq[SEQKEY]
-		#print 'currUniqLen: %s, currUniqSeqKey: %s' % (currUniqLen, currUniqSeqKey) 
             # current choice from the full set
             l = determineShortest(currAllLen, seq[LENGTH])
             # if seq[LENGTH] is shortest or equal

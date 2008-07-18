@@ -1,3 +1,9 @@
+TAG: seqcacheload-tr8490-4
+DATE: 07/18/2008
+STAFF: sc
+CHANGES: decided to leave my development debugging code in place, so added 
+  debug flag to Configuration and seqmarker.py
+
 TAG: seqcacheload-tr8490-3
 DATE: 07/2/2008
 STAFF: sc
