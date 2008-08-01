@@ -1,6 +1,35 @@
+TAG: seqcacheload-4-1-1-1
+DATE: 08/01/2008
+STAFF: sc
+CHANGES: merge tr8490 to trunk
+
+TAG: seqcacheload-tr8490-4
+DATE: 07/18/2008
+STAFF: sc
+CHANGES: decided to leave my development debugging code in place, so added 
+  debug flag to Configuration and seqmarker.py
+
+TAG: seqcacheload-tr8490-3
+DATE: 07/2/2008
+STAFF: sc
+CHANGES: The latest algorithm
+
+TAG: seqcacheload-tr8490-2
+DATE: 02/28/2008
+STAFF: sc
+CHANGES:
+1) updated genbank rep algo to allow longest genbank DNA seq to be rep
+   genomic.
+
+TAG: seqcacheload-tr8490-1
+DATE: 02/08/2008
+STAFF: sc
+CHANGES:
+1) seqcacheload - update representative sequence algorithm
+
 TAG: seqcacheload-tr8490-BP
 DATE: 02/08/2008
-STAFF:
+STAFF: sc
 CHANGES: Branch point tag for change to rep genomic algorithm
 
 TAG: seqcacheload-3-5-4-1

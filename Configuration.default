@@ -25,3 +25,8 @@ setenv CACHELOGSDIR		${CACHEDIR}/logs
 setenv COLDELIM       "&=&"
 setenv LINEDELIM      "\n"
 
+# debug for seqmarker.py
+# when true: when selecting the representative genomic sequence
+# prints case number, markerKey, four sets of genomic sequences and the
+# representative sequence selected
+setenv SEQMARKER_DEBUG  false
