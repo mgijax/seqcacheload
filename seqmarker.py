@@ -7,7 +7,7 @@
 #           which caches sequence/marker pairs including:
 #               1) all marker statuses
 #	        2) all marker types
-#               3) organisms: mouse, rat, human, dog, chimp
+#               3) organisms: mouse, rat, human, dog, chimp, cattle
 #               4) all sequence statuses except deleted
 #	    This script also determines the representative genomic, 
 #		transcript and protein sequence for each marker (if it can)
@@ -730,12 +730,12 @@ def createBCP():
 
     print 'Processing ...%s' % (mgi_utils.date())
     #	
-    # select only mouse, human, rat, dog & chimpanzee markers
+    # select only mouse, human, rat, dog, chimpanzee & cattle markers
     # with ANY marker status 
     #db.sql('set rowcount 10000', None)
     db.sql('select _Marker_key, _Organism_key, _Marker_Type_key ' + \
 	'into #markers from MRK_Marker ' + \
-	'where _Organism_key in (1, 2, 40, 10, 13)', None)
+	'where _Organism_key in (1, 2, 40, 10, 13, 11)', None)
 	#'and _Marker_key in (6005, 6385, 6644)', None)
     db.sql('create nonclustered index idx_key on ' + \
 	'#markers (_Marker_key)', None)
