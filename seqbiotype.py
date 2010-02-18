@@ -33,7 +33,7 @@
 #  History
 #
 #  02/18/2010	lec
-#	- TR 9239; add rawbiotype, _BiotypeConflict_key, _Marker_Type_key
+#	- TR 9239; update rawbiotype, _BiotypeConflict_key from SEQ_Marker_Cache
 #
 
 import sys
@@ -42,6 +42,12 @@ import string
 import db
 import mgi_utils
 import loadlib
+
+#
+# from configuration file
+#
+user = os.environ['MGD_DBUSER']
+passwordFileName = os.environ['MGD_DBPASSWORDFILE']
 
 # database errors
 DB_ERROR = 'A database error occured: '
@@ -53,7 +59,6 @@ update SEQ_Marker_Cache
 set _BiotypeConflict_key = %s, rawbiotype = "%s"
 where _Marker_key = %s
 and _Sequence_key = %s
-\n
 '''
 
 # list of marker/sequence, marker type
@@ -78,6 +83,8 @@ def init ():
     global markerList
     
     db.useOneConnection(1)
+    db.set_sqlUser(user)
+    db.set_sqlPasswordFromFile(passwordFileName)
     db.set_sqlLogFunction(db.sqlLogAll)
 
     print 'Initializing ...%s' % (mgi_utils.date())
@@ -159,9 +166,9 @@ def createSQL():
         for s in markerList[m]:
 	    rawbiotype = s['rawBiotype']
 	    sequenceKey = s['_Sequence_key']
-	    execSQL = execSQL + updateSQL % (conflictKey, rawbiotype, markerKey, sequenceKey)
-
-    db.sql(execSQL, None)
+	    execSQL = updateSQL % (conflictKey, rawbiotype, markerKey, sequenceKey)
+	    print execSQL
+            db.sql(execSQL, None)
 
     return
 
