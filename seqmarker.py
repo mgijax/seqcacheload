@@ -34,6 +34,7 @@
 #
 #  02/18/2010	lec
 #	- TR 9239; add rawbiotype, _BiotypeConflict_key, _Marker_Type_key
+#       - add method to generate biotype lookup
 #
 #  02/07/2008	sc
 #	- TR 8490 new genomic rep sequence algorithm
@@ -104,6 +105,11 @@ qualByTermKeyLookup = {}
 # looks like {seqKey:[mkrKey1, ..., mkrKeyn], ...}
 mkrsByGenomicSeqKeyLookup = {}
 
+# biotype lookup by genomic sequence key + marker key
+# biotype default vocabulary = Not Applicable (_Vocab_key = 76)
+biotypeLookup = {}
+biotypeDefaultConflict = '5420769'
+
 # represents all genomic seqs for the current marker by provider - see indexes
 # each dictionary looks like (_Marker_key:{}, ...} 
 # where {} is a db.sql result set
@@ -152,9 +158,6 @@ transcript = {}
 # the set of protein representative sequences for markers
 polypeptide = {}
 
-# biotype term _Vocab_key = 76 where term = 'Not Applicable'
-biotypeKey = '5420769'
-
 # Purpose: Initialize db.sql settings, lookups, and file descriptor
 # Returns: Nothing
 # Assumes: Nothing
@@ -193,6 +196,7 @@ def init ():
 	'and a.preferred = 1 ' + \
         'and a._Object_key = s._Sequence_key  ' + \
         'and s._SequenceType_key = 316347', None)
+
     # get the set of all Ensembl, NCBI, VEGA gene models
     db.sql('select a.accID as seqID, a._Object_key as _Sequence_key ' + \
 	'into #gm ' + \
@@ -200,6 +204,9 @@ def init ():
         'where a._LogicalDB_key in (59, 60, 85) ' + \
 	'and a.preferred = 1 ' + \
         'and a._MGIType_key = 19', None)
+    db.sql('create nonclustered index idx_1 on #gm (seqID)', None)
+    db.sql('create nonclustered index idx_2 on #gm (_Sequence_key)', None)
+
     # union the set
     db.sql('select seqID, _Sequence_key ' + \
 	'into #allSeqs ' + \
@@ -227,6 +234,10 @@ def init ():
         else:
 	    mkrsByGenomicSeqKeyLookup[seqKey].append(markerKey)
 	prevSeqKey = seqKey
+
+    # generate biotype lookup
+    generateBiotypeLookup()
+
     # create file descriptor for bcp file
     outBCP = open('%s/%s.bcp' % (datadir, table), 'w')
     return
@@ -681,6 +692,118 @@ def determineShortest (len1, len2): # integer sequence length
     else:
         return 1
 
+# Purpose: generate lookup of biotype data from gene model sequence/marker associations
+# Returns:  Nothing
+# Assumes: Nothing
+# Throws: Nothing
+
+def generateBiotypeLookup():
+
+    #
+    #   for each Marker that contains NCBI/Ensembl/VEGA sequence (see #gm, SEQ_GeneModel):
+    #
+    #     determine if the MGD marker type is in conflict with the biotype types
+    #
+    #     translate non-"pseudogene" marker types to "gene"
+    #
+    #     if MGD marker type is equal to all biotype types:
+    #       then there is no conflict (Not Applicable)
+    #       else there is a conflict (Conflict)
+    #
+
+    global biotypeLookup
+
+    # conflict types (see _Vocab_key = 76)
+    yesConflict = 5420767
+    noConflict = 5420769
+
+    # 'gene', 'pseudogene' : MRK_Types
+    geneType = 1
+    pseudoType = 7
+
+    biotypeMarkerDict = {}
+
+    print 'Initializing Biotype...%s' % (mgi_utils.date())
+
+    #
+    # select all sequence/markers that contain sequences in SEQ_GeneModel
+    # where logicaldb in NCBI (59), Ensembl (60), VEGA (85)
+    #
+
+#			    g._GMMarker_Type_key, g.rawBiotype
+    results = db.sql('''
+		     select s._Sequence_key, a._Object_key as _Marker_key, m._Marker_Type_key,
+			    g._Marker_Type_key, g.rawBiotype
+	             from #gm s, ACC_Accession a, MRK_Marker m, SEQ_GeneModel g
+	             where a._MGIType_key = 2
+	             and a._LogicalDB_key in (59, 60, 85)
+	             and s.seqID = a.accid
+		     and a._Object_key = m._Marker_key
+		     and s._Sequence_key = g._Sequence_key
+	             order by s._Sequence_key
+		     ''', 'auto')
+                     #and m._Marker_key = 10603
+
+    for r in results:
+        key = r['_Marker_key']
+        value = r
+        if not biotypeMarkerDict.has_key(key):
+            biotypeMarkerDict[key] = []
+        biotypeMarkerDict[key].append(value)
+
+    # for each marker
+
+    for m in biotypeMarkerDict:
+
+        typeList = []
+
+	# for each sequence...
+
+        for s in biotypeMarkerDict[m]:
+
+	    markerKey = s['_Marker_key']
+	    mgdtype = s['_Marker_Type_key']
+	    #gmtype = s['_GMMarker_Type_key']
+	    gmtype = s['_Marker_Type_key']
+
+	    # if mgdtype != pseudogene, then re-set to "gene"
+
+	    if mgdtype != pseudoType:
+	        mgdtype = geneType
+
+	    # store each type once
+
+	    if typeList.count(mgdtype) == 0:
+	        typeList.append(mgdtype)
+
+	    if typeList.count(gmtype) == 0:
+	        typeList.append(gmtype)
+
+	# if more than one marker type appears in the list, 
+	# then there is a conflict
+
+	if len(typeList) > 1:
+	    conflictType = yesConflict
+        else:
+	    conflictType = noConflict
+
+	# now re-iterate thru the marker/sequences
+	# and set the conflict key and raw biotype
+	# all sequences for a given marker get the same conflict key value
+
+        for s in biotypeMarkerDict[m]:
+	    rawbiotype = s['rawBiotype']
+	    sequenceKey = s['_Sequence_key']
+
+	    key = '%s:%s' % (markerKey, sequenceKey)
+	    value = [conflictType, rawbiotype]
+            if not biotypeLookup.has_key(key):
+                biotypeLookup[key] = value
+
+	    #print biotypeLookup
+
+    return
+
 # Purpose: formats and writes out record to bcp file
 # Returns: Nothing
 # Assumes: Nothing
@@ -712,13 +835,25 @@ def writeRecord(r):
     if not printedQualifier:
         outBCP.write(mgi_utils.prvalue(qualByTermLookup['Not Specified']) + DL)
 
+    #
+    # get the biotype information from biotypeLookup
+    # use defaults if there is no biotype record for this marker/sequence
+    #
+    biotypeKey = '%s:%s' % (r['_Marker_key'], r['_Sequence_key'])
+    if biotypeLookup.has_key(biotypeKey):
+	biotypeConflict = biotypeLookup[biotypeKey][0]
+	biotypeRaw = biotypeLookup[biotypeKey][1]
+    else:
+        biotypeConflict = biotypeDefaultConflict
+        biotypeRaw = None
+
     outBCP.write(mgi_utils.prvalue(r['_SequenceProvider_key']) + DL + \
 	mgi_utils.prvalue(r['_SequenceType_key']) + DL + \
 	mgi_utils.prvalue(r['_LogicalDB_key']) + DL + \
 	mgi_utils.prvalue(r['_Marker_Type_key']) + DL + \
-	biotypeKey + DL + \
+	mgi_utils.prvalue(biotypeConflict) + DL + \
 	r['accID'] + DL + \
-	DL + \
+	mgi_utils.prvalue(biotypeRaw) + DL + \
 	r['mdate'] + DL + \
         mgi_utils.prvalue(r['_User_key']) + DL + \
 	mgi_utils.prvalue(r['_User_key']) + DL + \
@@ -744,7 +879,8 @@ def createBCP():
     #db.sql('set rowcount 10000', None)
     db.sql('select _Marker_key, _Organism_key, _Marker_Type_key ' + \
 	'into #markers from MRK_Marker ' + \
-	'where _Organism_key in (1, 2, 40, 10, 13, 11)', None)
+	'where _Organism_key in (1, 2, 40, 10, 13, 11) ', None)
+	#' and _Marker_key in (12217)', None)
 	#'and _Marker_key in (6005, 6385, 6644)', None)
     db.sql('create nonclustered index idx_key on ' + \
 	'#markers (_Marker_key)', None)
