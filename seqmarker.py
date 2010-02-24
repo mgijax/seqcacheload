@@ -1155,7 +1155,7 @@ def finalize():
 #
 try:
     init()
-#    createBCP()
+    createBCP()
     finalize()
 except db.connection_exc, message:
     error = '%s%s' % (DB_CONNECT_ERROR, message)
