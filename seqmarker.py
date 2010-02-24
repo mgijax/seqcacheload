@@ -730,10 +730,10 @@ def generateBiotypeLookup():
     # where logicaldb in NCBI (59), Ensembl (60), VEGA (85)
     #
 
-#			    g._GMMarker_Type_key, g.rawBiotype
     results = db.sql('''
-		     select s._Sequence_key, a._Object_key as _Marker_key, m._Marker_Type_key,
-			    g._Marker_Type_key, g.rawBiotype
+		     select s._Sequence_key, a._Object_key as _Marker_key, 
+			    m._Marker_Type_key,
+			    g._GMMarker_Type_key, g.rawBiotype
 	             from #gm s, ACC_Accession a, MRK_Marker m, SEQ_GeneModel g
 	             where a._MGIType_key = 2
 	             and a._LogicalDB_key in (59, 60, 85)
@@ -742,7 +742,7 @@ def generateBiotypeLookup():
 		     and s._Sequence_key = g._Sequence_key
 	             order by s._Sequence_key
 		     ''', 'auto')
-                     #and m._Marker_key = 10603
+                     #and m._Marker_key = 12217
 
     for r in results:
         key = r['_Marker_key']
@@ -750,6 +750,8 @@ def generateBiotypeLookup():
         if not biotypeMarkerDict.has_key(key):
             biotypeMarkerDict[key] = []
         biotypeMarkerDict[key].append(value)
+
+    #print biotypeMarkerDict
 
     # for each marker
 
@@ -763,8 +765,7 @@ def generateBiotypeLookup():
 
 	    markerKey = s['_Marker_key']
 	    mgdtype = s['_Marker_Type_key']
-	    #gmtype = s['_GMMarker_Type_key']
-	    gmtype = s['_Marker_Type_key']
+	    gmtype = s['_GMMarker_Type_key']
 
 	    # if mgdtype != pseudogene, then re-set to "gene"
 
@@ -800,7 +801,7 @@ def generateBiotypeLookup():
             if not biotypeLookup.has_key(key):
                 biotypeLookup[key] = value
 
-	    #print biotypeLookup
+    #print biotypeLookup
 
     return
 
@@ -1154,7 +1155,7 @@ def finalize():
 #
 try:
     init()
-    createBCP()
+#    createBCP()
     finalize()
 except db.connection_exc, message:
     error = '%s%s' % (DB_CONNECT_ERROR, message)
