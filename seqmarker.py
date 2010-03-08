@@ -723,24 +723,37 @@ def determineRepresentative(marker):
     return
 
 def determineVegaEnsProtTransRep(marker, genomicRepKey):
+    # Purpose: Determine the representative protein and transcript
+    #     for 'marker'. When the rep genomic is VEGA or Ensembl
+    #     the protein and transcript must be from same provider
+    #     if they exist
+    # Returns: nothing
+    # Assumes: nothing
+    # Effects: nothing
+    # Throws: nothing
+
     global allpolypeptide, polypeptide, alltranscript, transcript
     global transcriptLookupByGenomicKey, transcriptLookupByProteinKey
 
-
     protRepKey = 0 	# default
     transRepKey = 0 	# default
+
+    #
+    # we determine the reprentative protein first per requirements -
+    # see TR9774
+    #
     if not proteinLookupByGenomicKey.has_key(genomicRepKey):
 	# no prots for this genomic, get rep protein in the usual way
 	determineNonVegaEnsProtRep(marker)
 
-        # now get Vega/Ensembl transcripts for the genomicRepKey
+        # now get Vega/Ensembl transcript(s) for the genomicRepKey
 	if transcriptLookupByGenomicKey.has_key(genomicRepKey):
 	    # get the list of transcriptIds mapped to their length
 	    #transDict- {t1:length, t2:length, ...}
 	    transDict = transcriptLookupByGenomicKey[genomicRepKey]
 	    # length of current longest transcript
             currentLongestTransLen = 0
-            # determine the longest transcript
+            # Now determine the longest transcript
             for tKey in transDict.keys():
                 tLength = transDict[tKey]
                 if tLength > currentLongestTransLen:
@@ -751,7 +764,7 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
 	    else:
 		print "This shouldn't happen 1"
 		exit("This shouldn't happen 1")
-	else: # no trans for the genomic, get rep transin the usual way
+	else: # no trans for the genomic, get rep trans in the usual way
 	    determineNonVegaEnsTransRep(marker)
 
     else: # there are proteins for the genomicRepKey, determine longest
@@ -770,6 +783,7 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
 	else: 
 	    print "This shouldn't happen 2"
 	    exit("This shouldn't happen 2")
+	# now get Vega/Ensembl transcript(s) for the protRepKey
 	if transcriptLookupByProteinKey.has_key(protRepKey):
 	    transDict = transcriptLookupByProteinKey[protRepKey]
 	    # length of current longest transcript
@@ -790,6 +804,12 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
     return
 
 def determineNonVegaEnsProtRep(marker):
+    # Purpose: determine non-VEGA, non-Ensembl rep protein
+    # Returns: nothing
+    # Assumes: nothing
+    # Effects: nothing
+    # Throws: nothing
+
     global allpolypeptide, polypeptide
     for i in range(len(allpolypeptide)):
 	if allpolypeptide[i].has_key(marker):
@@ -798,6 +818,12 @@ def determineNonVegaEnsProtRep(marker):
     return
 
 def determineNonVegaEnsTransRep(marker):
+    # Purpose: determine non-VEGA, non-Ensembl rep transcript
+    # Returns: nothing
+    # Assumes: nothing
+    # Effects: nothing
+    # Throws: nothing
+
     global alltranscript, transcript
     for i in range(len(alltranscript)):
 	if alltranscript[i].has_key(marker):
@@ -810,18 +836,19 @@ def determineNonVegaEnsTransRep(marker):
 	    return
     return
 
-# Purpose: Find the longest or shortest sequence given a dictionary like:
-#          [{UNIQ:True/False, SEQKEY:key, LENGTH:length}, ...]
-# Returns: tuple (seqKey, length) where sequence key is the longest/shortest 
-#          uniq/notuniq depending on value of 'getLongest' and 'useUniq', 
-#          else both members of the tuple are 0 
-# Assumes: Nothing
-# Throws: Nothing
-#
 def determineSeq(seqList, 	# list of dictionaries
                 getLongest,     # boolean, determine longest if True, else
                                 # shortest
 		useUniq): 	# boolean, consider uniq only if True
+    # Purpose: Find the longest or shortest sequence given a dictionary like:
+    #          [{UNIQ:True/False, SEQKEY:key, LENGTH:length}, ...]
+    # Returns: tuple (seqKey, length) where sequence key is the longest/shortest
+    #          uniq/notuniq depending on value of 'getLongest' and 'useUniq',
+    #          else both members of the tuple are 0
+    # Assumes: Nothing
+    # Throws: Nothing
+    #
+
     # current choice considering only uniq sequences
     # based on value of getLongest
 
@@ -869,11 +896,12 @@ def determineSeq(seqList, 	# list of dictionaries
     else:
 	return (currAllSeqKey, currAllLen)
 
-# Purpose: determine the longest length
-# Returns: 0 if len1 longest, 1 if len2, -1 for tie
-# Assumes: Nothing
-# Throws: Nothing
 def determineLongest (len1, len2): # integer sequence length
+    # Purpose: determine the longest length
+    # Returns: 0 if len1 longest, 1 if len2, -1 for tie
+    # Assumes: Nothing
+    # Throws: Nothing
+
     # first comparison for a given seq set, one value will be the default of '' 
     if len1 == '':
 	return 1
@@ -887,11 +915,12 @@ def determineLongest (len1, len2): # integer sequence length
     else:
 	return 1
 
-# Purpose: determine the shortest length
-# Returns:  0 if len1 shortest, 1 if len2, -1 for tie
-# Assumes: Nothing
-# Throws: Nothing
 def determineShortest (len1, len2): # integer sequence length
+    # Purpose: determine the shortest length
+    # Returns:  0 if len1 shortest, 1 if len2, -1 for tie
+    # Assumes: Nothing
+    # Throws: Nothing
+
     # first comparison for a given seq set, one value will be the default of ''
     if len1 == '':
         return 1
@@ -905,21 +934,23 @@ def determineShortest (len1, len2): # integer sequence length
     else:
         return 1
 
-# Purpose: generate lookup of biotype data from gene model sequence/marker associations
-# Returns:  Nothing
-# Assumes: Nothing
-# Throws: Nothing
 
 def generateBiotypeLookup():
+    # Purpose: generate lookup of biotype data from gene model 
+    # SEQUence/marker associations
+    # Returns:  Nothing
+    # Assumes: Nothing
+    # Throws: Nothing
 
     #
-    #   for each Marker that contains NCBI/Ensembl/VEGA sequence (see #gm, SEQ_GeneModel):
+    #   for each Marker that contains NCBI/Ensembl/VEGA sequence 
+    #   (see #gm, SEQ_GeneModel):
     #
-    #     determine if the MGD marker type is in conflict with the biotype types
+    #     determine if the MGI marker type is in conflict with the gm biotype
     #
-    #     translate non-"pseudogene" marker types to "gene"
+    #     translate non-"pseudogene" MGI marker types to "gene"
     #
-    #     if MGD marker type is equal to all biotype types:
+    #     if MGI marker type is equal to all gm biotypes:
     #       then there is no conflict (Not Applicable)
     #       else there is a conflict (Conflict)
     #
@@ -1018,13 +1049,13 @@ def generateBiotypeLookup():
 
     return
 
-# Purpose: formats and writes out record to bcp file
-# Returns: Nothing
-# Assumes: Nothing
-# Effects: writes a record to a file
-# Throws: Nothing
-
 def writeRecord(r):
+    # Purpose: formats and writes out record to bcp file
+    # Returns: Nothing
+    # Assumes: Nothing
+    # Effects: writes a record to a file
+    # Throws: Nothing
+
     outBCP.write(mgi_utils.prvalue(r['_Sequence_key']) + DL + \
 	mgi_utils.prvalue(r['_Marker_key']) + DL + \
 	mgi_utils.prvalue(r['_Organism_key']) + DL + \
@@ -1077,16 +1108,16 @@ def writeRecord(r):
         loaddate + DL + loaddate + NL)
     return
 
-# Purpose: Iterates through result set of sequence marker pairs
-#          determining the representative sequence qualifier for each
-#          (genomic, transcript, protein, or none of the above), writing
-#          pairs out to bcp file
-# Returns: Nothing
-# Assumes: Nothing
-# Effects: queries a database, writes records to a file
-# Throws: Nothing
-
 def createBCP():
+    # Purpose: Iterates through result set of sequence marker pairs
+    #          determining the representative sequence qualifier for each
+    #          (genomic, transcript, protein, or none of the above), writing
+    #          pairs out to bcp file
+    # Returns: Nothing
+    # Assumes: Nothing
+    # Effects: queries a database, writes records to a file
+    # Throws: Nothing
+
     global allgenomic, alltranscript, allpolypeptide
     global outBCP
 
@@ -1354,13 +1385,13 @@ def createBCP():
 	writeRecord(r)
     return
 
-# Purpose: Perform cleanup steps for the script.
-# Returns: Nothing
-# Assumes: Nothing
-# Effects: Nothing
-# Throws: Nothing
-
 def finalize():
+    # Purpose: Perform cleanup steps for the script.
+    # Returns: Nothing
+    # Assumes: Nothing
+    # Effects: Nothing
+    # Throws: Nothing
+
     global outBCP
 
     db.useOneConnection(0)
