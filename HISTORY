@@ -1,3 +1,28 @@
+TAG: seqcacheload-4-3-3-1
+DATE: 03/11/2010
+STAFF: lec
+CHANGES:
+1) merge TR9782 branch to the trunk
+
+TAG: seqcacheload-tr9782-4
+DATE: 03/08/2010
+STAFF: sc
+CHANGES:
+1) comments
+
+TAG: seqcacheload-tr9782-3
+DATE: 03/01/2010
+STAFF: sc
+CHANGES:
+1) TR9774 rep trans/prot algorithm update
+
+TAG: seqcacheload-tr9782-2
+TAG: seqcacheload-tr9782-1
+DATE: 02/24/2010
+STAFF: lec
+CHANGES:
+1) TR9239/seqmarker.py/add biotype lookup
+
 TAG: seqcacheload-tr9782-BP
 DATE: 02/18/2010
 STAFF: lec
