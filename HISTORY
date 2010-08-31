@@ -1,3 +1,10 @@
+TAG: seqcacheload-4-3-3-2
+DATE: 08/31/2010
+STAFF: sc
+CHANGES: TR10162`
+1) Fix bug in loading lookups and typo in currentLongestProtein
+   variable name 
+
 TAG: seqcacheload-4-3-3-1
 DATE: 03/11/2010
 STAFF: lec

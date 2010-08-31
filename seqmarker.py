@@ -147,13 +147,13 @@ vega_prov = 'VEGA'
 # NEW - Lookups from SEQ_Sequence_Assoc to determine relationships 
 # between VEGA and Ensembl genomic, transcript, and protein sequences
 
-# Looks like {gKey1:{tKey1:length, ...},...,gKeyn:{tKey:length, ...}}
+# Looks like {gKey1:{tKey1:length, tKey2:length, ...},...,gKeyn:{tKeyn:length, ...}, ...}
 transcriptLookupByGenomicKey = {}
 
-# Looks like {pKey1:{tKey1:length, ...},...,pKeyn:{tKey:length, ...}}
+# Looks like {pKey1:{tKey1:length, tKey2:length, ...},...,pKeyn:{tKeyn:length, ...}, ...}
 transcriptLookupByProteinKey = {}
 
-# Looks like {gKey1:{pKey1:length, ...},...,gKeyn:{pKey:length, ...}}
+# Looks like {gKey1:{pKey1:length, pKey2:length, ...},...,gKeyn:{pKeyn:length, ...}, ...}
 proteinLookupByGenomicKey = {}
 
 # indexes of genomic sequence dictionaries
@@ -294,9 +294,8 @@ def init ():
 	tKey = r['transcriptKey']
 	tLength = r['transcriptLength']
 	if gKey != prevGKey:
-	    transcriptLookupByGenomicKey[gKey] = {tKey:tLength}
-	else:
-	    transcriptLookupByGenomicKey[gKey][tKey] = tLength
+	    transcriptLookupByGenomicKey[gKey] = {}
+	transcriptLookupByGenomicKey[gKey][tKey] = tLength
         prevGKey = gKey
 
     # Load proteinLookupByGenomicKey
@@ -316,9 +315,8 @@ def init ():
         pKey = r['proteinKey']
 	pLength = r['proteinLength']
         if gKey != prevGKey:
-            proteinLookupByGenomicKey[gKey] = {pKey:pLength}
-        else:
-            transcriptLookupByGenomicKey[gKey][pKey] = pLength
+            proteinLookupByGenomicKey[gKey] = {}
+	proteinLookupByGenomicKey[gKey][pKey] = pLength
         prevGKey = gKey
     # Load transcriptLookupByProteinKey
     # there should be only one transcript for a protein, but one never knows
@@ -336,9 +334,8 @@ def init ():
         tKey = r['transcriptKey']
 	tLength = r['transcriptLength']
         if pKey != prevPKey:
-            transcriptLookupByProteinKey[pKey] = {tKey:tLength}
-        else:
-            transcriptLookupByProteinKey[pKey][tKey] = tLength
+            transcriptLookupByProteinKey[pKey] = {}
+	transcriptLookupByProteinKey[pKey][tKey] = tLength
         prevPKey = pKey
 
     # generate biotype lookup
@@ -769,15 +766,18 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
 
     else: # there are proteins for the genomicRepKey, determine longest
 	protDict = proteinLookupByGenomicKey[genomicRepKey]
+	#print 'Proteins for genomicRepKey %s: %s' % (genomicRepKey, protDict)
 	# length of current longest polypeptide
 	currentLongestProtLen = 0
 	protRepKey = 0
 	# determine the longest polypeptide
 	for pKey in protDict.keys():
 	    pLength = protDict[pKey]
-	    if pLength > currentLongestProtLen:
-		currentLongestProtLength = pLength
+	    #print 'pKey: %s pLength %s type: %s currentLongestProtLen %s type: %s' % (pKey, pLength, type(pLength), currentLongestProtLen, type(currentLongestProtLen))
+	    if int(pLength) > int(currentLongestProtLen):
+		currentLongestProtLen = pLength
 		protRepKey = pKey
+	#print 'chosen LongestProtLen: %s protRepKey: %s' % (currentLongestProtLen, protRepKey)
 	if protRepKey != 0:
 	    polypeptide[marker] = protRepKey
 	else: 
@@ -1055,7 +1055,7 @@ def writeRecord(r):
     # Assumes: Nothing
     # Effects: writes a record to a file
     # Throws: Nothing
-
+    #print 'writeRecord: %s' % r
     outBCP.write(mgi_utils.prvalue(r['_Sequence_key']) + DL + \
 	mgi_utils.prvalue(r['_Marker_key']) + DL + \
 	mgi_utils.prvalue(r['_Organism_key']) + DL + \
@@ -1066,7 +1066,7 @@ def writeRecord(r):
 	if genomic[r['_Marker_key']] == r['_Sequence_key']:
 	    outBCP.write(mgi_utils.prvalue(qualByTermLookup['genomic']) + DL)
 	    printedQualifier = 1
-
+	    #print 'Rep Genomic'
     if transcript.has_key(r['_Marker_key']):
 	# used to be transcript[markerKey] used to be a list of one now 
 	# just seqKey
@@ -1074,15 +1074,15 @@ def writeRecord(r):
 	if r['_Sequence_key'] == transcript[r['_Marker_key']]:
 	    outBCP.write(mgi_utils.prvalue(qualByTermLookup['transcript']) + DL)
 	    printedQualifier = 1
-
+	    #print 'Rep Transcript'
     if polypeptide.has_key(r['_Marker_key']):
         if polypeptide[r['_Marker_key']] == r['_Sequence_key']:
 	    outBCP.write(mgi_utils.prvalue(qualByTermLookup['polypeptide']) + DL)
 	    printedQualifier = 1
-
+	    #print 'Rep Protein'
     if not printedQualifier:
         outBCP.write(mgi_utils.prvalue(qualByTermLookup['Not Specified']) + DL)
-
+	#print 'Not Specified'
     #
     # get the biotype information from biotypeLookup
     # use defaults if there is no biotype record for this marker/sequence
@@ -1094,7 +1094,8 @@ def writeRecord(r):
     else:
         biotypeConflict = biotypeDefaultConflict
         biotypeRaw = None
-
+    #print 'biotype conflict: %s' % biotypeConflict
+    #print 'biotype raw: %s' % biotypeRaw
     outBCP.write(mgi_utils.prvalue(r['_SequenceProvider_key']) + DL + \
 	mgi_utils.prvalue(r['_SequenceType_key']) + DL + \
 	mgi_utils.prvalue(r['_LogicalDB_key']) + DL + \
@@ -1129,7 +1130,8 @@ def createBCP():
     db.sql('select _Marker_key, _Organism_key, _Marker_Type_key ' + \
 	'into #markers from MRK_Marker ' + \
 	'where _Organism_key in (1, 2, 40, 10, 13, 11) ', None)
-	#' and _Marker_key in (12217)', None)
+	#'where _Organism_key = 1 ' + \
+	#' and _Marker_key in (12179)', None)
 	#'and _Marker_key in (6005, 6385, 6644)', None)
     db.sql('create nonclustered index idx_key on ' + \
 	'#markers (_Marker_key)', None)
@@ -1233,7 +1235,7 @@ def createBCP():
 	m = r['_Marker_key']
 	s = r['_Sequence_key']
 	a = r['accID']
-
+	#print 'mKey: %s sKey: %s accId: %s' %(m, s, a)
 	if r['length'] is None:
 	    seqlength = 0
 	else:
@@ -1241,7 +1243,7 @@ def createBCP():
 
 	providerKey = r['_SequenceProvider_key']
 	seqTypeKey = r['_SequenceType_key']
-
+	#print 'seqlength: %s provKey: %s seqTypeKey: %s' % (seqlength, providerKey, seqTypeKey)
         # lengths for transcript and polypeptide, we do genomic differently
 	if prevMarker != m:
 	    tlengths = [-1,-1,-1,-1,-1,-1,-1]
@@ -1252,6 +1254,7 @@ def createBCP():
 
 	# VEGA
 	if providerKey == 1865333:
+	    #print 'adding result set to VEGA allgenomic'
 	    if allgenomic[VEGA].has_key(m):
 		allgenomic[VEGA][m].append(r)
 	    else:
