@@ -121,9 +121,14 @@ qualByTermKeyLookup = {}
 mkrsByGenomicSeqKeyLookup = {}
 
 # biotype lookup by genomic sequence key + marker key
-# biotype default vocabulary = Not Applicable (_Vocab_key = 76)
 biotypeLookup = {}
+
+# biotype default vocabulary = Not Applicable (_Vocab_key = 76)
 biotypeDefaultConflict = '5420769'
+# {markerKey:[transBiotype1, ...transBiotypeN} 
+translatedBiotypesDict = {}
+# {markerKey:[featureType1, ...featureTypeN}
+featureTypesDict = {}
 
 # represents all genomic seqs for the current marker by provider - see indexes
 # each dictionary looks like (_Marker_key:{}, ...} 
@@ -339,7 +344,7 @@ def init ():
         prevPKey = pKey
 
     # generate biotype lookup
-    generateBiotypeLookup()
+    generateBiotypeLookups()
 
     #
     # create file descriptor for bcp file
@@ -935,117 +940,122 @@ def determineShortest (len1, len2): # integer sequence length
         return 1
 
 
-def generateBiotypeLookup():
-    # Purpose: generate lookup of biotype data from gene model 
-    # SEQUence/marker associations
+def generateBiotypeLookups():
+    # Purpose: generate biotype lookups:
+    # 1. Lookup of marker feature types (mcv terms), by marker
+    # 2. Lookup of gene model raw biotypes translated to feature types,by marker
     # Returns:  Nothing
     # Assumes: Nothing
     # Throws: Nothing
 
-    #
-    #   for each Marker that contains NCBI/Ensembl/VEGA sequence 
-    #   (see #gm, SEQ_GeneModel):
-    #
-    #     determine if the MGI marker type is in conflict with the gm biotype
-    #
-    #     translate non-"pseudogene" MGI marker types to "gene"
-    #
-    #     if MGI marker type is equal to all gm biotypes:
-    #       then there is no conflict (Not Applicable)
-    #       else there is a conflict (Conflict)
-    #
-
-    global biotypeLookup
+    global translatedBiotypesDict, featureTypesDict, biotypeLookup
 
     # conflict types (see _Vocab_key = 76)
     yesConflict = 5420767
     noConflict = 5420769
 
-    # 'gene', 'pseudogene' : MRK_Types
-    geneType = 1
-    pseudoType = 7
-
-    biotypeMarkerDict = {}
+    #
+    #   for each Marker associated with a NCBI (59), Ensembl (60), VEGA (85) 
+    #       gene model sequence:
+    #     get the gene model raw biotype and translate it to mcv an term
+    #         ignore: null and 'unknown' raw biotypes 
+    #     map the raw translated biotypes (mcv terms) to the marker
+    #
+    #
 
     print 'Initializing Biotype...%s' % (mgi_utils.date())
+    db.sql('''
+	 select s._Sequence_key, a._Object_key as _Marker_key,
+		m._Marker_Type_key,
+		g._GMMarker_Type_key, g.rawBiotype
+	 into #gmRaw
+	 from #gm s, ACC_Accession a, MRK_Marker m, SEQ_GeneModel g
+	 where a._MGIType_key = 2
+	 and a._LogicalDB_key in (59, 60, 85)
+	 and s.seqID = a.accid
+	 and a._Object_key = m._Marker_key
+	 and s._Sequence_key = g._Sequence_key
+	 and g.rawBiotype != null
+	 and g.rawBiotype != 'unknown'
+	 order by s._Sequence_key
+	 ''', None)
+	 #and m._Marker_key = 12217
 
-    #
-    # select all sequence/markers that contain sequences in SEQ_GeneModel
-    # where logicaldb in NCBI (59), Ensembl (60), VEGA (85)
-    #
+    db.sql('create nonclustered index idx_key on ' + \
+        '#gmRaw (rawBiotype)', None)
 
     results = db.sql('''
-		     select s._Sequence_key, a._Object_key as _Marker_key, 
-			    m._Marker_Type_key,
-			    g._GMMarker_Type_key, g.rawBiotype
-	             from #gm s, ACC_Accession a, MRK_Marker m, SEQ_GeneModel g
-	             where a._MGIType_key = 2
-	             and a._LogicalDB_key in (59, 60, 85)
-	             and s.seqID = a.accid
-		     and a._Object_key = m._Marker_key
-		     and s._Sequence_key = g._Sequence_key
-	             order by s._Sequence_key
-		     ''', 'auto')
-                     #and m._Marker_key = 12217
+	select s.*, t._Object_key as _MCVTerm_key
+	from #gmRaw s, MGI_Translation t
+	where t._TranslationType_key = 1021
+	and s.rawBiotype = t.badName''', 'auto')
 
     for r in results:
         key = r['_Marker_key']
         value = r
-        if not biotypeMarkerDict.has_key(key):
-            biotypeMarkerDict[key] = []
-        biotypeMarkerDict[key].append(value)
+        if not translatedBiotypesDict.has_key(key):
+            translatedBiotypesDict[key] = []
+        translatedBiotypesDict[key].append(value)
+#    print 'Printing translatedBiotypesDict'
+#    for t in translatedBiotypesDict:
+#	print t
+#	print translatedBiotypesDict[t]
+    #   for each Marker in MRK_MCV_Cache 
+    #        get the direct term(s) and map them to the marker
+    results = db.sql('''
+	select _Marker_key, _MCVTerm_key
+	from MRK_MCV_Cache
+	where qualifier = 'D' ''', 'auto')
 
-    #print biotypeMarkerDict
+    for r in results:
+	key = r['_Marker_key']
+        value = r['_MCVTerm_key']
+        if not featureTypesDict.has_key(key):
+	    featureTypesDict[key] = []
+	featureTypesDict[key].append(value)
+#    print 'Printing featureTypesDict'
+    #for f in featureTypesDict.keys():
+#	print f
+#	print featureTypesDict[f]
 
-    # for each marker
-
-    for m in biotypeMarkerDict:
-
-        typeList = []
-
-	# for each sequence...
-
-        for s in biotypeMarkerDict[m]:
-
-	    markerKey = s['_Marker_key']
-	    mgdtype = s['_Marker_Type_key']
-	    gmtype = s['_GMMarker_Type_key']
-
-	    # if mgdtype != pseudogene, then re-set to "gene"
-
-	    if mgdtype != pseudoType:
-	        mgdtype = geneType
-
-	    # store each type once
-
-	    if typeList.count(mgdtype) == 0:
-	        typeList.append(mgdtype)
-
-	    if typeList.count(gmtype) == 0:
-	        typeList.append(gmtype)
-
-	# if more than one marker type appears in the list, 
-	# then there is a conflict
-
-	if len(typeList) > 1:
+    # now iterate through the MRK_MCV_Cache markers
+    # for each marker ....
+    markerKeys = featureTypesDict.keys()
+    markerKeys.sort()
+    for markerKey in markerKeys:
+	# default
+	print 'markerKey: %s' % markerKey
+	conflictType = noConflict
+	mcvTermKeyList = featureTypesDict[markerKey]
+	# get the the set of translated provider biotypes for each sequence
+	transTermKeyList = []
+	if translatedBiotypesDict.has_key(markerKey):
+	    for s in translatedBiotypesDict[markerKey]:
+		    transTermKeyList.append(s['_MCVTerm_key'])
+	# union the lists, if > 1 we have a conflict
+	s1 = set(mcvTermKeyList)
+	s2 = set(transTermKeyList)
+	all = s1.union(s2)
+	print 'union of mcvTermKeyList and transTermKeyList: %s' % all
+	if len(all) > 1:
 	    conflictType = yesConflict
-        else:
-	    conflictType = noConflict
-
+	print 'conflictType: %s ' % conflictType
 	# now re-iterate thru the marker/sequences
 	# and set the conflict key and raw biotype
 	# all sequences for a given marker get the same conflict key value
+	if translatedBiotypesDict.has_key(markerKey):
+	    for s in  translatedBiotypesDict[markerKey]:
+		rawbiotype = s['rawBiotype']
+		sequenceKey = s['_Sequence_key']
 
-        for s in biotypeMarkerDict[m]:
-	    rawbiotype = s['rawBiotype']
-	    sequenceKey = s['_Sequence_key']
-
-	    key = '%s:%s' % (markerKey, sequenceKey)
-	    value = [conflictType, rawbiotype]
-            if not biotypeLookup.has_key(key):
-                biotypeLookup[key] = value
-
-    #print biotypeLookup
+		key = '%s:%s' % (markerKey, sequenceKey)
+		value = [conflictType, rawbiotype]
+		if not biotypeLookup.has_key(key):
+		    biotypeLookup[key] = value
+#    print 'Printing biotypeLookup'
+#    for b in  biotypeLookup.keys():
+#	print b
+#	print biotypeLookup[b]
 
     return
 
