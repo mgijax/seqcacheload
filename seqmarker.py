@@ -123,6 +123,14 @@ mkrsByGenomicSeqKeyLookup = {}
 # biotype lookup by genomic sequence key + marker key
 biotypeLookup = {}
 
+# mcv term descendent lookup by ancestor
+descendentLookup = {}
+
+# unclassified gene requires special handling
+# as it can match non-coding RNA Gene and any of its descendents
+unClassGeneTermKey = 6238184
+nonCodingRNAGeneTermKey = 6238162
+
 # biotype default vocabulary = Not Applicable (_Vocab_key = 76)
 biotypeDefaultConflict = '5420769'
 # {markerKey:[transBiotype1, ...transBiotypeN} 
@@ -948,7 +956,7 @@ def generateBiotypeLookups():
     # Assumes: Nothing
     # Throws: Nothing
 
-    global translatedBiotypesDict, featureTypesDict, biotypeLookup
+    global translatedBiotypesDict, featureTypesDict, biotypeLookup, descendentLookup
 
     # conflict types (see _Vocab_key = 76)
     yesConflict = 5420767
@@ -958,7 +966,6 @@ def generateBiotypeLookups():
     #   for each Marker associated with a NCBI (59), Ensembl (60), VEGA (85) 
     #       gene model sequence:
     #     get the gene model raw biotype and translate it to mcv an term
-    #         ignore: null and 'unknown' raw biotypes 
     #     map the raw translated biotypes (mcv terms) to the marker
     #
     #
@@ -975,20 +982,23 @@ def generateBiotypeLookups():
 	 and s.seqID = a.accid
 	 and a._Object_key = m._Marker_key
 	 and s._Sequence_key = g._Sequence_key
-	 and g.rawBiotype != null
-	 and g.rawBiotype != 'unknown'
 	 order by s._Sequence_key
 	 ''', None)
-	 #and m._Marker_key = 12217
+	 #and m._Marker_key = 332286
 
     db.sql('create nonclustered index idx_key on ' + \
         '#gmRaw (rawBiotype)', None)
-
-    results = db.sql('''
-	select s.*, t._Object_key as _MCVTerm_key
-	from #gmRaw s, MGI_Translation t
-	where t._TranslationType_key = 1021
-	and s.rawBiotype = t.badName''', 'auto')
+    # get the translated raw values; except we dont' translate
+    # null, 'unknown' or 'other' so just include these 'raw' terms
+    results = db.sql('''select s.*, t._Object_key as _MCVTerm_key
+        from #gmRaw s, MGI_Translation t
+        where t._TranslationType_key = 1021
+        and s.rawBiotype = t.badName
+	union
+	select s.*, _MCVTerm_key = null
+	from #gmRaw s
+	where s.rawBiotype = null or s.rawBiotype = 'unknown' 
+	or s.rawBiotype = 'other' ''', 'auto')
 
     for r in results:
         key = r['_Marker_key']
@@ -996,10 +1006,24 @@ def generateBiotypeLookups():
         if not translatedBiotypesDict.has_key(key):
             translatedBiotypesDict[key] = []
         translatedBiotypesDict[key].append(value)
-#    print 'Printing translatedBiotypesDict'
-#    for t in translatedBiotypesDict:
-#	print t
-#	print translatedBiotypesDict[t]
+
+    #
+    # create lookup of mcv term descendents by ancestor
+    #
+    results = db.sql('''select t.term as descTerm, c._AncestorObject_key, c._DescendentObject_key
+            from DAG_Closure c, VOC_Term t 
+            where c._DAG_key = 9
+            and c._MGIType_key = 13
+	    and c._DescendentObject_key = t._Term_key
+            order by  c._AncestorObject_key, c._DescendentObject_key''', 'auto')
+
+    for r in results:
+        aKey = r['_AncestorObject_key']
+        descKey = r['_DescendentObject_key']
+        if not descendentLookup.has_key(aKey):
+	    descendentLookup[aKey] = []
+	descendentLookup[aKey].append(descKey)
+
     #   for each Marker in MRK_MCV_Cache 
     #        get the direct term(s) and map them to the marker
     results = db.sql('''
@@ -1013,33 +1037,49 @@ def generateBiotypeLookups():
         if not featureTypesDict.has_key(key):
 	    featureTypesDict[key] = []
 	featureTypesDict[key].append(value)
-#    print 'Printing featureTypesDict'
-    #for f in featureTypesDict.keys():
-#	print f
-#	print featureTypesDict[f]
 
     # now iterate through the MRK_MCV_Cache markers
     # for each marker ....
     markerKeys = featureTypesDict.keys()
     markerKeys.sort()
     for markerKey in markerKeys:
-	# default
-	print 'markerKey: %s' % markerKey
+	# default conflict type
 	conflictType = noConflict
+
+	# get the list of MGI feature types for the current marker
 	mcvTermKeyList = featureTypesDict[markerKey]
-	# get the the set of translated provider biotypes for each sequence
+	# get the the set of translated gene model biotypes for the current marker
 	transTermKeyList = []
 	if translatedBiotypesDict.has_key(markerKey):
 	    for s in translatedBiotypesDict[markerKey]:
 		    transTermKeyList.append(s['_MCVTerm_key'])
-	# union the lists, if > 1 we have a conflict
-	s1 = set(mcvTermKeyList)
-	s2 = set(transTermKeyList)
-	all = s1.union(s2)
-	print 'union of mcvTermKeyList and transTermKeyList: %s' % all
-	if len(all) > 1:
-	    conflictType = yesConflict
-	print 'conflictType: %s ' % conflictType
+
+	# create a set, s1, of the MGI marker feature types
+        s1 = set(mcvTermKeyList)
+	# create a set, s2, of the translated gene model biotypes
+        s2 = set(transTermKeyList)
+	# we want to exclude null, 'other' and 'unknown' from consideration
+	if None in s2:
+            s2.remove(None)
+        if 'unknown' in s2:
+            s2.remove('unknown')
+	if 'other' in s2:
+	    s2.remove('other')
+
+	# classified gene does not conflict with classified gene 
+        # OR non-coding RNA gene OR any of its descendents, so add these 
+        # to s1, don't bother checking if there
+	# already - it is a set
+	if unClassGeneTermKey in s1 or unClassGeneTermKey in s2:
+		s1.add(unClassGeneTermKey)
+		ncRNADescKeyList = descendentLookup[nonCodingRNAGeneTermKey]
+		for i in ncRNADescKeyList:
+		    s1.add(i)
+	# anything in s2 not in s1 means there is conflict
+        diffList = s2.difference(s1) 
+        if len(diffList) != 0:
+            conflictType = yesConflict
+
 	# now re-iterate thru the marker/sequences
 	# and set the conflict key and raw biotype
 	# all sequences for a given marker get the same conflict key value
@@ -1052,13 +1092,8 @@ def generateBiotypeLookups():
 		value = [conflictType, rawbiotype]
 		if not biotypeLookup.has_key(key):
 		    biotypeLookup[key] = value
-#    print 'Printing biotypeLookup'
-#    for b in  biotypeLookup.keys():
-#	print b
-#	print biotypeLookup[b]
-
     return
-
+    
 def writeRecord(r):
     # Purpose: formats and writes out record to bcp file
     # Returns: Nothing
@@ -1160,7 +1195,8 @@ def createBCP():
 
     db.sql('create nonclustered index idx1 on #markerAccs ' + \
 	'(_LogicalDB_key, accID)', None)
-
+    db.sql('create nonclustered index idx2 on #markerAccs ' + \
+	'(accID)', None)
     # select all sequence annotations
     
     db.sql('select _Sequence_key = s._Object_key, ' + \

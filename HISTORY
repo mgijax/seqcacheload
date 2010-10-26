@@ -1,7 +1,12 @@
+TAG: seqcacheload-tr10308-2
+DATE: 10/08/2010
+STAFF: sc
+CHANGES: Round 2 after testing 
+
 TAG: seqcacheload-tr10308-1
 DATE: 10/08/2010
 STAFF: sc
-CHANGES: 
+CHANGES: initial implementation
 
 TAG: seqcacheload-tr10308-BP
 DATE: 10/08/2010
