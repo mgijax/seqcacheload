@@ -1,3 +1,23 @@
+TAG: seqcacheload-4-4-0-1
+DATE: 11/15/2010
+STAFF: sc
+CHANGES: Merge tr10308 to trunk
+
+TAG: seqcacheload-tr10308-3
+DATE: 11/15/2010
+STAFF: sc
+CHANGES: After final seq grp verification
+
+TAG: seqcacheload-tr10308-2
+DATE: 10/08/2010
+STAFF: sc
+CHANGES: Round 2 after testing 
+
+TAG: seqcacheload-tr10308-1
+DATE: 10/08/2010
+STAFF: sc
+CHANGES: initial implementation
+
 TAG: seqcacheload-tr10308-BP
 DATE: 10/08/2010
 STAFF: sc
