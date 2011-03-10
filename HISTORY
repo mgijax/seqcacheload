@@ -1,3 +1,9 @@
+TAG: seqcacheload-4-4-0-2
+DATE: 03/10/2011
+STAFF: lec
+CHANGES: 
+1) seqdummy.py; SEQ_Source_Assoc trigger removed
+
 TAG: seqcacheload-4-4-0-1
 DATE: 11/15/2010
 STAFF: sc
@@ -23,6 +29,7 @@ DATE: 10/08/2010
 STAFF: sc
 CHANGES: Biotype Conflict revision
 
+>>>>>>> 1.65
 TAG: seqcacheload-4-3-3-2
 DATE: 08/31/2010
 STAFF: sc

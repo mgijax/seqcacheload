@@ -5,6 +5,9 @@
 #
 # History
 #
+# lec	03/10/2011
+#	- trigger SEQ_Source_Assoc has been removed from the system
+#
 # lec	11/08/2005
 #	- TR 7094/MGI 3.5
 #
@@ -47,7 +50,6 @@ endif
 # Drop index and triggers
 
 ${MGD_DBSCHEMADIR}/trigger/SEQ_Sequence_drop.object | tee -a ${LOG}
-${MGD_DBSCHEMADIR}/trigger/SEQ_Source_Assoc_drop.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/trigger/ACC_Accession_drop.object | tee -a ${LOG}
 
 # BCP new data into tables
