@@ -65,7 +65,6 @@ if ( $b > 3000 ) then
 endif
 
 ${MGD_DBSCHEMADIR}/trigger/SEQ_Sequence_create.object | tee -a ${LOG}
-${MGD_DBSCHEMADIR}/trigger/SEQ_Source_Assoc_create.object | tee -a ${LOG}
 ${MGD_DBSCHEMADIR}/trigger/ACC_Accession_create.object | tee -a ${LOG}
 
 date | tee -a ${LOG}
