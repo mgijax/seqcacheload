@@ -1,3 +1,9 @@
+TAG: seqcacheload-4-4-1-1
+DATE: 03/11/2011
+STAFF: lec
+CHANGES: 
+1) seqdummy.csh; removed call to trigger/SEQ_Source_Assoc_create.object
+
 TAG: seqcacheload-4-4-0-2
 DATE: 03/10/2011
 STAFF: lec
