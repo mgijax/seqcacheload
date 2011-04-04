@@ -1,3 +1,9 @@
+TAG: seqcacheload-4-4-1-2
+DATE: 04/04/2011
+STAFF: lec
+CHANGES: 
+1) TR10658/seqmarker.py/add _Cache_key
+
 TAG: seqcacheload-4-4-1-1
 DATE: 03/11/2011
 STAFF: lec
@@ -35,7 +41,6 @@ DATE: 10/08/2010
 STAFF: sc
 CHANGES: Biotype Conflict revision
 
->>>>>>> 1.65
 TAG: seqcacheload-4-3-3-2
 DATE: 08/31/2010
 STAFF: sc

@@ -32,6 +32,9 @@
 #
 #  History
 #
+# 04/04/2011	lec
+#	- TR10658/add _Cache_key
+#
 #  03/01/2010   sc
 #	- TR9774; update rep tran and prot sequence algorithm for 
 #	 markers with VEGA or Ensembl representative Genomic sequences
@@ -206,6 +209,9 @@ transcript = {}
 
 # the set of protein representative sequences for markers
 polypeptide = {}
+
+# next max(_Cache_key)
+nextMaxKey = 0
 
 # Purpose: Initialize db.sql settings, lookups, and file descriptor
 # Returns: Nothing
@@ -1121,7 +1127,14 @@ def writeRecord(r):
     # Assumes: Nothing
     # Effects: writes a record to a file
     # Throws: Nothing
-    outBCP.write(mgi_utils.prvalue(r['_Sequence_key']) + DL + \
+
+    global nextMaxKey
+
+    nextMaxKey = nextMaxKey + 1
+
+    outBCP.write(
+	str(nextMaxKey) + DL + \
+	mgi_utils.prvalue(r['_Sequence_key']) + DL + \
 	mgi_utils.prvalue(r['_Marker_key']) + DL + \
 	mgi_utils.prvalue(r['_Organism_key']) + DL + \
 	mgi_utils.prvalue(r['_Refs_key']) + DL)
