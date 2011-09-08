@@ -5,16 +5,14 @@
 #
 #  Purpose: This script creates the bcp file for SEQ_Marker_Cache
 #           which caches sequence/marker pairs including:
-#               1) all marker statuses
-#	        2) all marker types
-#               3) organisms: mouse, rat, human, dog, chimp, cattle
-#               4) all sequence statuses except deleted
-#	    This script also determines the representative genomic, 
-#		transcript and protein sequence for each marker (if it can)
+#
 #	    A record in SEQ_Marker_Cache represents a uniq sequence, marker
 #           reference relationship; there may be multiple references for 
 #           a sequence to marker association, therefore multiple records
 #           per sequence/marker pair
+#
+#  See for details: 
+#  http://prodwww.informatics.jax.org/wiki/index.php/sw:Seqcacheload#2._Sequence_Marker_Cache_Load
 #
 #  Usage:
 #	seqmarker.py
@@ -30,7 +28,17 @@
 #
 #  Exit Codes:
 #
+# TO DO: 
+# 1. string.lower term comparisons, 
+# 2. string.strip on incoming equivalency mappings
+# 3. update history
+# 4. update comments
+# 5. remove debug
+#
 #  History
+#
+# 09/08/11	sc
+#	- TR10308/biotype conflict revision
 #
 # 04/04/2011	lec
 #	- TR10658/add _Cache_key
@@ -124,23 +132,14 @@ qualByTermKeyLookup = {}
 mkrsByGenomicSeqKeyLookup = {}
 
 # biotype lookup by genomic sequence key + marker key
+# {seqKey:mkrKey:[conflictType, rawBiotype], ...}
 biotypeLookup = {}
-
-# set of non-coding RNA gene descendents
-ncRNAdescSet = set([])
-
-# unclassified gene requires special handling
-# as it can match non-coding RNA Gene and any of its descendents
-unClassGeneTermKey = 6238184
-nonCodingRNAGeneTermKey = 6238162
 
 # biotype default vocabulary = Not Applicable (_Vocab_key = 76)
 biotypeDefaultConflict = '5420769'
-# {markerKey:[transBiotype1, ...transBiotypeN} 
-translatedBiotypesDict = {}
 
-# {markerKey:[featureType1, ...featureTypeN}
-featureTypesDict = {}
+# {markerKey:[GeneModel1, ...GeneModelN} 
+markerToGMDict = {}
 
 # represents all genomic seqs for the current marker by provider - see indexes
 # each dictionary looks like (_Marker_key:{}, ...} 
@@ -153,7 +152,7 @@ ENSEMBL = 1
 NCBI = 2
 gGENBANK = 3
 
-# NEW - genomic sequence provider terms, these are used when the 
+# genomic sequence provider terms, these are used when the 
 # provider is VEGA or Ensembl, to determine the rep transcript and
 # protein associated with the gene model.
 genbank_prov = 'GENBANK'
@@ -161,7 +160,7 @@ ncbi_prov = 'NCBI'
 ensembl_prov = 'ENSEMBL'
 vega_prov = 'VEGA'
 
-# NEW - Lookups from SEQ_Sequence_Assoc to determine relationships 
+# Lookups from SEQ_Sequence_Assoc to determine relationships 
 # between VEGA and Ensembl genomic, transcript, and protein sequences
 
 # Looks like {gKey1:{tKey1:length, tKey2:length, ...},...,gKeyn:{tKeyn:length, ...}, ...}
@@ -212,6 +211,16 @@ polypeptide = {}
 
 # next max(_Cache_key)
 nextMaxKey = 0
+
+class GeneModel:
+    # A representation of an gene model
+    # as it applies to determining the biotype conflict
+    def __init__(self):
+
+        self.sequenceKey = None
+        self.ldbKey = None
+	self.rawBiotype = None
+        self.equivalentBiotypeSet = None
 
 # Purpose: Initialize db.sql settings, lookups, and file descriptor
 # Returns: Nothing
@@ -780,7 +789,7 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
 		transcript[marker] = transRepKey
 	    else:
 		print "This shouldn't happen 1"
-		exit("This shouldn't happen 1")
+		sys.exit("This shouldn't happen 1")
 	else: # no trans for the genomic, get rep trans in the usual way
 	    determineNonVegaEnsTransRep(marker)
 
@@ -802,7 +811,7 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
 	    polypeptide[marker] = protRepKey
 	else: 
 	    print "This shouldn't happen 2"
-	    exit("This shouldn't happen 2")
+	    sys.exit("This shouldn't happen 2")
 	# now get Vega/Ensembl transcript(s) for the protRepKey
 	if transcriptLookupByProteinKey.has_key(protRepKey):
 	    transDict = transcriptLookupByProteinKey[protRepKey]
@@ -820,7 +829,7 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
 	else:   # no VEGA or Ensembl protein i.e.
 		# we have a protein w/o a transcript
 	    print "This shouldn't happen 3"
-            exit("This shouldn't happen 3")
+            sys.exit("This shouldn't happen 3")
     return
 
 def determineNonVegaEnsProtRep(marker):
@@ -956,86 +965,212 @@ def determineShortest (len1, len2): # integer sequence length
 
 
 def generateBiotypeLookups():
-    # Purpose: generate biotype lookups:
-    # 1. Lookup of biotype translations (provider raw to mcv term)
-    # 2. Lookup of marker feature types (mcv terms), by marker
-    # 3. Lookup of conflict and feature type by marker/sequence
+    # Purpose: create lookups for use in determining biotype conflicts
+    # for those markers associated with Gene Models. Create global lookup
+    # 'biotypeLookup' for use in writing conflict attributes to bcp file
     # Returns:  Nothing
     # Assumes: Nothing
     # Throws: Nothing
 
-    global translatedBiotypesDict, featureTypesDict, biotypeLookup
+    global biotypeLookup
+
+    # do all comparisons in lower case
+    NC_RNA_CONFIG_TERM=string.lower(string.strip(os.environ['NC_RNA_TERM']))
+    ALL_FEATURES_CONFIG_TERM=string.lower(string.strip(os.environ['ALL_FEATURES_TERM']))
+
+    # non-coding RNA gene feature types and its descendents
+    ncRNAdescSet = set([])
+
+    # all feature types descendents
+    allFeatureTypesDescSet = set([])
+
+    # map mcv feature type terms from the VOC_Term table to their keys
+    mcvTermToKeyDict = {}
+
+    # markers mapped to their MGI feature type. 9/8/11 - still currently only 1
+    # {markerKey:[featureType1, ...featureTypeN}
+    featureTypesDict = {}
+
+    # provider raw biotypes mapped to their set of equivalent terms
+    # equivalency dicts look like {rawTerm:[listOfEquivalentTerms], ...}
+    NCBIEquivDict = {}
+    EnsEquivDict = {}
+    VEGAEquivDict = {}
 
     # conflict types (see _Vocab_key = 76)
     yesConflict = 5420767
     noConflict = 5420769
 
-    #
-    #   for each Marker associated with a NCBI (59), Ensembl (60), VEGA (85) 
-    #       gene model sequence:
-    #     get the gene model raw biotype and translate it to mcv an term
-    #     map the raw translated biotypes (mcv terms) to the marker
-    #
-    #
-
-    print 'Initializing Biotype...%s' % (mgi_utils.date())
-    db.sql('''
-	 select s._Sequence_key, a._Object_key as _Marker_key,
-		m._Marker_Type_key,
-		g._GMMarker_Type_key, g.rawBiotype
-	 into #gmRaw
-	 from #gm s, ACC_Accession a, MRK_Marker m, SEQ_GeneModel g
-	 where a._MGIType_key = 2
-	 and a._LogicalDB_key in (59, 60, 85)
-	 and s.seqID = a.accid
-	 and a._Object_key = m._Marker_key
-	 and s._Sequence_key = g._Sequence_key
-	 order by s._Sequence_key
-	 ''', None)
-	 #and m._Marker_key = 332286
-
-    db.sql('create nonclustered index idx_key on ' + \
-        '#gmRaw (rawBiotype)', None)
-    # get the translated raw values; except we dont' translate
-    # null, 'unknown' or 'other' so just include these 'raw' terms
-    results = db.sql('''select s.*, t._Object_key as _MCVTerm_key
-        from #gmRaw s, MGI_Translation t
-        where t._TranslationType_key = 1021
-        and s.rawBiotype = t.badName
-	union
-	select s.*, _MCVTerm_key = null
-	from #gmRaw s
-	where s.rawBiotype = null or s.rawBiotype = 'unknown' 
-	or s.rawBiotype = 'other' ''', 'auto')
-
-    for r in results:
-        key = r['_Marker_key']
-        value = r
-        if not translatedBiotypesDict.has_key(key):
-            translatedBiotypesDict[key] = []
-        translatedBiotypesDict[key].append(value)
+    print 'Initializing Biotype Lookups ... %s' % (mgi_utils.date())
 
     #
-    # create set of non-coding RNA gene and its descendant terms
+    # create set of non-coding RNA gene and its descendent terms
     #
-    results = db.sql('''select t.term as descTerm, c._AncestorObject_key, 
-		c._DescendentObject_key
-            from DAG_Closure c, VOC_Term t 
+    nonCodingRNAGeneTermKey = 6238162
+    
+    results = db.sql('''select t.term as descTerm, c._AncestorObject_key,
+                c._DescendentObject_key
+            from DAG_Closure c, VOC_Term t
             where c._DAG_key = 9
-		and c._MGIType_key = 13
-		and _AncestorObject_key = %s
-		and c._DescendentObject_key = t._Term_key
+                and c._MGIType_key = 13
+                and _AncestorObject_key = %s
+                and c._DescendentObject_key = t._Term_key
             order by  c._AncestorObject_key, c._DescendentObject_key''' % \
-		nonCodingRNAGeneTermKey, 'auto')
+                nonCodingRNAGeneTermKey, 'auto')
     # add the term itself
     ncRNAdescSet.add(nonCodingRNAGeneTermKey)
     for r in results:
-	ncRNAdescSet.add(r['_DescendentObject_key'])
+        ncRNAdescSet.add(r['_DescendentObject_key'])
+
+    #
+    # create set of all feature types descendent terms
+    #
+    allFeatureTypesTermKey = 6238159
+
+    results = db.sql('''select t.term as descTerm, c._AncestorObject_key,
+                c._DescendentObject_key
+            from DAG_Closure c, VOC_Term t
+            where c._DAG_key = 9
+                and c._MGIType_key = 13
+                and _AncestorObject_key = %s
+                and c._DescendentObject_key = t._Term_key
+            order by  c._AncestorObject_key, c._DescendentObject_key''' % \
+                allFeatureTypesTermKey, 'auto')
+    for r in results:
+        allFeatureTypesDescSet.add(r['_DescendentObject_key'])
+
+    #
+    # map  all feature type terms to their keys
+    #
+    results = db.sql('''select _Term_key, term
+		from VOC_Term
+		where _Vocab_key = 79''', 'auto')
+    for r in results:
+	mcvTermToKeyDict[string.lower(r['term'])] = r['_Term_key']
+
+    #
+    # create NCBI, Ensembl and VEGA equivalency Lookups 
+    #
+    # raw term/equivalency sets split on ','
+    # raw term split from equivalent terms using ':'
+    # equivalent terms split on '|'
+    # VEGA example:
+    # ..,KNOWN_polymorphic:protein coding gene,pseudogene:pseudogenic region|pseudogene|pseudogenic gene segment,.
+
+    print 'Initializing NCBI raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
+    ncbiEquiv = string.lower(os.environ['NCBI_EQUIV'])
+    mappingList = string.split(ncbiEquiv, ',')
+
+    for m in mappingList:
+        rawList = string.split(m, ':')
+        raw = string.strip(rawList[0])
+        equivList = string.split(rawList[1], '|')
+	equivKeySet = set()
+	for e in equivList:
+	    e = string.strip(e)
+	    if e == ALL_FEATURES_CONFIG_TERM:
+		equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
+	    elif e == NC_RNA_CONFIG_TERM:
+		equivKeySet = equivKeySet.union(ncRNAdescSet)
+	    elif mcvTermToKeyDict.has_key(e):
+                equivKeySet.add(mcvTermToKeyDict[e])
+	    else:
+		sys.exit('NCBI equivalency term does not resolve: %s' % e)
+        NCBIEquivDict[raw] = equivKeySet
+
+    print 'Initializing Ensembl raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
+    ensEquiv = string.lower(os.environ['ENSEMBL_EQUIV'])
+    mappingList = string.split(ensEquiv, ',')
+
+    for m in mappingList:
+        rawList = string.split(m, ':')
+        raw = string.strip(rawList[0])
+        equivList = string.split(rawList[1], '|')
+	equivKeySet = set()
+	for e in equivList:
+	    e = string.strip(e)
+            if mcvTermToKeyDict.has_key(e):
+                equivKeySet.add(mcvTermToKeyDict[e])
+	    elif e == NC_RNA_CONFIG_TERM:
+                equivKeySet = equivKeySet.union(ncRNAdescSet)
+            else:
+                sys.exit('Ensembl equivalency term does not resolve: %s' % e)
+        EnsEquivDict[raw] = equivKeySet
+
+    print 'Initializing VEGA raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
+    vegaEquiv = string.lower(os.environ['VEGA_EQUIV'])
+    mappingList = string.split(vegaEquiv, ',')
+
+    for m in mappingList:
+	rawList = string.split(m, ':')
+	raw = string.strip(rawList[0])
+	equivList = string.split(rawList[1], '|')
+	equivKeySet = set()
+        for e in equivList:
+	    e = string.strip(e)
+            if mcvTermToKeyDict.has_key(e):
+                equivKeySet.add(mcvTermToKeyDict[e])
+	    elif e == NC_RNA_CONFIG_TERM:
+		equivKeySet = equivKeySet.union(ncRNAdescSet)
+            else:
+                sys.exit('VEGA equivalency term does not resolve: %s' % e)
+        VEGAEquivDict[raw] = equivKeySet
+
+    #
+    #   for each Marker associated with a NCBI (59), Ensembl (60), VEGA (85) 
+    #       gene model sequence:
+    #     get the gene model raw biotype and map it to its set of equivalent
+    #     mcv terms
+    #
+    print 'Initializing  gene model lookup by marker key ... %s' % (mgi_utils.date())
+    results = db.sql('''select s._Sequence_key, a._Object_key as _Marker_key,
+		a._LogicalDB_key, g.rawBiotype
+	 from #gm s, ACC_Accession a, SEQ_GeneModel g
+	 where a._MGIType_key = 2
+	 and a._LogicalDB_key in (59, 60, 85)
+	 and s.seqID = a.accid
+	 and s._Sequence_key = g._Sequence_key
+	 order by s._Sequence_key
+	 ''', 'auto')
+	 #and m._Marker_key = 332286
+
+    for r in results:
+	markerKey = r['_Marker_key']
+	ldbKey = r['_LogicalDB_key']
+	sequenceKey = r['_Sequence_key']
+	rawBiotype = r['rawBiotype']
+	if rawBiotype == None:
+            rawBiotype = 'null'
+	currentEquivSet = set()
+
+	# equivalencies are in lower case, so compare with lower biotype
+	lowerRawBiotype = string.lower(rawBiotype)
+	if ldbKey == 59 and NCBIEquivDict.has_key(lowerRawBiotype):
+	    currentEquivSet =  NCBIEquivDict[lowerRawBiotype]
+	elif ldbKey ==  60 and EnsEquivDict.has_key(lowerRawBiotype):
+	    currentEquivSet = EnsEquivDict[lowerRawBiotype]
+	elif ldbKey == 85 and VEGAEquivDict.has_key(lowerRawBiotype):
+	    currentEquivSet = VEGAEquivDict[lowerRawBiotype]
+	else:
+	    print 'No equivalency set for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (
+		sequenceKey, ldbKey, rawBiotype)
+	    continue
+
+	# create a GeneModel object; map marker key to the GM object 
+	gm = GeneModel()
+	gm.sequenceKey = sequenceKey
+	gm.ldbKey = ldbKey
+	gm.rawBiotype = rawBiotype
+	gm.equivalentBiotypeSet = currentEquivSet
+	if not markerToGMDict.has_key(markerKey):
+	     markerToGMDict[markerKey] = []
+	markerToGMDict[markerKey].append(gm)
 
     #
     #   for each Marker in MRK_MCV_Cache 
     #        get the direct term(s) and map them to the marker
     #
+    print 'Initializing MGI Marker feature type lookup ... %s' % (mgi_utils.date())
     results = db.sql('''
 	select _Marker_key, _MCVTerm_key
 	from MRK_MCV_Cache
@@ -1049,78 +1184,55 @@ def generateBiotypeLookups():
 	featureTypesDict[key].append(value)
 
     # now iterate through the MRK_MCV_Cache markers
-    # for each marker ....
+    print 'Iterating through all markers in MRK_MCV_Cache to determine conflicts ... %s' % (mgi_utils.date())
     markerKeys = featureTypesDict.keys()
     markerKeys.sort()
+
     for markerKey in markerKeys:
 	# default conflict type
 	conflictType = noConflict
 
 	# get the list of MGI feature types for the current marker
-	mcvTermKeyList = featureTypesDict[markerKey]
+	mkrFeatureTypeSet = set(featureTypesDict[markerKey])
+	equivalencyList = []
+	first = True
+	gmIntersectSet = set()
 
-	# get the the set of translated gene model biotypes for 
-        # the current marker
-	transTermKeyList = []
-	if translatedBiotypesDict.has_key(markerKey):
-	    for s in translatedBiotypesDict[markerKey]:
-		    transTermKeyList.append(s['_MCVTerm_key'])
+	if markerToGMDict.has_key(markerKey):
+	    for gm in markerToGMDict[markerKey]:
+		s = gm.equivalentBiotypeSet
+		if first == True:
+		    gmIntersectSet = s
+		    first = False
+		else:
+		    gmIntersectSet = gmIntersectSet.intersection(s)
+	else:
+	     # No gene models, we can move on to the next marker
+	     continue
 
-	# create a set, s1, of the MGI marker feature types
-        s1 = set(mcvTermKeyList)
-
-	# create a set, s2, of the translated gene model biotypes
-        s2 = set(transTermKeyList)
-
-	# we want to exclude null, 'other' and 'unknown' from consideration
-	if None in s2:
-            s2.remove(None)
-        if 'unknown' in s2:
-            s2.remove('unknown')
-	if 'other' in s2:
-	    s2.remove('other')
-
-	# unclassified gene does not conflict with itself
-        # OR non-coding RNA gene OR any of its descendents
-	# Note: multiple terms in s1 (Marker Features) does not cause a conflict
-        # Here we manipulate the sets to accomplish this equivalence
-	if unClassGeneTermKey in s1 or unClassGeneTermKey in s2:
-	    # if NC RNA gene or any of its descendents in s1,
-	    # then remove all NC RNA and descendent terms from s1 and add
-	    # unclassified even though it might already be there
-	    if  len(s1.union(ncRNAdescSet)) <  (len(s1) + len(ncRNAdescSet)):
-		for e in ncRNAdescSet:
-		    if e in s1:
-			s1.remove(e)
-		s1.add(unClassGeneTermKey)
-	    # if NC RNA gene or any of its descendents in s2,
-            # then remove all NC RNA and descendent terms from s2 and add
-            # unclassified even though it might already be there
-	    if len(s2.union(ncRNAdescSet)) <  (len(s2) + len(ncRNAdescSet)):
-		for e in ncRNAdescSet:
-		    if e in s2:
-			s2.remove(e)
-		s2.add(unClassGeneTermKey)
-	# anything in s2 not in s1 means there is conflict
-        diffList = s2.difference(s1) 
-
-        if len(diffList) != 0:
-            conflictType = yesConflict
+	# there are gene models so check for conflict
+	# if the gene model set is empty that means conflicts btwn gene models
+	if len(gmIntersectSet) == 0:
+	    conflictType = yesConflict
+	# otherwise the gene models agree, see if they agree with the marker
+	else:
+	    finalIntersectSet = mkrFeatureTypeSet.intersection(gmIntersectSet)
+	    if len(finalIntersectSet) != 1:
+		conflictType = yesConflict
 
 	# now re-iterate thru the marker/sequences
 	# and set the conflict key and raw biotype
 	# all sequences for a given marker get the same conflict key value
-	if translatedBiotypesDict.has_key(markerKey):
-	    for s in  translatedBiotypesDict[markerKey]:
-		rawbiotype = s['rawBiotype']
-		sequenceKey = s['_Sequence_key']
-
+	if markerToGMDict.has_key(markerKey):
+	    for gm in  markerToGMDict[markerKey]:
+		rawBiotype = gm.rawBiotype
+		sequenceKey = gm.sequenceKey
 		key = '%s:%s' % (markerKey, sequenceKey)
-		value = [conflictType, rawbiotype]
+		value = [conflictType, rawBiotype]
 		if not biotypeLookup.has_key(key):
 		    biotypeLookup[key] = value
     return
-    
+
 def writeRecord(r):
     # Purpose: formats and writes out record to bcp file
     # Returns: Nothing

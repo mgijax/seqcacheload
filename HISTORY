@@ -1,3 +1,12 @@
+TAG: seqcacheload-4-4-1-3
+DATE: 09/08/2011
+STAFF: sc
+CHANGES: TR10308/biotype conflict revision
+1)  Configuration.defaults - added NCBI_EQUIV, ENSEMBL_EQUIV, VEGA_EQUIV,
+    NC_RNA_TERM, ALL_FEATURES_TERM
+2) seqmarker.py - updated generateBiotypeLookups() -  updated the biotype
+   conflict algorithm
+
 TAG: seqcacheload-4-4-1-2
 DATE: 04/04/2011
 STAFF: lec

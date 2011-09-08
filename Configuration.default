@@ -30,3 +30,20 @@ setenv LINEDELIM      "\n"
 # prints case number, markerKey, four sets of genomic sequences and the
 # representative sequence selected
 setenv SEQMARKER_DEBUG  false
+
+# biotype conflict equivalency mappings
+setenv NCBI_EQUIV	"null:all feature types,unknown:all feature types,other:all feature types,miscRNA:unclassified gene|non-coding RNA gene or its children,protein-coding:protein coding gene|polymorphic pseudogene,pseudo:pseudogenic region|pseudogene|pseudogenic gene segment|polymorphic pseudogene,rRNA:rRNA gene,snoRNA:snoRNA gene,snRNA:snRNA gene,scRNA:scRNA gene,tRNA:tRNA gene"
+ 
+setenv ENSEMBL_EQUIV	"IG_C_gene:gene segment,IG_D_gene:gene segment,IG_J_gene:gene segment,IG_V_gene:gene segment,miRNA:miRNA gene,misc_RNA:non-coding RNA gene or its children,processed_transcript:unclassified gene|non-coding RNA gene or its children,protein_coding:protein coding gene,pseudogene:pseudogenic region|pseudogene|pseudogenic gene segment,polymorphic_pseudogene:polymorphic pseudogene,rRNA:rRNA gene,snoRNA:snoRNA gene,snRNA:snRNA gene,lincRNA:lincRNA gene,Mt_tRNA:tRNA gene,Mt_rRNA:rRNA gene"
+
+setenv VEGA_EQUIV	"_IG_gene:gene segment,KNOWN_IG_gene:gene segment,KNOWN_protein_coding:protein coding gene,NOVEL_protein_coding:protein coding gene,_polymorphic:protein coding gene,KNOWN_polymorphic:protein coding gene,_pseudogene:pseudogenic region|pseudogene|pseudogenic gene segment,_transcribed_unitary_pseudogene:pseudogenic region|pseudogene|pseudogenic gene segment,_transcribed_unprocessed_pseudogene:pseudogenic region|pseudogene|pseudogenic gene segment,_unitary_pseudogene:pseudogenic region|pseudogene|pseudogenic gene segment,_unprocessed_pseudogene:pseudogenic region|pseudogene|pseudogenic gene segment,_processed_pseudogene:pseudogenic region|pseudogene,_transcribed_processed_pseudogene:pseudogenic region|pseudogene,KNOWN_polymorphic_pseudogene:polymorphic pseudogene,KNOWN_processed_transcript:unclassified gene|non-coding RNA gene or its children,NOVEL_processed_transcript:unclassified gene|non-coding RNA gene or its children,PUTATIVE_processed_transcript:unclassified gene|non-coding RNA gene or its children"
+
+# equivalency term that indicates to map the associated raw term to 
+# 'non-coding RNA gene' and all its children. This is applicable to all 
+# providers. We do this in code rather than in config file because there is a 
+# limit to the length of a configuration value
+setenv NC_RNA_TERM	"non-coding RNA gene or its children"
+
+# equivalency term that indicates to map the associated raw term to all
+# children of 'all feature types'. This is applicable to NCBI only.
+setenv ALL_FEATURES_TERM	"all feature types"
