@@ -1,3 +1,9 @@
+TAG: seqcacheload-4-4-2-1
+DATE: 11/22/2011
+STAFF: lec
+CHANGES:
+1) added -f to Configuration.default
+
 TAG: seqcacheload-4-4-1-3
 DATE: 09/08/2011
 STAFF: sc
