@@ -376,6 +376,9 @@ def init ():
     outBCP = open('%s/%s.bcp' % (datadir, table), 'w')
     return
 
+def writeError(sKey, lKey, rawBiotype):
+    print 'No equivalency set for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' \
+	% (sKey, lKey, rawBiotype)
 # Purpose: Determines representative genomic, transcript, and protein
 #          for the given marker
 # Returns: Nothing
@@ -1055,7 +1058,7 @@ def generateBiotypeLookups():
     # raw term split from equivalent terms using ':'
     # equivalent terms split on '|'
     # VEGA example:
-    # ..,KNOWN_polymorphic:protein coding gene,pseudogene:pseudogenic region|pseudogene|pseudogenic gene segment,.
+    # ..,_polymorphic:protein coding gene,_pseudogene:pseudogene,.
 
     print 'Initializing NCBI raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
     ncbiEquiv = string.lower(os.environ['NCBI_EQUIV'])
@@ -1098,7 +1101,9 @@ def generateBiotypeLookups():
         EnsEquivDict[raw] = equivKeySet
 
     print 'Initializing VEGA raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
-    vegaEquiv = string.lower(os.environ['VEGA_EQUIV'])
+    vegaEquiv1 = string.lower(os.environ['VEGA_EQUIV1'])
+    vegaEquiv2 = string.lower(os.environ['VEGA_EQUIV2'])
+    vegaEquiv = '%s,%s' % (vegaEquiv1, vegaEquiv2)
     mappingList = string.split(vegaEquiv, ',')
 
     for m in mappingList:
@@ -1145,14 +1150,33 @@ def generateBiotypeLookups():
 
 	# equivalencies are in lower case, so compare with lower biotype
 	lowerRawBiotype = string.lower(rawBiotype)
-	if ldbKey == 59 and NCBIEquivDict.has_key(lowerRawBiotype):
-	    currentEquivSet =  NCBIEquivDict[lowerRawBiotype]
-	elif ldbKey ==  60 and EnsEquivDict.has_key(lowerRawBiotype):
-	    currentEquivSet = EnsEquivDict[lowerRawBiotype]
-	elif ldbKey == 85 and VEGAEquivDict.has_key(lowerRawBiotype):
-	    currentEquivSet = VEGAEquivDict[lowerRawBiotype]
+	if ldbKey == 59:
+	    if NCBIEquivDict.has_key(lowerRawBiotype):
+		currentEquivSet =  NCBIEquivDict[lowerRawBiotype]
+	    else:
+		writeError(sequenceKey, ldbKey, rawBiotype)
+		continue
+	elif ldbKey ==  60: 
+	    if EnsEquivDict.has_key(lowerRawBiotype):
+		currentEquivSet = EnsEquivDict[lowerRawBiotype]
+	    else:
+                writeError(sequenceKey, ldbKey, rawBiotype)
+                continue
+	elif ldbKey == 85:
+	    # e.g. 'KNOWN_protein_coding' is in the database,
+            # we want to lookup '_protein_coding'
+	    i = lowerRawBiotype.find('_')
+
+	    # strip off the prefix, unless there is no leading '_'
+	    if i != -1:
+		lowerRawBiotype = lowerRawBiotype[i:]
+	    if VEGAEquivDict.has_key(lowerRawBiotype):
+		currentEquivSet = VEGAEquivDict[lowerRawBiotype]
+	    else: 
+		writeError(sequenceKey, ldbKey, rawBiotype)
+		continue
 	else:
-	    print 'No equivalency set for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (
+	    print 'Invalid ldbKey for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (
 		sequenceKey, ldbKey, rawBiotype)
 	    continue
 

@@ -1,3 +1,12 @@
+TAG: seqcacheload-4-4-2-2
+DATE: 03/19/2012
+STAFF: sc
+CHANGES: TR11002/TR11003
+1) Configuration.default - Added to the biotype conflict mapping for Ensembl and VEGA
+2) seqmarker.py - for VEGA remove prefix from raw biotype when looking up 
+   mapping; for VEGA catenate value of two biotype mapping variables because
+   value too  long for one.
+
 TAG: seqcacheload-4-4-2-1
 DATE: 11/22/2011
 STAFF: lec
