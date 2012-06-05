@@ -1103,7 +1103,12 @@ def generateBiotypeLookups():
     print 'Initializing VEGA raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
     vegaEquiv1 = string.lower(os.environ['VEGA_EQUIV1'])
     vegaEquiv2 = string.lower(os.environ['VEGA_EQUIV2'])
-    vegaEquiv = '%s,%s' % (vegaEquiv1, vegaEquiv2)
+    vegaEquiv3 = string.lower(os.environ['VEGA_EQUIV3'])
+    vegaEquiv4 = string.lower(os.environ['VEGA_EQUIV4'])
+    vegaEquiv5 = string.lower(os.environ['VEGA_EQUIV5'])
+    vegaEquiv6 = string.lower(os.environ['VEGA_EQUIV6'])
+
+    vegaEquiv = '%s,%s,%s,%s,%s,%s' % (vegaEquiv1, vegaEquiv2, vegaEquiv3, vegaEquiv4, vegaEquiv5, vegaEquiv6)
     mappingList = string.split(vegaEquiv, ',')
 
     for m in mappingList:
