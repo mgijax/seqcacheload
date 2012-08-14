@@ -995,7 +995,7 @@ def generateBiotypeLookups():
     featureTypesDict = {}
 
     # provider raw biotypes mapped to their set of equivalent terms
-    # equivalency dicts look like {rawTerm:[listOfEquivalentTerms], ...}
+    # equivalency dicts look like {rawTerm:[listOfEquivalentTermKeys], ...}
     NCBIEquivDict = {}
     EnsEquivDict = {}
     VEGAEquivDict = {}
@@ -1080,7 +1080,6 @@ def generateBiotypeLookups():
 	    else:
 		sys.exit('NCBI equivalency term does not resolve: %s' % e)
         NCBIEquivDict[raw] = equivKeySet
-
     print 'Initializing Ensembl raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
     ensEquiv = string.lower(os.environ['ENSEMBL_EQUIV'])
     mappingList = string.split(ensEquiv, ',')
@@ -1110,7 +1109,6 @@ def generateBiotypeLookups():
 
     vegaEquiv = '%s,%s,%s,%s,%s,%s' % (vegaEquiv1, vegaEquiv2, vegaEquiv3, vegaEquiv4, vegaEquiv5, vegaEquiv6)
     mappingList = string.split(vegaEquiv, ',')
-
     for m in mappingList:
 	rawList = string.split(m, ':')
 	raw = string.strip(rawList[0])
@@ -1168,13 +1166,6 @@ def generateBiotypeLookups():
                 writeError(sequenceKey, ldbKey, rawBiotype)
                 continue
 	elif ldbKey == 85:
-	    # e.g. 'KNOWN_protein_coding' is in the database,
-            # we want to lookup '_protein_coding'
-	    i = lowerRawBiotype.find('_')
-
-	    # strip off the prefix, unless there is no leading '_'
-	    if i != -1:
-		lowerRawBiotype = lowerRawBiotype[i:]
 	    if VEGAEquivDict.has_key(lowerRawBiotype):
 		currentEquivSet = VEGAEquivDict[lowerRawBiotype]
 	    else: 
@@ -1248,7 +1239,6 @@ def generateBiotypeLookups():
 	    finalIntersectSet = mkrFeatureTypeSet.intersection(gmIntersectSet)
 	    if len(finalIntersectSet) != 1:
 		conflictType = yesConflict
-
 	# now re-iterate thru the marker/sequences
 	# and set the conflict key and raw biotype
 	# all sequences for a given marker get the same conflict key value
