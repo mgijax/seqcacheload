@@ -14,7 +14,7 @@ endif
 source ${MGICONFIG}/master.config.csh
 
 # directory
-setenv CACHEDIR			/data/loads/mgi/seqcacheload
+setenv CACHEDIR			${DATALOADSOUTPUT}/mgi/seqcacheload
 
 # data directory
 setenv CACHEDATADIR		${CACHEDIR}/output
