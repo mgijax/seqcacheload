@@ -1081,9 +1081,11 @@ def generateBiotypeLookups():
 		sys.exit('NCBI equivalency term does not resolve: %s' % e)
         NCBIEquivDict[raw] = equivKeySet
     print 'Initializing Ensembl raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
-    ensEquiv = string.lower(os.environ['ENSEMBL_EQUIV'])
-    mappingList = string.split(ensEquiv, ',')
+    ensEquiv1 = string.lower(os.environ['ENSEMBL_EQUIV1'])
+    ensEquiv2 = string.lower(os.environ['ENSEMBL_EQUIV2'])
 
+    ensEquiv = '%s%s' % (ensEquiv1, ensEquiv2)
+    mappingList = string.split(ensEquiv, ',')
     for m in mappingList:
         rawList = string.split(m, ':')
         raw = string.strip(rawList[0])
@@ -1095,6 +1097,8 @@ def generateBiotypeLookups():
                 equivKeySet.add(mcvTermToKeyDict[e])
 	    elif e == NC_RNA_CONFIG_TERM:
                 equivKeySet = equivKeySet.union(ncRNAdescSet)
+	    elif e == ALL_FEATURES_CONFIG_TERM:
+                equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
             else:
                 sys.exit('Ensembl equivalency term does not resolve: %s' % e)
         EnsEquivDict[raw] = equivKeySet
@@ -1120,6 +1124,8 @@ def generateBiotypeLookups():
                 equivKeySet.add(mcvTermToKeyDict[e])
 	    elif e == NC_RNA_CONFIG_TERM:
 		equivKeySet = equivKeySet.union(ncRNAdescSet)
+	    elif e == ALL_FEATURES_CONFIG_TERM:
+                equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
             else:
                 sys.exit('VEGA equivalency term does not resolve: %s' % e)
         VEGAEquivDict[raw] = equivKeySet

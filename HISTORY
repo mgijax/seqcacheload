@@ -1,3 +1,14 @@
+TAG: seqcacheload-tr7106-1
+DATE: 09/19/2012
+STAFF: sc
+CHANGES: 
+1) Configuration - US155 update biotype equivalency mapping - split ensembl
+   into two config settings (too long for one)
+2) seqmarker.py - catenate two ensembl config settings. Update loading
+   of Ensembl and VEGA to handle 'all feature types' which implies equiv
+   to all its children as well. We have a new mapping for VEGA to 'all
+   feature types, but not any for ensembl .... yet. 
+
 TAG: seqcacheload-tr7106-BP
 DATE: 09/19/2012
 STAFF: sc
