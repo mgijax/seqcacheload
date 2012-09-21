@@ -1084,7 +1084,7 @@ def generateBiotypeLookups():
     ensEquiv1 = string.lower(os.environ['ENSEMBL_EQUIV1'])
     ensEquiv2 = string.lower(os.environ['ENSEMBL_EQUIV2'])
 
-    ensEquiv = '%s%s' % (ensEquiv1, ensEquiv2)
+    ensEquiv = '%s,%s' % (ensEquiv1, ensEquiv2)
     mappingList = string.split(ensEquiv, ',')
     for m in mappingList:
         rawList = string.split(m, ':')
