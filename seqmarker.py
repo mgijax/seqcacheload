@@ -991,8 +991,14 @@ def generateBiotypeLookups():
     mcvTermToKeyDict = {}
 
     # markers mapped to their MGI feature type. 9/8/11 - still currently only 1
-    # {markerKey:[featureType1, ...featureTypeN}
+    # {markerKey:[featureTypeKey1, ...featureTypeKeyN}
     featureTypesDict = {}
+
+    # raw featureTypes translated to marker type 'pseudogene'
+    pseudogeneRawFeatureTypeList  = []
+
+    # raw featureTypes translated to marker type 'gene'
+    geneRawFeatureTypeList = []
 
     # provider raw biotypes mapped to their set of equivalent terms
     # equivalency dicts look like {rawTerm:[listOfEquivalentTermKeys], ...}
@@ -1022,6 +1028,9 @@ def generateBiotypeLookups():
                 nonCodingRNAGeneTermKey, 'auto')
     # add the term itself
     ncRNAdescSet.add(nonCodingRNAGeneTermKey)
+    # add the term 'gene' - C4AM/Build 38
+    ncRNAdescSet.add('gene')
+
     for r in results:
         ncRNAdescSet.add(r['_DescendentObject_key'])
 
@@ -1052,6 +1061,27 @@ def generateBiotypeLookups():
 	mcvTermToKeyDict[string.lower(r['term'])] = r['_Term_key']
 
     #
+    # create list of all raw feature types translating to mkr type 'pseudogene'
+    #
+
+    results = db.sql('''select badName
+		from MGI_Translation
+		where _TranslationType_key = 1020
+		and _Object_key = 7''', 'auto')
+    for r in results:
+	pseudogeneRawFeatureTypeList.append( string.lower(string.strip(r['badName'])) )
+    #
+    # create list of all raw feature types translating to mkr type 'gene'
+    #
+
+    results = db.sql('''select badName
+                from MGI_Translation
+                where _TranslationType_key = 1020
+                and _Object_key = 1''', 'auto')
+    for r in results:
+        geneRawFeatureTypeList.append( string.lower(string.strip(r['badName'])) )
+
+    #
     # create NCBI, Ensembl and VEGA equivalency Lookups 
     #
     # raw term/equivalency sets split on ','
@@ -1068,7 +1098,15 @@ def generateBiotypeLookups():
         rawList = string.split(m, ':')
         raw = string.strip(rawList[0])
         equivList = string.split(rawList[1], '|')
+  	print 'NCBI mapping: %s' % m
+	if raw in pseudogeneRawFeatureTypeList:
+	    equivList.append('pseudogenic region')
+	    print 'adding "pseudogenic region" to equivList for %s' % raw
+	elif raw in geneRawFeatureTypeList:
+            equivList.append('gene')
+	    print 'adding "gene" to equivList for %s' % raw
 	equivKeySet = set()
+	print 'NCBI full equiv List: %s' % equivList
 	for e in equivList:
 	    e = string.strip(e)
 	    if e == ALL_FEATURES_CONFIG_TERM:
@@ -1091,7 +1129,15 @@ def generateBiotypeLookups():
         rawList = string.split(m, ':')
         raw = string.strip(rawList[0])
         equivList = string.split(rawList[1], '|')
+        print 'Ensembl mapping: %s' % m
+	if raw in pseudogeneRawFeatureTypeList:
+            equivList.append('pseudogenic region')
+            print 'adding "pseudogenic region" to equivList for %s' % raw
+        elif raw in geneRawFeatureTypeList:
+            equivList.append('gene')
+            print 'adding "gene" to equivList for %s' % raw
 	equivKeySet = set()
+	print 'Ensembl full equiv List: %s' % equivList
         for e in equivList:
             e = string.strip(e)
             if e == ALL_FEATURES_CONFIG_TERM:
@@ -1118,7 +1164,15 @@ def generateBiotypeLookups():
 	rawList = string.split(m, ':')
 	raw = string.strip(rawList[0])
 	equivList = string.split(rawList[1], '|')
+        print 'VEGA mapping: %s' % m
+        if raw in pseudogeneRawFeatureTypeList:
+            equivList.append('pseudogenic region')
+            print 'adding "pseudogenic region" to equivList for %s' % raw
+        elif raw in geneRawFeatureTypeList:
+            equivList.append('gene')
+            print 'adding "gene" to equivList for %s' % raw
 	equivKeySet = set()
+	print 'VEGA full equiv List: %s' % equivList
         for e in equivList:
 	    e = string.strip(e)
             if e == ALL_FEATURES_CONFIG_TERM:

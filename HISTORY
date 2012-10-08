@@ -1,3 +1,14 @@
+TAG: seqcacheload-tr7106-3
+DATE: 10/08/2012
+STAFF: sc
+CHANGES:
+1) Configuration - US155 update biotype equivalency mapping again for miscRNA,
+	misc_RNA, and scRNA.
+2) seqmarker.py - add mapping to gene and pseudogenic region
+        via translation table, so the direct or indirect annotations to these
+        terms no longer cause conflict
+3) left debug print statements in on purpose
+
 TAG: seqcacheload-tr7106-2
 TAG: seqcacheload-tr7106-1
 DATE: 09/19/2012
