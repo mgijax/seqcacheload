@@ -991,8 +991,14 @@ def generateBiotypeLookups():
     mcvTermToKeyDict = {}
 
     # markers mapped to their MGI feature type. 9/8/11 - still currently only 1
-    # {markerKey:[featureType1, ...featureTypeN}
+    # {markerKey:[featureTypeKey1, ...featureTypeKeyN}
     featureTypesDict = {}
+
+    # raw featureTypes translated to marker type 'pseudogene'
+    pseudogeneRawFeatureTypeList  = []
+
+    # raw featureTypes translated to marker type 'gene'
+    geneRawFeatureTypeList = []
 
     # provider raw biotypes mapped to their set of equivalent terms
     # equivalency dicts look like {rawTerm:[listOfEquivalentTermKeys], ...}
@@ -1022,6 +1028,9 @@ def generateBiotypeLookups():
                 nonCodingRNAGeneTermKey, 'auto')
     # add the term itself
     ncRNAdescSet.add(nonCodingRNAGeneTermKey)
+    # add the term 'gene' - C4AM/Build 38
+    ncRNAdescSet.add('gene')
+
     for r in results:
         ncRNAdescSet.add(r['_DescendentObject_key'])
 
@@ -1052,6 +1061,27 @@ def generateBiotypeLookups():
 	mcvTermToKeyDict[string.lower(r['term'])] = r['_Term_key']
 
     #
+    # create list of all raw feature types translating to mkr type 'pseudogene'
+    #
+
+    results = db.sql('''select badName
+		from MGI_Translation
+		where _TranslationType_key = 1020
+		and _Object_key = 7''', 'auto')
+    for r in results:
+	pseudogeneRawFeatureTypeList.append( string.lower(string.strip(r['badName'])) )
+    #
+    # create list of all raw feature types translating to mkr type 'gene'
+    #
+
+    results = db.sql('''select badName
+                from MGI_Translation
+                where _TranslationType_key = 1020
+                and _Object_key = 1''', 'auto')
+    for r in results:
+        geneRawFeatureTypeList.append( string.lower(string.strip(r['badName'])) )
+
+    #
     # create NCBI, Ensembl and VEGA equivalency Lookups 
     #
     # raw term/equivalency sets split on ','
@@ -1068,7 +1098,15 @@ def generateBiotypeLookups():
         rawList = string.split(m, ':')
         raw = string.strip(rawList[0])
         equivList = string.split(rawList[1], '|')
+  	print 'NCBI mapping: %s' % m
+	if raw in pseudogeneRawFeatureTypeList:
+	    equivList.append('pseudogenic region')
+	    print 'adding "pseudogenic region" to equivList for %s' % raw
+	elif raw in geneRawFeatureTypeList:
+            equivList.append('gene')
+	    print 'adding "gene" to equivList for %s' % raw
 	equivKeySet = set()
+	print 'NCBI full equiv List: %s' % equivList
 	for e in equivList:
 	    e = string.strip(e)
 	    if e == ALL_FEATURES_CONFIG_TERM:
@@ -1080,21 +1118,34 @@ def generateBiotypeLookups():
 	    else:
 		sys.exit('NCBI equivalency term does not resolve: %s' % e)
         NCBIEquivDict[raw] = equivKeySet
-    print 'Initializing Ensembl raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
-    ensEquiv = string.lower(os.environ['ENSEMBL_EQUIV'])
-    mappingList = string.split(ensEquiv, ',')
 
+    print 'Initializing Ensembl raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
+    ensEquiv1 = string.lower(os.environ['ENSEMBL_EQUIV1'])
+    ensEquiv2 = string.lower(os.environ['ENSEMBL_EQUIV2'])
+
+    ensEquiv = '%s,%s' % (ensEquiv1, ensEquiv2)
+    mappingList = string.split(ensEquiv, ',')
     for m in mappingList:
         rawList = string.split(m, ':')
         raw = string.strip(rawList[0])
         equivList = string.split(rawList[1], '|')
+        print 'Ensembl mapping: %s' % m
+	if raw in pseudogeneRawFeatureTypeList:
+            equivList.append('pseudogenic region')
+            print 'adding "pseudogenic region" to equivList for %s' % raw
+        elif raw in geneRawFeatureTypeList:
+            equivList.append('gene')
+            print 'adding "gene" to equivList for %s' % raw
 	equivKeySet = set()
-	for e in equivList:
-	    e = string.strip(e)
-            if mcvTermToKeyDict.has_key(e):
-                equivKeySet.add(mcvTermToKeyDict[e])
-	    elif e == NC_RNA_CONFIG_TERM:
+	print 'Ensembl full equiv List: %s' % equivList
+        for e in equivList:
+            e = string.strip(e)
+            if e == ALL_FEATURES_CONFIG_TERM:
+                equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
+            elif e == NC_RNA_CONFIG_TERM:
                 equivKeySet = equivKeySet.union(ncRNAdescSet)
+            elif mcvTermToKeyDict.has_key(e):
+                equivKeySet.add(mcvTermToKeyDict[e])
             else:
                 sys.exit('Ensembl equivalency term does not resolve: %s' % e)
         EnsEquivDict[raw] = equivKeySet
@@ -1113,13 +1164,23 @@ def generateBiotypeLookups():
 	rawList = string.split(m, ':')
 	raw = string.strip(rawList[0])
 	equivList = string.split(rawList[1], '|')
+        print 'VEGA mapping: %s' % m
+        if raw in pseudogeneRawFeatureTypeList:
+            equivList.append('pseudogenic region')
+            print 'adding "pseudogenic region" to equivList for %s' % raw
+        elif raw in geneRawFeatureTypeList:
+            equivList.append('gene')
+            print 'adding "gene" to equivList for %s' % raw
 	equivKeySet = set()
+	print 'VEGA full equiv List: %s' % equivList
         for e in equivList:
 	    e = string.strip(e)
-            if mcvTermToKeyDict.has_key(e):
+            if e == ALL_FEATURES_CONFIG_TERM:
+                equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
+            elif e == NC_RNA_CONFIG_TERM:
+                equivKeySet = equivKeySet.union(ncRNAdescSet)
+            elif mcvTermToKeyDict.has_key(e):
                 equivKeySet.add(mcvTermToKeyDict[e])
-	    elif e == NC_RNA_CONFIG_TERM:
-		equivKeySet = equivKeySet.union(ncRNAdescSet)
             else:
                 sys.exit('VEGA equivalency term does not resolve: %s' % e)
         VEGAEquivDict[raw] = equivKeySet
@@ -1144,6 +1205,8 @@ def generateBiotypeLookups():
 
     for r in results:
 	markerKey = r['_Marker_key']
+	#if markerKey == 444177:
+	#    print 'Gm20606 resultSet: %s' %r
 	ldbKey = r['_LogicalDB_key']
 	sequenceKey = r['_Sequence_key']
 	rawBiotype = r['rawBiotype']
@@ -1175,6 +1238,8 @@ def generateBiotypeLookups():
 	    print 'Invalid ldbKey for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (
 		sequenceKey, ldbKey, rawBiotype)
 	    continue
+	#if markerKey == 444177:
+        #    print 'Gm20606 equivSet: %s' % currentEquivSet
 
 	# create a GeneModel object; map marker key to the GM object 
 	gm = GeneModel()
@@ -1214,6 +1279,9 @@ def generateBiotypeLookups():
 
 	# get the list of MGI feature types for the current marker
 	mkrFeatureTypeSet = set(featureTypesDict[markerKey])
+        #if markerKey == 444177:
+	#    print 'Gm20606 mkrFeatureTypeSet: %s' % mkrFeatureTypeSet
+
 	equivalencyList = []
 	first = True
 	gmIntersectSet = set()
@@ -1226,10 +1294,12 @@ def generateBiotypeLookups():
 		    first = False
 		else:
 		    gmIntersectSet = gmIntersectSet.intersection(s)
+	    #if markerKey == 444177:
+	    #	print 'Gm20606 gmIntersectSet: %s' % gmIntersectSet
 	else:
 	     # No gene models, we can move on to the next marker
 	     continue
-
+	
 	# there are gene models so check for conflict
 	# if the gene model set is empty that means conflicts btwn gene models
 	if len(gmIntersectSet) == 0:
@@ -1237,8 +1307,13 @@ def generateBiotypeLookups():
 	# otherwise the gene models agree, see if they agree with the marker
 	else:
 	    finalIntersectSet = mkrFeatureTypeSet.intersection(gmIntersectSet)
+	    #if markerKey == 444177:
+	    #	print 'Gm20606 finalIntersectSet: %s' % finalIntersectSet
+
 	    if len(finalIntersectSet) != 1:
 		conflictType = yesConflict
+	    #if markerKey == 444177:
+	    #	print 'Gm20606 conflictType: %s' % conflictType
 	# now re-iterate thru the marker/sequences
 	# and set the conflict key and raw biotype
 	# all sequences for a given marker get the same conflict key value
