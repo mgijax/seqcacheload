@@ -1,3 +1,33 @@
+TAG: seqcacheload-5-1-1-1
+DATE: 11/06/2012
+STAFF: dbm
+CHANGES:
+C4AM/B38 release
+
+TAG: seqcacheload-tr7106-4
+TAG: seqcacheload-tr7106-3
+DATE: 10/08/2012
+STAFF: sc
+CHANGES:
+1) Configuration - US155 update biotype equivalency mapping again for miscRNA,
+	misc_RNA, and scRNA.
+2) seqmarker.py - add mapping to gene and pseudogenic region
+        via translation table, so the direct or indirect annotations to these
+        terms no longer cause conflict
+3) left debug print statements in on purpose
+
+TAG: seqcacheload-tr7106-2
+TAG: seqcacheload-tr7106-1
+DATE: 09/19/2012
+STAFF: sc
+CHANGES: 
+1) Configuration - US155 update biotype equivalency mapping - split ensembl
+   into two config settings (too long for one)
+2) seqmarker.py - catenate two ensembl config settings. Update loading
+   of Ensembl and VEGA to handle 'all feature types' which implies equiv
+   to all its children as well. We have a new mapping for VEGA to 'all
+   feature types, but not any for ensembl .... yet. 
+
 TAG: seqcacheload-tr7106-BP
 DATE: 09/19/2012
 STAFF: sc
