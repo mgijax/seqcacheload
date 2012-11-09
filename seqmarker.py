@@ -798,18 +798,18 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
 
     else: # there are proteins for the genomicRepKey, determine longest
 	protDict = proteinLookupByGenomicKey[genomicRepKey]
-	#print 'Proteins for genomicRepKey %s: %s' % (genomicRepKey, protDict)
+
 	# length of current longest polypeptide
 	currentLongestProtLen = 0
 	protRepKey = 0
 	# determine the longest polypeptide
 	for pKey in protDict.keys():
 	    pLength = protDict[pKey]
-	    #print 'pKey: %s pLength %s type: %s currentLongestProtLen %s type: %s' % (pKey, pLength, type(pLength), currentLongestProtLen, type(currentLongestProtLen))
+
 	    if int(pLength) > int(currentLongestProtLen):
 		currentLongestProtLen = pLength
 		protRepKey = pKey
-	#print 'chosen LongestProtLen: %s protRepKey: %s' % (currentLongestProtLen, protRepKey)
+
 	if protRepKey != 0:
 	    polypeptide[marker] = protRepKey
 	else: 
@@ -1098,15 +1098,11 @@ def generateBiotypeLookups():
         rawList = string.split(m, ':')
         raw = string.strip(rawList[0])
         equivList = string.split(rawList[1], '|')
-  	print 'NCBI mapping: %s' % m
 	if raw in pseudogeneRawFeatureTypeList:
 	    equivList.append('pseudogenic region')
-	    print 'adding "pseudogenic region" to equivList for %s' % raw
 	elif raw in geneRawFeatureTypeList:
             equivList.append('gene')
-	    print 'adding "gene" to equivList for %s' % raw
 	equivKeySet = set()
-	print 'NCBI full equiv List: %s' % equivList
 	for e in equivList:
 	    e = string.strip(e)
 	    if e == ALL_FEATURES_CONFIG_TERM:
@@ -1129,15 +1125,11 @@ def generateBiotypeLookups():
         rawList = string.split(m, ':')
         raw = string.strip(rawList[0])
         equivList = string.split(rawList[1], '|')
-        print 'Ensembl mapping: %s' % m
 	if raw in pseudogeneRawFeatureTypeList:
             equivList.append('pseudogenic region')
-            print 'adding "pseudogenic region" to equivList for %s' % raw
         elif raw in geneRawFeatureTypeList:
             equivList.append('gene')
-            print 'adding "gene" to equivList for %s' % raw
 	equivKeySet = set()
-	print 'Ensembl full equiv List: %s' % equivList
         for e in equivList:
             e = string.strip(e)
             if e == ALL_FEATURES_CONFIG_TERM:
@@ -1164,15 +1156,11 @@ def generateBiotypeLookups():
 	rawList = string.split(m, ':')
 	raw = string.strip(rawList[0])
 	equivList = string.split(rawList[1], '|')
-        print 'VEGA mapping: %s' % m
         if raw in pseudogeneRawFeatureTypeList:
             equivList.append('pseudogenic region')
-            print 'adding "pseudogenic region" to equivList for %s' % raw
         elif raw in geneRawFeatureTypeList:
             equivList.append('gene')
-            print 'adding "gene" to equivList for %s' % raw
 	equivKeySet = set()
-	print 'VEGA full equiv List: %s' % equivList
         for e in equivList:
 	    e = string.strip(e)
             if e == ALL_FEATURES_CONFIG_TERM:
@@ -1205,8 +1193,6 @@ def generateBiotypeLookups():
 
     for r in results:
 	markerKey = r['_Marker_key']
-	#if markerKey == 444177:
-	#    print 'Gm20606 resultSet: %s' %r
 	ldbKey = r['_LogicalDB_key']
 	sequenceKey = r['_Sequence_key']
 	rawBiotype = r['rawBiotype']
@@ -1238,8 +1224,6 @@ def generateBiotypeLookups():
 	    print 'Invalid ldbKey for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (
 		sequenceKey, ldbKey, rawBiotype)
 	    continue
-	#if markerKey == 444177:
-        #    print 'Gm20606 equivSet: %s' % currentEquivSet
 
 	# create a GeneModel object; map marker key to the GM object 
 	gm = GeneModel()
@@ -1279,8 +1263,6 @@ def generateBiotypeLookups():
 
 	# get the list of MGI feature types for the current marker
 	mkrFeatureTypeSet = set(featureTypesDict[markerKey])
-        #if markerKey == 444177:
-	#    print 'Gm20606 mkrFeatureTypeSet: %s' % mkrFeatureTypeSet
 
 	equivalencyList = []
 	first = True
@@ -1294,8 +1276,6 @@ def generateBiotypeLookups():
 		    first = False
 		else:
 		    gmIntersectSet = gmIntersectSet.intersection(s)
-	    #if markerKey == 444177:
-	    #	print 'Gm20606 gmIntersectSet: %s' % gmIntersectSet
 	else:
 	     # No gene models, we can move on to the next marker
 	     continue
@@ -1307,13 +1287,9 @@ def generateBiotypeLookups():
 	# otherwise the gene models agree, see if they agree with the marker
 	else:
 	    finalIntersectSet = mkrFeatureTypeSet.intersection(gmIntersectSet)
-	    #if markerKey == 444177:
-	    #	print 'Gm20606 finalIntersectSet: %s' % finalIntersectSet
 
 	    if len(finalIntersectSet) != 1:
 		conflictType = yesConflict
-	    #if markerKey == 444177:
-	    #	print 'Gm20606 conflictType: %s' % conflictType
 	# now re-iterate thru the marker/sequences
 	# and set the conflict key and raw biotype
 	# all sequences for a given marker get the same conflict key value

@@ -1,3 +1,9 @@
+TAG: seqcacheload-5-1-1-2
+DATE: 11/08/2012
+STAFF: sc
+CHANGES: seqmarker.py - remove some debug
+C4AM/B38 release
+
 TAG: seqcacheload-5-1-1-1
 DATE: 11/06/2012
 STAFF: dbm
