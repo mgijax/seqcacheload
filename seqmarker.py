@@ -1383,12 +1383,12 @@ def createBCP():
 
     print 'Processing ...%s' % (mgi_utils.date())
     #	
-    # select only mouse, human, rat, dog, chimpanzee & cattle markers
-    # with ANY marker status 
+    # select only mouse, human, rat, dog, chimpanzee, cattle, chicken,
+    # zebrafish and monkey markers with ANY marker status 
     #db.sql('set rowcount 10000', None)
     db.sql('select _Marker_key, _Organism_key, _Marker_Type_key ' + \
 	'into #markers from MRK_Marker ' + \
-	'where _Organism_key in (1, 2, 40, 10, 13, 11) ', None)
+	'where _Organism_key in (1, 2, 40, 10, 13, 11, 63, 84, 94) ', None)
 	#'where _Organism_key = 1 ' + \
 	#' and _Marker_key in (12179)', None)
 	#'and _Marker_key in (6005, 6385, 6644)', None)
