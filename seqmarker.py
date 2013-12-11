@@ -1149,8 +1149,9 @@ def generateBiotypeLookups():
     vegaEquiv4 = string.lower(os.environ['VEGA_EQUIV4'])
     vegaEquiv5 = string.lower(os.environ['VEGA_EQUIV5'])
     vegaEquiv6 = string.lower(os.environ['VEGA_EQUIV6'])
+    vegaEquiv7 = string.lower(os.environ['VEGA_EQUIV7'])
 
-    vegaEquiv = '%s,%s,%s,%s,%s,%s' % (vegaEquiv1, vegaEquiv2, vegaEquiv3, vegaEquiv4, vegaEquiv5, vegaEquiv6)
+    vegaEquiv = '%s,%s,%s,%s,%s,%s,%s' % (vegaEquiv1, vegaEquiv2, vegaEquiv3, vegaEquiv4, vegaEquiv5, vegaEquiv6, vegaEquiv7)
     mappingList = string.split(vegaEquiv, ',')
     for m in mappingList:
 	rawList = string.split(m, ':')
