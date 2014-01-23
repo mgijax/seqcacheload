@@ -1,3 +1,10 @@
+TAG: seqcacheload-5-1-6-1
+DATE: 01/23/2014
+STAFF: lec
+CHANGES:
+1) TR11555/Configuration, seqmarker.py - update biotype equivalency mapping
+for ensembl 74
+
 TAG: seqcacheload-5-1-5-1
 DATE: 12/11/2013
 STAFF: lec
