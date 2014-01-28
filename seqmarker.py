@@ -12,7 +12,7 @@
 #           per sequence/marker pair
 #
 #  See for details: 
-#  http://prodwww.informatics.jax.org/wiki/index.php/sw:Seqcacheload#2._Sequence_Marker_Cache_Load
+#  http://mgiwiki/mediawiki/index.php/sw:Seqcacheload#2._Sequence_Marker_Cache_Load
 #
 #  Usage:
 #	seqmarker.py
@@ -394,8 +394,7 @@ def determineRepresentative(marker):
     # Determine Representative Genomic Sequence
     #
     # see algorithm here: 
-    # http://prodwww.informatics.jax.org/wiki/index.php/sw%
-    #          3ARepresentative_sequence_algorithm
+    # http://mgiwiki/mediawiki/index.php/sw%3ARepresentative_sequence_algorithm
     # 
 
     ##-------------------------------------------------------------
