@@ -1,3 +1,9 @@
+TAG: seqcacheload-5-1-9-1
+DATE: 07/31/2014
+STAFF: dbm
+CHANGES: TR11662
+1) seqmarker.py: added organism key 95 for xenopus
+
 TAG: seqcacheload-5-1-7-1
 DATE: 01/28/2014
 STAFF: lec
