@@ -1,3 +1,9 @@
+TAG: seqcacheload-5-2-1-2
+DATE: 11/04/2014
+STAFF: sc
+CHANGES: TR11872 - Ensembl release 78
+1) Configuration.default - add new Ensembl biotype mappings
+
 TAG: seqcacheload-5-1-9-2
 DATE: 11/04/2014
 STAFF: sc
