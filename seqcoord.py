@@ -24,9 +24,9 @@
 
 import sys
 import os
-import db
 import mgi_utils
 import loadlib
+
 
 NL = '\n'
 DL = os.environ['COLDELIM']
@@ -34,6 +34,19 @@ table = os.environ['TABLE']
 datadir = os.environ['CACHEDATADIR']
 userKey = 0
 loaddate = loadlib.loaddate
+
+try:
+    if os.environ['DB_TYPE'] == 'postgres':
+        import pg_db
+        db = pg_db
+        db.setTrace()
+        db.setAutoTranslateBE()
+    else:
+        import db
+        db.set_sqlLogFunction(db.sqlLogAll)
+except:
+    import db
+    db.set_sqlLogFunction(db.sqlLogAll)
 
 def createBCP():
 
@@ -81,7 +94,6 @@ def createBCP():
 userKey = loadlib.verifyUser(os.environ['MGI_DBUSER'], 1, None)
 
 db.useOneConnection(1)
-db.set_sqlLogFunction(db.sqlLogAll)
 print '%s' % mgi_utils.date()
 createBCP()
 print '%s' % mgi_utils.date()

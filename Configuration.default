@@ -13,6 +13,9 @@ endif
 
 source ${MGICONFIG}/master.config.csh
 
+# database schema
+setenv PG_DB_SCHEMA mgd
+
 # directory
 setenv CACHEDIR			${DATALOADSOUTPUT}/mgi/seqcacheload
 
@@ -22,7 +25,7 @@ setenv CACHEDATADIR		${CACHEDIR}/output
 # logs directory
 setenv CACHELOGSDIR		${CACHEDIR}/logs
 
-setenv COLDELIM       "&=&"
+setenv COLDELIM       "|"
 setenv LINEDELIM      "\n"
 
 # debug for seqmarker.py
@@ -63,3 +66,29 @@ setenv NC_RNA_TERM	"non-coding RNA gene or its children"
 # equivalency term that indicates to map the associated raw term to all
 # children of 'all feature types'. This is applicable to NCBI only.
 setenv ALL_FEATURES_TERM	"all feature types"
+
+
+if ( ! $?DB_TYPE ) then
+    setenv DB_TYPE sybase
+endif
+
+setenv SCHEMADIR ${MGD_DBSCHEMADIR}
+setenv BCP_CMD "${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME}"
+
+
+# Postgres specific config goes here
+if ( ${DB_TYPE} == "postgres" ) then
+
+    setenv SCHEMADIR ${PG_MGD_DBSCHEMADIR}
+    setenv BCP_CMD "${PG_DBUTILS}/bin/bcpin.csh ${PG_DBSERVER} ${PG_DBNAME}"
+
+    # directory
+    setenv CACHEDIR          ${DATALOADSOUTPUT}/mgi/seqcacheload/postgres
+
+    # bcp output directory
+    setenv CACHEDATADIR               ${CACHEDIR}/output
+
+    # log directory
+    setenv CACHELOGSDIR               ${CACHEDIR}/logs
+
+endif
