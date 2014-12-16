@@ -77,9 +77,21 @@
 import sys
 import os
 import string
-import db
 import mgi_utils
 import loadlib
+
+try:
+    if os.environ['DB_TYPE'] == 'postgres':
+        import pg_db
+        db = pg_db
+        db.setTrace()
+        db.setAutoTranslateBE()
+    else:
+        import db
+        db.set_sqlLogFunction(db.sqlLogAll)
+except:
+    import db
+    db.set_sqlLogFunction(db.sqlLogAll)
 
 #
 # CONSTANTS
@@ -234,7 +246,6 @@ def init ():
     global transcriptLookupByProteinKey, outBCP
     
     db.useOneConnection(1)
-    db.set_sqlLogFunction(db.sqlLogAll)
 
     print 'Initializing ...%s' % (mgi_utils.date())
     #
@@ -269,8 +280,8 @@ def init ():
         'where a._LogicalDB_key in (59, 60, 85) ' + \
 	'and a.preferred = 1 ' + \
         'and a._MGIType_key = 19', None)
-    db.sql('create nonclustered index idx_1 on #gm (seqID)', None)
-    db.sql('create nonclustered index idx_2 on #gm (_Sequence_key)', None)
+    db.sql('create index idx_1 on #gm (seqID)', None)
+    db.sql('create index idx_2 on #gm (_Sequence_key)', None)
 
     # union the set
     db.sql('select seqID, _Sequence_key ' + \
@@ -279,7 +290,7 @@ def init ():
 	'union ' + \
 	'select seqID, _Sequence_key ' + \
 	'from #gm', None)
-    db.sql('create nonclustered index idx_1 on ' + \
+    db.sql('create index idx_3 on ' + \
         '#allSeqs (seqID)', None)
     # get markers for these sequences
     results = db.sql('select s._Sequence_key, ' + \
@@ -313,7 +324,7 @@ def init ():
 	'from SEQ_Sequence_Assoc sa, SEQ_Sequence ss ' + \
 	'where sa._Qualifier_key = %s ' % TRANSCRIBED_FROM_KEY + \
 	'and sa._Sequence_key_1 = ss._Sequence_key', None)
-    db.sql('create nonclustered index idx1 on ' + \
+    db.sql('create index idx4 on ' + \
 	'#transGen(transcriptKey)', None)
     results = db.sql('select * from #transGen ' + \
 	'order by genomicKey', 'auto')
@@ -1392,14 +1403,14 @@ def createBCP():
 	#'where _Organism_key = 1 ' + \
 	#' and _Marker_key in (12179)', None)
 	#'and _Marker_key in (6005, 6385, 6644)', None)
-    db.sql('create nonclustered index idx_key on ' + \
+    db.sql('create index idx_key on ' + \
 	'#markers (_Marker_key)', None)
 
     # select all non-MGI accession ids for markers 
 
     db.sql('select m._Marker_key, m._Organism_key, m._Marker_Type_key, ' + \
 	'a._LogicalDB_key, a.accID, r._Refs_key, a._ModifiedBy_key, ' + \
-	'mdate = convert(char(10), a.modification_date, 101) ' + \
+	'convert(char(10), a.modification_date, 101) as mdate ' + \
 	'into #markerAccs ' + \
 	'from #markers m, ACC_Accession a, ACC_AccessionReference r ' + \
 	'where m._Marker_key = a._Object_key ' + \
@@ -1407,9 +1418,9 @@ def createBCP():
 	'and a._LogicalDB_key != 1 ' + \
 	'and a._Accession_key = r._Accession_key', None)
 
-    db.sql('create nonclustered index idx1 on #markerAccs ' + \
+    db.sql('create index idx5 on #markerAccs ' + \
 	'(_LogicalDB_key, accID)', None)
-    db.sql('create nonclustered index idx2 on #markerAccs ' + \
+    db.sql('create index idx6 on #markerAccs ' + \
 	'(accID)', None)
     # select all sequence annotations
     
@@ -1425,7 +1436,7 @@ def createBCP():
 	'and m._LogicalDB_key = s._LogicalDB_key ' + \
 	'and s._MGIType_key = 19 ', None)
 
-    db.sql('create nonclustered index idx1 on ' + \
+    db.sql('create index idx7 on ' + \
 	'#preallannot (_Sequence_key)', None)
 
     # get the sequence provider and sequence type
@@ -1438,7 +1449,7 @@ def createBCP():
 	'from #preallannot m, SEQ_Sequence ss ' + \
 	'where m._Sequence_key = ss._Sequence_key', None)
 
-    db.sql('create nonclustered index idx1 on ' + \
+    db.sql('create index idx8 on ' + \
 	'#allannot (_Sequence_key)', None)
 
     # grab sequence's primary accID
@@ -1453,30 +1464,31 @@ def createBCP():
 	'and ac._MGIType_key = 19 ' + \
 	'and ac.preferred = 1', None)
 
-    db.sql('create nonclustered index idx1 on ' + \
+    db.sql('create index idx9 on ' + \
 	'#allseqannot (_Sequence_key, _Marker_key, _Refs_key)', None)
 
     # select records, grouping by sequence, marker and reference
     db.sql('select _Sequence_key, _Marker_key, _Organism_key, ' + \
 	'_Marker_Type_key, _SequenceProvider_key, _SequenceType_key, ' + \
-	'_LogicalDB_key, _Refs_key, _User_key, mdate = max(mdate), accID ' + \
+	'_LogicalDB_key, _Refs_key, _User_key, max(mdate) as mdate, accID ' + \
 	'into #finalannot ' + \
 	'from #allseqannot ' + \
-	'group by _Sequence_key, _Marker_key, _Refs_key', None)
-    db.sql('create nonclustered index idx1 on #finalannot ' + \
+	'group by _Sequence_key, _Marker_key, _Refs_key, _organism_Key, _marker_type_key, _sequenceprovider_key, '+ \
+	'_sequencetype_key, _logicaldb_key, _user_key, accID', None)
+    db.sql('create index idx10 on #finalannot ' + \
 	'(_Sequence_key, _Marker_key, _Refs_key, _User_key, mdate)', None)
-    db.sql('create nonclustered index idx2 on #finalannot ' + \
+    db.sql('create index idx11 on #finalannot ' + \
 	'(_Sequence_key, _Marker_key, _Marker_Type_key, accID)', None)
-    db.sql('create nonclustered index idx3 on #finalannot ' + \
+    db.sql('create index idx12 on #finalannot ' + \
 	'(_Marker_key)', None)
 
     db.sql('select distinct _Sequence_key, _Marker_key, ' + \
 	'_Marker_Type_key, accID ' + \
 	'into #deriveQuality ' + \
 	'from #finalannot order by _Marker_key', None)
-    db.sql('create nonclustered index idx1 on ' + \
+    db.sql('create index idx13 on ' + \
 	'#deriveQuality (_Sequence_key)', None)
-    db.sql('create nonclustered index idx2 on ' + \
+    db.sql('create index idx14 on ' + \
 	'#deriveQuality (_Marker_key)', None)
 
     # do not include deleted sequences
