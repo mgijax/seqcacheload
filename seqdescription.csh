@@ -17,6 +17,8 @@ touch ${LOG}
 
 setenv TABLE	SEQ_Description_Cache
 
+setenv COLDELIM '\t'
+
 date | tee -a ${LOG}
 
 # Create the bcp file
@@ -30,15 +32,15 @@ endif
 
 # truncate table
 
-${MGD_DBSCHEMADIR}/table/${TABLE}_truncate.object | tee -a ${LOG}
+${SCHEMADIR}/table/${TABLE}_truncate.object | tee -a ${LOG}
 
 # Drop indexes
-${MGD_DBSCHEMADIR}/index/${TABLE}_drop.object | tee -a ${LOG}
+${SCHEMADIR}/index/${TABLE}_drop.object | tee -a ${LOG}
 
 # BCP new data into tables
-${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} ${TABLE} ${CACHEDATADIR} ${TABLE}.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
+${BCP_CMD} ${TABLE} ${CACHEDATADIR} ${TABLE}.bcp ${COLDELIM} ${LINEDELIM} ${PG_DB_SCHEMA} | tee -a ${LOG}
 
 # Create indexes
-${MGD_DBSCHEMADIR}/index/${TABLE}_create.object | tee -a ${LOG}
+${SCHEMADIR}/index/${TABLE}_create.object | tee -a ${LOG}
 
 date | tee -a ${LOG}

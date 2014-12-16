@@ -21,12 +21,25 @@
 
 import sys
 import os
-import db
 import mgi_utils
 import loadlib
 
+try:
+    if os.environ['DB_TYPE'] == 'postgres':
+        import pg_db
+        db = pg_db
+        db.setTrace()
+        db.setAutoTranslateBE()
+    else:
+        import db
+        db.set_sqlLogFunction(db.sqlLogAll)
+except:
+    import db
+    db.set_sqlLogFunction(db.sqlLogAll)
+
 NL = '\n'
-DL = os.environ['COLDELIM']
+#DL = os.environ['COLDELIM']
+DL = '\t'
 table = os.environ['TABLE']
 datadir = os.environ['CACHEDATADIR']
 userKey = 0
@@ -41,7 +54,7 @@ def createBCP():
 	cmds = []
 
 	cmds.append('select distinct _Sequence_key into #sequences from SEQ_Marker_Cache')
-	cmds.append('create nonclustered index idx_seq on #sequences (_Sequence_key)')
+	cmds.append('create index idx_seq on #sequences (_Sequence_key)')
 	cmds.append('select s._Sequence_key, s.description ' + \
 		'from #sequences c, SEQ_Sequence s ' + \
 		'where c._Sequence_key = s._Sequence_key ' + \
@@ -63,7 +76,6 @@ def createBCP():
 #
 
 db.useOneConnection(1)
-db.set_sqlLogFunction(db.sqlLogAll)
 userKey = loadlib.verifyUser(os.environ['MGI_DBUSER'], 1, None)
 print '%s' % mgi_utils.date()
 createBCP()
