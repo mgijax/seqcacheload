@@ -70,6 +70,7 @@ def createBCP():
 	print 'deletion begin...%s' % (mgi_utils.date())
 	db.sql('delete #sequences1 from #sequences1 s, #excluded e where s.probeKey = e._Probe_key', None)
 	print 'deletion end...%s' % (mgi_utils.date())
+	db.commit()
 
 	print 'sequences2 begin...%s' % (mgi_utils.date())
 	cmds = []
