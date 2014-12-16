@@ -44,27 +44,27 @@ set b=`echo $a | cut -f1 -d " "`
 # Drop index and triggers
 
 if ( $b > 3000 ) then
-    ${MGD_DBSCHEMADIR}/index/SEQ_Sequence_drop.object | tee -a ${LOG}
+    ${SCHEMADIR}/index/SEQ_Sequence_drop.object | tee -a ${LOG}
 endif
 
 # Drop index and triggers
 
-${MGD_DBSCHEMADIR}/trigger/SEQ_Sequence_drop.object | tee -a ${LOG}
-${MGD_DBSCHEMADIR}/trigger/ACC_Accession_drop.object | tee -a ${LOG}
+${SCHEMADIR}/trigger/SEQ_Sequence_drop.object | tee -a ${LOG}
+${SCHEMADIR}/trigger/ACC_Accession_drop.object | tee -a ${LOG}
 
 # BCP new data into tables
-${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} SEQ_Sequence ${CACHEDATADIR} SEQ_Sequence.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
-${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} SEQ_Sequence_Raw ${CACHEDATADIR} SEQ_Sequence_Raw.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
-${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} SEQ_Source_Assoc ${CACHEDATADIR} SEQ_Source_Assoc.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
-${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME} ACC_Accession ${CACHEDATADIR} ACC_Accession.bcp ${COLDELIM} ${LINEDELIM} | tee -a ${LOG}
+${BCP_CMD} SEQ_Sequence ${CACHEDATADIR} SEQ_Sequence.bcp ${COLDELIM} ${LINEDELIM} ${PG_DB_SCHEMA} | tee -a ${LOG}
+${BCP_CMD} SEQ_Sequence_Raw ${CACHEDATADIR} SEQ_Sequence_Raw.bcp ${COLDELIM} ${LINEDELIM} ${PG_DB_SCHEMA} | tee -a ${LOG}
+${BCP_CMD} SEQ_Source_Assoc ${CACHEDATADIR} SEQ_Source_Assoc.bcp ${COLDELIM} ${LINEDELIM} ${PG_DB_SCHEMA} | tee -a ${LOG}
+${BCP_CMD} ACC_Accession ${CACHEDATADIR} ACC_Accession.bcp ${COLDELIM} ${LINEDELIM} ${PG_DB_SCHEMA} | tee -a ${LOG}
 
 # Re-create index and triggers
 
 if ( $b > 3000 ) then
-    ${MGD_DBSCHEMADIR}/index/SEQ_Sequence_create.object | tee -a ${LOG}
+    ${SCHEMADIR}/index/SEQ_Sequence_create.object | tee -a ${LOG}
 endif
 
-${MGD_DBSCHEMADIR}/trigger/SEQ_Sequence_create.object | tee -a ${LOG}
-${MGD_DBSCHEMADIR}/trigger/ACC_Accession_create.object | tee -a ${LOG}
+${SCHEMADIR}/trigger/SEQ_Sequence_create.object | tee -a ${LOG}
+${SCHEMADIR}/trigger/ACC_Accession_create.object | tee -a ${LOG}
 
 date | tee -a ${LOG}

@@ -50,10 +50,22 @@ import os
 import string
 import getopt
 import accessionlib
-import db
 import mgi_utils
 import loadlib
 import sourceloadlib
+
+try:
+    if os.environ['DB_TYPE'] == 'postgres':
+        import pg_db
+        db = pg_db
+        db.setTrace()
+        db.setAutoTranslateBE()
+    else:
+        import db
+        db.set_sqlLogFunction(db.sqlLogAll)
+except:
+    import db
+    db.set_sqlLogFunction(db.sqlLogAll)
 
 #globals
 
@@ -125,7 +137,6 @@ def init():
     global seqFile, rawFile, sourceFile, accFile
  
     db.useOneConnection(1)
-    db.set_sqlLogFunction(db.sqlLogAll)
  
     try:
         seqFile = open(seqFileName, 'w')
@@ -148,7 +159,6 @@ def init():
         exit(1, 'Could not open file %s\n' % accFileName)
 
     # Log all SQL
-    db.set_sqlLogFunction(db.sqlLogAll)
 
     return
 
@@ -162,13 +172,13 @@ def setPrimaryKeys():
 
     global seqKey, assocKey, accKey, userKey
 
-    results = db.sql('select maxKey = max(_Sequence_key) + 1 from %s' % (seqTable), 'auto')
+    results = db.sql('select max(_Sequence_key) + 1 as maxKey from %s' % (seqTable), 'auto')
     seqKey = results[0]['maxKey']
 
-    results = db.sql('select maxKey = max(_Assoc_key) + 1 from %s' % (sourceTable), 'auto')
+    results = db.sql('select max(_Assoc_key) + 1 as maxKey from %s' % (sourceTable), 'auto')
     assocKey = results[0]['maxKey']
 
-    results = db.sql('select maxKey = max(_Accession_key) + 1 from %s' % (accTable), 'auto')
+    results = db.sql('select max(_Accession_key) + 1 as maxKey from %s' % (accTable), 'auto')
     accKey = results[0]['maxKey']
 
     userKey = loadlib.verifyUser(os.environ['MGI_DBUSER'], 1, None)
