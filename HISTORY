@@ -1,3 +1,8 @@
+TAG: seqcacheload-5-2-1-3
+DATE: 12/17/2014
+STAFF: kstone
+CHANGES: postgres conversion and tests
+
 TAG: seqcacheload-5-2-1-2
 DATE: 11/04/2014
 STAFF: sc
