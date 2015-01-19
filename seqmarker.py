@@ -1128,8 +1128,9 @@ def generateBiotypeLookups():
     print 'Initializing Ensembl raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
     ensEquiv1 = string.lower(os.environ['ENSEMBL_EQUIV1'])
     ensEquiv2 = string.lower(os.environ['ENSEMBL_EQUIV2'])
+    ensEquiv3 = string.lower(os.environ['ENSEMBL_EQUIV3'])
 
-    ensEquiv = '%s,%s' % (ensEquiv1, ensEquiv2)
+    ensEquiv = '%s,%s,%s' % (ensEquiv1, ensEquiv2, ensEquiv3)
     mappingList = string.split(ensEquiv, ',')
     for m in mappingList:
         rawList = string.split(m, ':')
