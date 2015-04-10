@@ -26,9 +26,22 @@
 
 import sys
 import os
-import db
 import mgi_utils
 import loadlib
+
+try:
+    if os.environ['DB_TYPE'] == 'postgres':
+        import pg_db
+        db = pg_db
+        db.setTrace()
+        db.setAutoTranslateBE()
+    else:
+        import db
+        db.set_sqlLogFunction(db.sqlLogAll)
+except:
+    import db
+    db.set_sqlLogFunction(db.sqlLogAll)
+
 
 NL = '\n'
 DL = os.environ['COLDELIM']
@@ -43,7 +56,7 @@ def createExcluded():
     print 'excluded begin...%s' % (mgi_utils.date())
     cmds = []
     cmds.append('select _Probe_key into #excluded from PRB_Notes ' + \
-	'where note like "The source of the material used to create this cDNA probe was different%"')
+	'where note like \'The source of the material used to create this cDNA probe was different%\'')
     cmds.append('create index idx1 on #excluded(_Probe_key)')
     db.sql(cmds, None)
     print 'excluded end...%s' % (mgi_utils.date())
@@ -61,9 +74,9 @@ def createBCP():
 		'and s.accID = p.accID ' + \
 		'and p._MGIType_key = 3 ' + \
 		'and s._LogicalDB_key = p._LogicalDB_key ')
-	cmds.append('create index idx1 on #sequences1 (sequenceKey)')
-	cmds.append('create index idx2 on #sequences1 (probeKey)')
-	cmds.append('create index idx3 on #sequences1 (_Accession_key)')
+	cmds.append('create index idx2 on #sequences1 (sequenceKey)')
+	cmds.append('create index idx3 on #sequences1 (probeKey)')
+	cmds.append('create index idx4 on #sequences1 (_Accession_key)')
 	db.sql(cmds, None)
 	print 'sequences1 end...%s' % (mgi_utils.date())
 
@@ -75,19 +88,19 @@ def createBCP():
 	print 'sequences2 begin...%s' % (mgi_utils.date())
 	cmds = []
 	cmds.append('select s.sequenceKey, s.probeKey, refsKey = ar._Refs_key, ' + \
-		'userKey = ar._ModifiedBy_key, ' + \
+		'ar._ModifiedBy_key as userKey, ' + \
 		'mdate = convert(char(10), ar.modification_date, 101) ' + \
 		'into #sequences2 ' + \
 		'from #sequences1 s, ACC_AccessionReference ar ' + \
 		'where s._Accession_key = ar._Accession_key')
-	cmds.append('create index idx1 on #sequences2 (sequenceKey, probeKey, refsKey, userKey, mdate)')
-	cmds.append('create index idx2 on #sequences2 (userKey)')
-	cmds.append('create index idx3 on #sequences2 (mdate)')
+	cmds.append('create index idx5 on #sequences2 (sequenceKey, probeKey, refsKey, userKey, mdate)')
+	cmds.append('create index idx6 on #sequences2 (userKey)')
+	cmds.append('create index idx7 on #sequences2 (mdate)')
 	db.sql(cmds, None)
 	print 'sequences2 end...%s' % (mgi_utils.date())
 
 	print 'final begin...%s' % (mgi_utils.date())
-	results = db.sql('select distinct sequenceKey, probeKey, refsKey, userKey = max(userKey), mdate = max(mdate) from #sequences2 ' + \
+	results = db.sql('select distinct sequenceKey, probeKey, refsKey, max(userKey) as userKey, max(mdate) as mdate from #sequences2 ' + \
 		'group by sequenceKey, probeKey, refsKey', 'auto')
 	print 'final end...%s' % (mgi_utils.date())
 
