@@ -81,7 +81,7 @@ def createBCP():
 	print 'sequences1 end...%s' % (mgi_utils.date())
 
 	print 'deletion begin...%s' % (mgi_utils.date())
-	db.sql('delete #sequences1 from #sequences1 s, #excluded e where s.probeKey = e._Probe_key', None)
+	db.sql('delete from #sequences1 from #excluded e where #sequences1.probeKey = e._Probe_key', None)
 	print 'deletion end...%s' % (mgi_utils.date())
 	db.commit()
 
@@ -89,7 +89,7 @@ def createBCP():
 	cmds = []
 	cmds.append('select s.sequenceKey, s.probeKey, refsKey = ar._Refs_key, ' + \
 		'ar._ModifiedBy_key as userKey, ' + \
-		'mdate = convert(char(10), ar.modification_date, 101) ' + \
+		'convert(char(10), ar.modification_date, 101) as mdate ' + \
 		'into #sequences2 ' + \
 		'from #sequences1 s, ACC_AccessionReference ar ' + \
 		'where s._Accession_key = ar._Accession_key')
@@ -118,7 +118,6 @@ def createBCP():
 #
 
 db.useOneConnection(1)
-db.set_sqlLogFunction(db.sqlLogAll)
 print '%s' % mgi_utils.date()
 createExcluded()
 createBCP()
