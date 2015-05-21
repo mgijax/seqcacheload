@@ -9,7 +9,7 @@ foreach load ( seqcoord.csh seqmarker.csh seqdescription.csh seqprobe.csh seqdum
 end
 
 echo "Performing test"
-python ${MGD_DBUTILS}/bin/comparePostgresTable.py seq_coord_cache seq_marker_cache seq_description_cache seq_probe_cache
-python ${MGD_DBUTILS}/bin/comparePostgresTable.py -c acc_accession seq_sequence_raw seq_sequence seq_source_assoc
+python ${MGI_DBUTILS}/bin/comparePostgresTable.py seq_coord_cache seq_marker_cache seq_description_cache seq_probe_cache
+python ${MGI_DBUTILS}/bin/comparePostgresTable.py -c acc_accession seq_sequence_raw seq_sequence seq_source_assoc
 
 echo "Tests successful"
