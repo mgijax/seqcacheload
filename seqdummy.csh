@@ -49,9 +49,6 @@ endif
 
 # Drop index and triggers
 
-${SCHEMADIR}/trigger/SEQ_Sequence_drop.object | tee -a ${LOG}
-${SCHEMADIR}/trigger/ACC_Accession_drop.object | tee -a ${LOG}
-
 # BCP new data into tables
 ${BCP_CMD} SEQ_Sequence ${CACHEDATADIR} SEQ_Sequence.bcp ${COLDELIM} ${LINEDELIM} ${PG_DB_SCHEMA} | tee -a ${LOG}
 ${BCP_CMD} SEQ_Sequence_Raw ${CACHEDATADIR} SEQ_Sequence_Raw.bcp ${COLDELIM} ${LINEDELIM} ${PG_DB_SCHEMA} | tee -a ${LOG}
@@ -63,8 +60,5 @@ ${BCP_CMD} ACC_Accession ${CACHEDATADIR} ACC_Accession.bcp ${COLDELIM} ${LINEDEL
 if ( $b > 3000 ) then
     ${SCHEMADIR}/index/SEQ_Sequence_create.object | tee -a ${LOG}
 endif
-
-${SCHEMADIR}/trigger/SEQ_Sequence_create.object | tee -a ${LOG}
-${SCHEMADIR}/trigger/ACC_Accession_create.object | tee -a ${LOG}
 
 date | tee -a ${LOG}
