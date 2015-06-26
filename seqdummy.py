@@ -53,19 +53,11 @@ import accessionlib
 import mgi_utils
 import loadlib
 import sourceloadlib
+import db
 
-try:
-    if os.environ['DB_TYPE'] == 'postgres':
-        import pg_db
-        db = pg_db
-        db.setTrace()
-        db.setAutoTranslateBE()
-    else:
-        import db
-        db.set_sqlLogFunction(db.sqlLogAll)
-except:
-    import db
-    db.set_sqlLogFunction(db.sqlLogAll)
+db.setTrace()
+db.setAutoTranslate(False)
+db.setAutoTranslateBE(False)
 
 #globals
 
@@ -197,7 +189,7 @@ def process():
     # are not represented as Sequence objects.
 
     db.sql('select distinct a.accID, a._LogicalDB_key, ps._Organism_key ' + \
-	'into #probeaccs1 ' + \
+	'INTO TEMPORARY TABLE probeaccs1 ' + \
 	'from ACC_Accession a, PRB_Probe p, PRB_Source ps ' + \
 	'where a._MGIType_key = 3 ' + \
 	'and a._LogicalDB_key = 9 ' + \
@@ -211,7 +203,7 @@ def process():
     # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
     db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
-	'into #markeraccs1 ' + \
+	'INTO TEMPORARY TABLE markeraccs1 ' + \
 	'from ACC_Accession a, MRK_Marker m ' + \
 	'where a._MGIType_key = 2 ' + \
 	'and a._LogicalDB_key in (9,13,27,35,36,41,53) ' + \
@@ -224,7 +216,7 @@ def process():
     # are not represented as Sequence objects.
 
     db.sql('select distinct a.accID, a._LogicalDB_key, s._Organism_key ' + \
-	'into #probeaccs2 ' + \
+	'INTO TEMPORARY TABLE probeaccs2 ' + \
 	'from ACC_Accession a, PRB_Probe p, PRB_Source s ' + \
 	'where a._MGIType_key = 3 ' + \
 	'and a._LogicalDB_key = 9 ' + \
@@ -238,7 +230,7 @@ def process():
     # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
     db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
-	'into #markeraccs2 ' + \
+	'INTO TEMPORARY TABLE markeraccs2 ' + \
 	'from ACC_Accession a, MRK_Marker m ' + \
 	'where a._MGIType_key = 2 ' + \
 	'and a._LogicalDB_key in (9,13,27,35,36,41,53) ' + \
@@ -250,19 +242,19 @@ def process():
     # union these 4 sets together to form one unique set
 
     db.sql('select accID, _LogicalDB_key, _Organism_key ' + \
-	'into #allaccs ' + \
-	'from #probeaccs1 ' + \
+	'INTO TEMPORARY TABLE allaccs ' + \
+	'from probeaccs1 ' + \
 	'union ' + \
 	'select accID, _LogicalDB_key, _Organism_key ' + \
-	'from #markeraccs1 ' + \
+	'from markeraccs1 ' + \
 	'union ' + \
 	'select accID, _LogicalDB_key, _Organism_key ' + \
-	'from #probeaccs2 ' + \
+	'from probeaccs2 ' + \
 	'union ' + \
 	'select accID, _LogicalDB_key, _Organism_key ' + \
-	'from #markeraccs2', None)
+	'from markeraccs2', None)
 
-    results = db.sql('select * from #allaccs', 'auto')
+    results = db.sql('select * from allaccs', 'auto')
     for r in results:
 
 	accID = r['accID']

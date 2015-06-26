@@ -26,7 +26,7 @@ import sys
 import os
 import mgi_utils
 import loadlib
-
+import db
 
 NL = '\n'
 DL = os.environ['COLDELIM']
@@ -35,18 +35,9 @@ datadir = os.environ['CACHEDATADIR']
 userKey = 0
 loaddate = loadlib.loaddate
 
-try:
-    if os.environ['DB_TYPE'] == 'postgres':
-        import pg_db
-        db = pg_db
-        db.setTrace()
-        db.setAutoTranslateBE()
-    else:
-        import db
-        db.set_sqlLogFunction(db.sqlLogAll)
-except:
-    import db
-    db.set_sqlLogFunction(db.sqlLogAll)
+db.setTrace()
+db.setAutoTranslate(False)
+db.setAutoTranslateBE(False)
 
 def createBCP():
 
@@ -54,13 +45,13 @@ def createBCP():
 
 	outBCP = open('%s/%s.bcp' % (datadir, table), 'w')
 
-        cmd = 'select distinct mc._Map_key, mc.version, mapUnits = t2.abbreviation, ' + \
+        cmd = 'select distinct mc._Map_key, mc.version, t2.abbreviation as mapUnits, ' + \
 	      'mcf._Object_key, mcf.startCoordinate, mcf.endCoordinate, mcf.strand, ' + \
-	      'c.chromosome, provider = t3.term ' + \
+	      'c.chromosome, t3.term as provider ' + \
               'from MAP_Coordinate mc, MAP_Coord_Feature mcf, ' + \
 	      'MRK_Chromosome c, SEQ_Sequence s, VOC_Term t1, VOC_Term t2, VOC_Term t3 ' + \
 	      'where mc._MapType_key = t1._Term_key ' + \
-	      'and t1.term = "Assembly" ' + \
+	      'and t1.term = \'Assembly\' ' + \
 	      'and mc._Units_key = t2._Term_key ' + \
 	      'and mc._MGIType_key = 27 ' + \
 	      'and mc._Object_key = c._Chromosome_key ' + \
