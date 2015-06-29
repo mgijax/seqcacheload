@@ -69,5 +69,5 @@ setenv NC_RNA_TERM	"non-coding RNA gene or its children"
 setenv ALL_FEATURES_TERM	"all feature types"
 
 setenv SCHEMADIR ${MGD_DBSCHEMADIR}
-setenv BCP_CMD "${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME}"
+setenv BCP_CMD "${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME}"
 
