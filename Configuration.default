@@ -68,14 +68,6 @@ setenv NC_RNA_TERM	"non-coding RNA gene or its children"
 # children of 'all feature types'. This is applicable to NCBI only.
 setenv ALL_FEATURES_TERM	"all feature types"
 
-if ( ${DB_TYPE} == "postgres" ) then
-
-setenv SCHEMADIR ${PG_MGD_DBSCHEMADIR}
-setenv BCP_CMD "${PG_DBUTILS}/bin/bcpin.csh ${PG_DBSERVER} ${PG_DBNAME}"
-
-else
-
 setenv SCHEMADIR ${MGD_DBSCHEMADIR}
 setenv BCP_CMD "${MGI_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME}"
 
-endif
