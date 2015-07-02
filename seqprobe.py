@@ -30,7 +30,6 @@ import mgi_utils
 import loadlib
 import db
 
-db.setTrace()
 db.setAutoTranslate(False)
 db.setAutoTranslateBE(False)
 
