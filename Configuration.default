@@ -58,6 +58,8 @@ setenv VEGA_EQUIV6	"PUTATIVE_transcribed_unprocessed_pseudogene:pseudogene,_tran
 
 setenv VEGA_EQUIV7	"_translated_processed_pseudogene:pseudogene|pseudogenic gene segment|pseudogenic region,KNOWN_translated_processed_pseudogene:pseudogene|pseudogenic gene segment|pseudogenic region,NOVEL_translated_processed_pseudogene:pseudogene|pseudogenic gene segment|pseudogenic region,PUTATIVE_translated_processed_pseudogene:pseudogene|pseudogenic gene segment|pseudogenic region,_translated_unprocessed_pseudogene:pseudogene|pseudogenic gene segment|pseudogenic region,KNOWN_translated_unprocessed_pseudogene:pseudogene|pseudogenic gene segment|pseudogenic region,NOVEL_translated_unprocessed_pseudogene:pseudogene|pseudogenic gene segment|pseudogenic region,PUTATIVE_translated_unprocessed_pseudogene:pseudogene|pseudogenic gene segment|pseudogenic region,_TR_pseudogene:pseudogenic gene segment|pseudogenic region,KNOWN_TR_pseudogene:pseudogenic gene segment|pseudogenic region,NOVEL_TR_pseudogene:pseudogenic gene segment|pseudogenic region,PUTATIVE_TR_pseudogene:pseudogenic gene segment|pseudogenic region"
 
+setenv VEGA_EQUIV8	"NOVEL_rRNA:rRNA gene,NOVEL_macro_IncRNA:unclassified non-coding RNA gene"
+
 # equivalency term that indicates to map the associated raw term to
 # 'non-coding RNA gene' and all its children. This is applicable to all
 # providers. We do this in code rather than in config file because there is a
