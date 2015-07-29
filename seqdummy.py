@@ -172,7 +172,7 @@ def setPrimaryKeys():
     results = db.sql('select max(_Accession_key) + 1 as maxKey from %s' % (accTable), 'auto')
     accKey = results[0]['maxKey']
 
-    userKey = loadlib.verifyUser(os.environ['MGI_DBUSER'], 1, None)
+    userKey = loadlib.verifyUser(os.environ['MGD_DBUSER'], 1, None)
 
 # Purpose:  processes data
 # Returns:  nothing

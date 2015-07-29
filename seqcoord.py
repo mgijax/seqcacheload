@@ -81,7 +81,7 @@ def createBCP():
 # Main Routine
 #
 
-userKey = loadlib.verifyUser(os.environ['MGI_DBUSER'], 1, None)
+userKey = loadlib.verifyUser(os.environ['MGD_DBUSER'], 1, None)
 
 db.useOneConnection(1)
 print '%s' % mgi_utils.date()
