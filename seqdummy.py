@@ -92,151 +92,119 @@ notLoaded = 'Not Loaded'
 
 loaddate = loadlib.loaddate
 
-# Purpose: prints error message and exits
-# Returns: nothing
-# Assumes: nothing
-# Effects: exits with exit status
-# Throws: nothing
-
-def exit(
-    status,          # numeric exit status (integer)
-    message = None   # exit message (string)
-    ):
-
-    if message is not None:
-        sys.stderr.write('\n' + str(message) + '\n')
- 
-    try:
-	seqFile.close()
-	rawFile.close()
-	sourceFile.close()
-	accFile.close()
-    except:
-        pass
-
-    db.useOneConnection(0)
-    sys.exit(status)
- 
-# Purpose: process command line options
-# Returns: nothing
-# Assumes: nothing
-# Effects: initializes global variables
-#          exits if files cannot be opened
-# Throws: nothing
 
 def init():
+    """
+    Initialize database connection
+    Open output files
+    """
     global seqFile, rawFile, sourceFile, accFile
  
     db.useOneConnection(1)
  
-    try:
-        seqFile = open(seqFileName, 'w')
-    except:
-        exit(1, 'Could not open file %s\n' % seqFileName)
+    seqFile = open(seqFileName, 'w')
 
-    try:
-        rawFile = open(rawFileName, 'w')
-    except:
-        exit(1, 'Could not open file %s\n' % rawFileName)
+    rawFile = open(rawFileName, 'w')
 
-    try:
-        sourceFile = open(sourceFileName, 'w')
-    except:
-        exit(1, 'Could not open file %s\n' % sourceFileName)
+    sourceFile = open(sourceFileName, 'w')
 
-    try:
-        accFile = open(accFileName, 'w')
-    except:
-        exit(1, 'Could not open file %s\n' % accFileName)
+    accFile = open(accFileName, 'w')
 
-    # Log all SQL
-
-    return
-
-# Purpose:  sets global primary key variables
-# Returns:  nothing
-# Assumes:  nothing
-# Effects:  sets global primary key variables
-# Throws:   nothing
 
 def setPrimaryKeys():
+    """
+    Assign global primary key variables
+	using max keys from database
+    """
 
     global seqKey, assocKey, accKey, userKey
 
-    results = db.sql('select max(_Sequence_key) + 1 as maxKey from %s' % (seqTable), 'auto')
-    seqKey = results[0]['maxKey']
+    results = db.sql("select max(_Sequence_key) + 1 as maxKey from %s" % (seqTable), "auto")
+    seqKey = results[0]["maxKey"]
 
-    results = db.sql('select max(_Assoc_key) + 1 as maxKey from %s' % (sourceTable), 'auto')
-    assocKey = results[0]['maxKey']
+    results = db.sql("select max(_Assoc_key) + 1 as maxKey from %s" % (sourceTable), "auto")
+    assocKey = results[0]["maxKey"]
 
-    results = db.sql('select max(_Accession_key) + 1 as maxKey from %s' % (accTable), 'auto')
-    accKey = results[0]['maxKey']
+    results = db.sql("select max(_Accession_key) + 1 as maxKey from %s" % (accTable), "auto")
+    accKey = results[0]["maxKey"]
 
     userKey = loadlib.verifyUser(os.environ['MGD_DBUSER'], 1, None)
 
-# Purpose:  processes data
-# Returns:  nothing
-# Assumes:  nothing
-# Effects:  verifies and processes each line in the input file
-# Throws:   nothing
 
 def process():
+    """
+    Query database to determine if dummy sequences need to
+	be created
+    Generates appropriate BCP files
+    """
 
     global seqKey, assocKey, accKey
 
     # generate table of all mouse molecular segments Acc IDs whose GenBank SeqIDs
     # are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key, ps._Organism_key ' + \
-	'INTO TEMPORARY TABLE probeaccs1 ' + \
-	'from ACC_Accession a, PRB_Probe p, PRB_Source ps ' + \
-	'where a._MGIType_key = 3 ' + \
-	'and a._LogicalDB_key = 9 ' + \
-	'and a._Object_key = p._Probe_key ' + \
-	'and p._Source_key = ps._Source_key ' + \
-	'and ps._Organism_key = 1 ' + \
-	'and not exists (select 1 from ACC_Accession s ' + \
-	'where s._MGIType_key = 19 and s._LogicalDB_key = a._LogicalDB_key and s.accID = a.accID)', None)
+    db.sql("""select upper(a.accID) accID, a._LogicalDB_key, ps._Organism_key 
+	INTO TEMPORARY TABLE probeaccs1 
+	from ACC_Accession a, PRB_Probe p, PRB_Source ps 
+	where a._MGIType_key = 3 
+	and a._LogicalDB_key = 9 
+	and a._Object_key = p._Probe_key 
+	and p._Source_key = ps._Source_key 
+	and ps._Organism_key = 1 
+	and not exists (select 1 from ACC_Accession s 
+	    where s._MGIType_key = 19 
+		and s._LogicalDB_key = a._LogicalDB_key 
+		and lower(s.accID) = lower(a.accID)
+	)""", None)
 
     # generate table of all mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
-	'INTO TEMPORARY TABLE markeraccs1 ' + \
-	'from ACC_Accession a, MRK_Marker m ' + \
-	'where a._MGIType_key = 2 ' + \
-	'and a._LogicalDB_key in (9,13,27,35,36,41,53) ' + \
-	'and a._Object_key = m._Marker_key ' + \
-	'and m._Organism_key = 1 ' + \
-	'and not exists (select 1 from ACC_Accession s ' + \
-	'where s._MGIType_key = 19 and s._LogicalDB_key = a._LogicalDB_key and s.accID = a.accID)', None)
+    db.sql("""select upper(a.accID) accID, a._LogicalDB_key, m._Organism_key 
+	INTO TEMPORARY TABLE markeraccs1 
+	from ACC_Accession a, MRK_Marker m 
+	where a._MGIType_key = 2 
+	and a._LogicalDB_key in (9,13,27,35,36,41,53) 
+	and a._Object_key = m._Marker_key 
+	and m._Organism_key = 1 
+	and not exists (select 1 from ACC_Accession s 
+	    where s._MGIType_key = 19 
+		and s._LogicalDB_key = a._LogicalDB_key 
+		and lower(s.accID) = lower(a.accID)
+	)""", None)
 
     # generate table of all non-mouse molecular segments Acc IDs whose GenBank SeqIDs
     # are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key, s._Organism_key ' + \
-	'INTO TEMPORARY TABLE probeaccs2 ' + \
-	'from ACC_Accession a, PRB_Probe p, PRB_Source s ' + \
-	'where a._MGIType_key = 3 ' + \
-	'and a._LogicalDB_key = 9 ' + \
-	'and a._Object_key = p._Probe_key ' + \
-	'and p._Source_key = s._Source_key ' + \
-	'and s._Organism_key != 1 ' + \
-	'and not exists (select 1 from ACC_Accession s ' + \
-	'where s._MGIType_key = 19 and s._LogicalDB_key = a._LogicalDB_key and s.accID = a.accID)', None)
+    db.sql("""select upper(a.accID) accID, a._LogicalDB_key, s._Organism_key 
+	INTO TEMPORARY TABLE probeaccs2 
+	from ACC_Accession a, PRB_Probe p, PRB_Source s 
+	where a._MGIType_key = 3 
+	and a._LogicalDB_key = 9 
+	and a._Object_key = p._Probe_key 
+	and p._Source_key = s._Source_key 
+	and s._Organism_key != 1 
+	and not exists (select 1 from ACC_Accession s 
+	    where s._MGIType_key = 19 
+		and s._LogicalDB_key = a._LogicalDB_key 
+		and lower(s.accID) = lower(a.accID)
+	)""", None)
 
     # generate table of all non-mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
-    db.sql('select distinct a.accID, a._LogicalDB_key, m._Organism_key ' + \
-	'INTO TEMPORARY TABLE markeraccs2 ' + \
-	'from ACC_Accession a, MRK_Marker m ' + \
-	'where a._MGIType_key = 2 ' + \
-	'and a._LogicalDB_key in (9,13,27,35,36,41,53) ' + \
-	'and a._Object_key = m._Marker_key ' + \
-	'and m._Organism_key != 1 ' + \
-	'and not exists (select 1 from ACC_Accession s ' + \
-	'where s._MGIType_key = 19 and s._LogicalDB_key = a._LogicalDB_key and s.accID = a.accID)', None)
+    db.sql("""select upper(a.accID) accID, a._LogicalDB_key, m._Organism_key 
+	INTO TEMPORARY TABLE markeraccs2 
+	from ACC_Accession a, MRK_Marker m 
+	where a._MGIType_key = 2 
+	and a._LogicalDB_key in (9,13,27,35,36,41,53) 
+	and a._Object_key = m._Marker_key 
+	and m._Organism_key != 1 
+	and not exists (select 1 from ACC_Accession s 
+	    where s._MGIType_key = 19 
+		and s._LogicalDB_key = a._LogicalDB_key 
+		and lower(s.accID) = lower(a.accID)
+	)""", None)
 
     # union these 4 sets together to form one unique set
 
@@ -358,12 +326,17 @@ def process():
 	assocKey = assocKey + 1
 	accKey = accKey + 1
 
-#
-# Main
-#
 
-init()
-setPrimaryKeys()
-process()
-exit(0)
+if __name__ == "__main__":
+    try:
+	init()
+	setPrimaryKeys()
+	process()
+
+    finally:
+	# always close output files
+	seqFile.close()
+	rawFile.close()
+	sourceFile.close()
+	accFile.close()
 
