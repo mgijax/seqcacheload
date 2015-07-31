@@ -1,9 +1,11 @@
+TAG: seqcacheload-6-0-0-3
 TAG: seqcacheload-6-0-0-2
 TAG: seqcacheload-6-0-0-1
 DATE: 07/22/2015, 07/29/2015
-STAFF: lec 
+STAFF: lec, kstone 
 CHANGES:
 1) TR11750/postgres
+2) bug fix to seqdummy.py
 
 TAG: seqcacheload-sybase
 DATE: 06/25/2015
