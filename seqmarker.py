@@ -255,7 +255,7 @@ def init ():
     # NCBI Gene Model(59), GenBank DNA (9)
 
     # get the set of all preferred GenBank DNA sequences
-    db.sql('select a.accID as seqID, a._Object_key as _Sequence_key ' + \
+    db.sql('select upper(a.accID) as seqID, a._Object_key as _Sequence_key ' + \
         'INTO TEMPORARY TABLE gbDNA ' + \
         'from ACC_Accession a, SEQ_Sequence s ' + \
         'where a._LogicalDB_key = 9  ' + \
@@ -265,13 +265,13 @@ def init ():
         'and s._SequenceType_key = 316347', None)
 
     # get the set of all Ensembl, NCBI, VEGA gene models
-    db.sql('select a.accID as seqID, a._Object_key as _Sequence_key ' + \
+    db.sql('select upper(a.accID) as seqID, a._Object_key as _Sequence_key ' + \
 	'INTO TEMPORARY TABLE gm ' + \
 	'from ACC_Accession a ' + \
         'where a._LogicalDB_key in (59, 60, 85) ' + \
 	'and a.preferred = 1 ' + \
         'and a._MGIType_key = 19', None)
-    db.sql('create index idx_1 on gm (seqID)', None)
+    db.sql('create index idx_1 on gm (lower(seqID))', None)
     db.sql('create index idx_2 on gm (_Sequence_key)', None)
 
     # union the set
@@ -281,14 +281,15 @@ def init ():
 	'union ' + \
 	'select seqID, _Sequence_key ' + \
 	'from gm', None)
-    db.sql('create index idx_3 on allSeqs (seqID)', None)
+    db.sql('create index idx_3_lower on allSeqs (lower(seqID))', None)
+
     # get markers for these sequences
     results = db.sql('select s._Sequence_key, ' + \
 	'a._Object_key as _Marker_key ' + \
 	'from allSeqs s, ACC_Accession a ' + \
 	'where a._MGIType_key = 2 ' + \
 	'and a._LogicalDB_key in (59, 60, 85, 9) ' + \
-	'and s.seqID = a.accid ' + \
+	'and lower(s.seqID) = lower(a.accid) ' + \
 	'order by _Sequence_key ', 'auto')
 
     # load genomic sequences associated with markers lookup
@@ -1187,7 +1188,7 @@ def generateBiotypeLookups():
 	 from gm s, ACC_Accession a, SEQ_GeneModel g
 	 where a._MGIType_key = 2
 	 and a._LogicalDB_key in (59, 60, 85)
-	 and s.seqID = a.accid
+	 and lower(s.seqID) = lower(a.accid)
 	 and s._Sequence_key = g._Sequence_key
 	 order by s._Sequence_key
 	 ''', 'auto')
@@ -1409,7 +1410,7 @@ def createBCP():
 	'and a._Accession_key = r._Accession_key', None)
 
     db.sql('create index idx5 on markerAccs (_LogicalDB_key, accID)', None)
-    db.sql('create index idx6 on markerAccs (accID)', None)
+    db.sql('create index idx6 on markerAccs (lower(accID))', None)
 
     # select all sequence annotations
     
@@ -1421,7 +1422,7 @@ def createBCP():
 	'm.mdate, m.accID ' + \
 	'INTO TEMPORARY TABLE preallannot ' + \
 	'from markerAccs m, ACC_Accession s ' + \
-	'where m.accID = s.accID ' + \
+	'where lower(m.accID) = lower(s.accID) ' + \
 	'and m._LogicalDB_key = s._LogicalDB_key ' + \
 	'and s._MGIType_key = 19 ', None)
 
@@ -1444,7 +1445,7 @@ def createBCP():
     db.sql('select a._Sequence_key, a._Marker_key, a._Organism_key, ' + \
 	'a._Marker_Type_key, a._SequenceProvider_key, ' + \
 	'a._SequenceType_key, a._LogicalDB_key, ' + \
-	'a._Refs_key, a._User_key, a.mdate, ac.accID ' + \
+	'a._Refs_key, a._User_key, a.mdate, upper(ac.accID) accID ' + \
 	'INTO TEMPORARY TABLE allseqannot ' + \
 	'from allannot a, ACC_Accession ac ' + \
 	'where a._Sequence_key = ac._Object_key ' + \
