@@ -55,6 +55,7 @@ import loadlib
 import sourceloadlib
 import db
 
+db.setTrace()
 db.setAutoTranslate(False)
 db.setAutoTranslateBE(False)
 
@@ -143,7 +144,7 @@ def process():
     # generate table of all mouse molecular segments Acc IDs whose GenBank SeqIDs
     # are not represented as Sequence objects.
 
-    db.sql("""select upper(a.accID) accID, a._LogicalDB_key, ps._Organism_key 
+    db.sql("""select a.accID, a._LogicalDB_key, ps._Organism_key 
 	INTO TEMPORARY TABLE probeaccs1 
 	from ACC_Accession a, PRB_Probe p, PRB_Source ps 
 	where a._MGIType_key = 3 
@@ -160,7 +161,7 @@ def process():
     # generate table of all mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
-    db.sql("""select upper(a.accID) accID, a._LogicalDB_key, m._Organism_key 
+    db.sql("""select a.accID, a._LogicalDB_key, m._Organism_key 
 	INTO TEMPORARY TABLE markeraccs1 
 	from ACC_Accession a, MRK_Marker m 
 	where a._MGIType_key = 2 
@@ -176,7 +177,7 @@ def process():
     # generate table of all non-mouse molecular segments Acc IDs whose GenBank SeqIDs
     # are not represented as Sequence objects.
 
-    db.sql("""select upper(a.accID) accID, a._LogicalDB_key, s._Organism_key 
+    db.sql("""select a.accID, a._LogicalDB_key, s._Organism_key 
 	INTO TEMPORARY TABLE probeaccs2 
 	from ACC_Accession a, PRB_Probe p, PRB_Source s 
 	where a._MGIType_key = 3 
@@ -193,7 +194,7 @@ def process():
     # generate table of all non-mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
-    db.sql("""select upper(a.accID) accID, a._LogicalDB_key, m._Organism_key 
+    db.sql("""select a.accID, a._LogicalDB_key, m._Organism_key 
 	INTO TEMPORARY TABLE markeraccs2 
 	from ACC_Accession a, MRK_Marker m 
 	where a._MGIType_key = 2 
