@@ -1096,7 +1096,7 @@ def generateBiotypeLookups():
 
     for m in mappingList:
         rawList = string.split(m, ':')
-        raw = string.strip(rawList[0])
+	raw = string.strip(rawList[0])
         equivList = string.split(rawList[1], '|')
 	if raw in pseudogeneRawFeatureTypeList:
 	    equivList.append('pseudogenic region')
@@ -1116,15 +1116,12 @@ def generateBiotypeLookups():
         NCBIEquivDict[raw] = equivKeySet
 
     print 'Initializing Ensembl raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
-    ensEquiv1 = string.lower(os.environ['ENSEMBL_EQUIV1'])
-    ensEquiv2 = string.lower(os.environ['ENSEMBL_EQUIV2'])
-    ensEquiv3 = string.lower(os.environ['ENSEMBL_EQUIV3'])
 
-    ensEquiv = '%s,%s,%s' % (ensEquiv1, ensEquiv2, ensEquiv3)
+    ensEquiv = string.lower(os.environ['ENSEMBL_EQUIV'])
     mappingList = string.split(ensEquiv, ',')
     for m in mappingList:
         rawList = string.split(m, ':')
-        raw = string.strip(rawList[0])
+	raw = string.strip(rawList[0])
         equivList = string.split(rawList[1], '|')
 	if raw in pseudogeneRawFeatureTypeList:
             equivList.append('pseudogenic region')
@@ -1133,6 +1130,7 @@ def generateBiotypeLookups():
 	equivKeySet = set()
         for e in equivList:
             e = string.strip(e)
+	    print 'mappingTerm: %s' % e
             if e == ALL_FEATURES_CONFIG_TERM:
                 equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
             elif e == NC_RNA_CONFIG_TERM:
@@ -1144,16 +1142,7 @@ def generateBiotypeLookups():
         EnsEquivDict[raw] = equivKeySet
 
     print 'Initializing VEGA raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
-    vegaEquiv1 = string.lower(os.environ['VEGA_EQUIV1'])
-    vegaEquiv2 = string.lower(os.environ['VEGA_EQUIV2'])
-    vegaEquiv3 = string.lower(os.environ['VEGA_EQUIV3'])
-    vegaEquiv4 = string.lower(os.environ['VEGA_EQUIV4'])
-    vegaEquiv5 = string.lower(os.environ['VEGA_EQUIV5'])
-    vegaEquiv6 = string.lower(os.environ['VEGA_EQUIV6'])
-    vegaEquiv7 = string.lower(os.environ['VEGA_EQUIV7'])
-    vegaEquiv8 = string.lower(os.environ['VEGA_EQUIV8'])
-
-    vegaEquiv = '%s,%s,%s,%s,%s,%s,%s,%s' % (vegaEquiv1, vegaEquiv2, vegaEquiv3, vegaEquiv4, vegaEquiv5, vegaEquiv6, vegaEquiv7, vegaEquiv8)
+    vegaEquiv = string.lower(os.environ['VEGA_EQUIV'])
     mappingList = string.split(vegaEquiv, ',')
     for m in mappingList:
 	rawList = string.split(m, ':')

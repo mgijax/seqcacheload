@@ -1,3 +1,11 @@
+TAG: seqcacheload-6-0-0-6
+DATE: 09/10/2015
+STAFF: sc
+CHANGES: TR12108 MCV/biotype mapping changes
+1) Configuration.default - new mapping for all providers created by Sophia
+   also one var per provider as length supported by linux
+2) seqmarker.py - remove concatenation of multi vars per provider
+
 TAG: seqcacheload-6-0-0-5
 DATE: 08/18/2015
 STAFF: lec 
