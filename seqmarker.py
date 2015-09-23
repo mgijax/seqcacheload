@@ -188,10 +188,7 @@ alltranscript = [{}, {}, {}, {}, {}, {}, {}]
 # 0=RefSeq NR
 # 1=GenBank RNA, not EST
 # 2=Refseq XM
-# 3=DFCI
-# 4=DoTS
-# 5=NIA
-# 6=GenBank RNA, EST
+# 3=GenBank RNA, EST
 
 #  represents the longest protein for the current marker by provider
 # each dictionary looks like: {_Marker_key:_Sequence_key, ...}
@@ -1531,7 +1528,6 @@ def createBCP():
 	# longest NM_ or NR_ RefSeq
 	# longest non-EST GenBank
 	# longest XM_ or XR_ RefSeq
-	# longest DFCI, DoTS, NIA Mouse Gene Index,
 	# longest EST GenBank
 	#
 
@@ -1556,28 +1552,10 @@ def createBCP():
 		alltranscript[2][m] = s
 		tlengths[2] = seqlength
 
-	# DFCI
-	elif providerKey == 316381:
-	    if seqlength > tlengths[3]:
-		alltranscript[3][m] = s
-		tlengths[3] = seqlength
-
-	# DoTS
-	elif providerKey == 316382:
-	    if seqlength > tlengths[4]:
-		alltranscript[4][m] = s
-		tlengths[4] = seqlength
-
-	# NIA
-	elif providerKey == 316383:
-	    if seqlength > tlengths[5]:
-		alltranscript[5][m] = s
-		tlengths[5] = seqlength
-
 	# GenBank EST; RNA
 	elif providerKey == 316376 and seqTypeKey == 316346:
 	    if seqlength > tlengths[6]:
-		alltranscript[6][m] = s
+		alltranscript[3][m] = s
 		tlengths[6] = seqlength
 
 	#
