@@ -159,13 +159,13 @@ def process():
 	)""", None)
 
     # generate table of all mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
-    # TrEMBL IDs are not represented as Sequence objects.
+    # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
     db.sql("""select a.accID, a._LogicalDB_key, m._Organism_key 
 	INTO TEMPORARY TABLE markeraccs1 
 	from ACC_Accession a, MRK_Marker m 
 	where a._MGIType_key = 2 
-	and a._LogicalDB_key in (9,13,27,41) 
+	and a._LogicalDB_key in (9,13,27,35,36,41,53) 
 	and a._Object_key = m._Marker_key 
 	and m._Organism_key = 1 
 	and not exists (select 1 from ACC_Accession s 
@@ -192,13 +192,13 @@ def process():
 	)""", None)
 
     # generate table of all non-mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
-    # TrEMBL IDs are not represented as Sequence objects.
+    # DFCI, DoTS, TrEMBL IDs are not represented as Sequence objects.
 
     db.sql("""select a.accID, a._LogicalDB_key, m._Organism_key 
 	INTO TEMPORARY TABLE markeraccs2 
 	from ACC_Accession a, MRK_Marker m 
 	where a._MGIType_key = 2 
-	and a._LogicalDB_key in (9,13,27,41) 
+	and a._LogicalDB_key in (9,13,27,35,36,41,53) 
 	and a._Object_key = m._Marker_key 
 	and m._Organism_key != 1 
 	and not exists (select 1 from ACC_Accession s 
@@ -240,8 +240,8 @@ def process():
 
 	# types:  316347 (DNA), 316346 (RNA), 316348 (polypeptide), 316349 (not loaded)
 	# quality:  316338 (high), 316339 (medium), 316340 (low), 316341 (not loaded)
-	# provider: 316380 (GenBank/EMBL/DDBJ), 316372 (RefSeq)
-	#           316384 (SwissProt), 316385 (TrEMBL)
+	# provider: 316380 (GenBank/EMBL/DDBJ), 316372 (RefSeq), 316381 (DFCI)
+	#           316382 (DoTS), 316384 (SwissProt), 316385 (TrEMBL), 316383 (NIA)
 
         if logicalDB == 9:	# GenBank
             typeKey = 316349
@@ -254,6 +254,16 @@ def process():
             qualityKey = 316338
             providerKey = 316372
 
+        elif logicalDB == 35:     # DFCI
+            typeKey = 316346
+            qualityKey = 316340
+            providerKey = 316381
+
+        elif logicalDB == 36:     # DoTS
+            typeKey = 316346
+            qualityKey = 316340
+            providerKey = 316382
+
         elif logicalDB == 13:     # SwissProt
             typeKey = 316348
             qualityKey = 316338
@@ -263,6 +273,11 @@ def process():
             typeKey = 316348
             qualityKey = 316340
             providerKey = 316385
+
+        elif logicalDB == 53:     # NIA Mouse Gene Index
+            typeKey = 316346
+            qualityKey = 316340
+            providerKey = 316383
 
         seqFile.write(mgi_utils.prvalue(seqKey) + DL + \
         	mgi_utils.prvalue(typeKey) + DL + \
