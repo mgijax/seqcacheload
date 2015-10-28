@@ -32,8 +32,6 @@ echo 'BCP Files are empty' | tee -a ${LOG}
 exit 0
 endif
 
-exit 0
-
 # truncate table
 
 ${SCHEMADIR}/table/${TABLE}_truncate.object | tee -a ${LOG}

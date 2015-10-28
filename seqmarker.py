@@ -28,14 +28,10 @@
 #
 #  Exit Codes:
 #
-# TO DO: 
-# 1. string.lower term comparisons, 
-# 2. string.strip on incoming equivalency mappings
-# 3. update history
-# 4. update comments
-# 5. remove debug
-#
 #  History
+#
+# 10/28/2015	lec
+#	- TR12070/TR12116/TR10308/biotype conflict revision : generateBiotypeLookups()
 #
 # 09/08/11	sc
 #	- TR10308/biotype conflict revision
@@ -88,23 +84,6 @@ db.setAutoTranslateBE(False)
 # CONSTANTS
 #
 
-# database errors
-DB_ERROR = 'A database error occured: '
-DB_CONNECT_ERROR = 'Connection to the database failed: '
-
-# record delimiter
-NL = '\n'
-
-# NEW - sequence to sequence qualifiers
-# A transcript is transcribed from a genomic sequence
-TRANSCRIBED_FROM_KEY = 5445464
-
-# A protein is translated from a transcript sequence
-TRANSLATED_FROM_KEY = 5445465
-
-# column delimiter
-DL = os.environ['COLDELIM']
-
 # table for which we are creating bcp file
 table = os.environ['TABLE']
 
@@ -115,6 +94,23 @@ datadir = os.environ['CACHEDATADIR']
 # prints case number, markerKey, four sets of genomic sequences and the
 # representative sequence selected
 debug = os.environ['SEQMARKER_DEBUG']
+
+# column delimiter
+DL = os.environ['COLDELIM']
+
+# record delimiter
+NL = '\n'
+
+# database errors
+DB_ERROR = 'A database error occured: '
+DB_CONNECT_ERROR = 'Connection to the database failed: '
+
+# NEW - sequence to sequence qualifiers
+# A transcript is transcribed from a genomic sequence
+TRANSCRIBED_FROM_KEY = 5445464
+
+# A protein is translated from a transcript sequence
+TRANSLATED_FROM_KEY = 5445465
 
 # date with which to record stamp database records
 loaddate = loadlib.loaddate
@@ -235,13 +231,11 @@ def init ():
     
     db.useOneConnection(1)
 
-    print 'Initializing ...%s' % (mgi_utils.date())
     #
     # load representative sequence qualifer lookups
     #
-    results = db.sql('select _Term_key, ' + \
-        'term from VOC_Term_RepQualifier_View', 'auto')
-
+    print 'Initializing ...%s' % (mgi_utils.date())
+    results = db.sql('select _Term_key, term from VOC_Term_RepQualifier_View', 'auto')
     for r in results:
        qualByTermLookup[r['term']] = r['_Term_key']
        qualByTermKeyLookup[r['_Term_key']] = r['term']
@@ -252,42 +246,49 @@ def init ():
     # NCBI Gene Model(59), GenBank DNA (9)
 
     # get the set of all preferred GenBank DNA sequences
-    db.sql('select upper(a.accID) as seqID, a._Object_key as _Sequence_key ' + \
-        'INTO TEMPORARY TABLE gbDNA ' + \
-        'from ACC_Accession a, SEQ_Sequence s ' + \
-        'where a._LogicalDB_key = 9  ' + \
-        'and a._MGIType_key = 19  ' + \
-	'and a.preferred = 1 ' + \
-        'and a._Object_key = s._Sequence_key  ' + \
-        'and s._SequenceType_key = 316347', None)
+    db.sql('''
+    	select upper(a.accID) as seqID, a._Object_key as _Sequence_key 
+        INTO TEMPORARY TABLE gbDNA 
+        from ACC_Accession a, SEQ_Sequence s 
+        where a._LogicalDB_key = 9  
+        and a._MGIType_key = 19  
+	and a.preferred = 1 
+        and a._Object_key = s._Sequence_key  
+        and s._SequenceType_key = 316347
+	''', None)
 
     # get the set of all Ensembl, NCBI, VEGA gene models
-    db.sql('select upper(a.accID) as seqID, a._Object_key as _Sequence_key ' + \
-	'INTO TEMPORARY TABLE gm ' + \
-	'from ACC_Accession a ' + \
-        'where a._LogicalDB_key in (59, 60, 85) ' + \
-	'and a.preferred = 1 ' + \
-        'and a._MGIType_key = 19', None)
+    db.sql('''
+    	select upper(a.accID) as seqID, a._Object_key as _Sequence_key 
+	INTO TEMPORARY TABLE gm 
+	from ACC_Accession a 
+        where a._LogicalDB_key in (59, 60, 85) 
+	and a.preferred = 1 
+        and a._MGIType_key = 19
+	''', None)
     db.sql('create index idx_1 on gm (lower(seqID))', None)
     db.sql('create index idx_2 on gm (_Sequence_key)', None)
 
     # union the set
-    db.sql('select seqID, _Sequence_key ' + \
-	'INTO TEMPORARY TABLE allSeqs ' + \
-	'from gbDNA ' + \
-	'union ' + \
-	'select seqID, _Sequence_key ' + \
-	'from gm', None)
+    db.sql('''
+    	select seqID, _Sequence_key 
+	INTO TEMPORARY TABLE allSeqs 
+	from gbDNA 
+	union 
+	select seqID, _Sequence_key 
+	from gm
+	''', None)
     db.sql('create index idx_3_lower on allSeqs (lower(seqID))', None)
 
     # get markers for these sequences
-    results = db.sql('select s._Sequence_key, ' + \
-	'a._Object_key as _Marker_key ' + \
-	'from allSeqs s, ACC_Accession a ' + \
-	'where a._MGIType_key = 2 ' + \
-	'and a._LogicalDB_key in (59, 60, 85, 9) ' + \
-	'and lower(s.seqID) = lower(a.accid) ' + \
-	'order by _Sequence_key ', 'auto')
+    results = db.sql('''
+    	select s._Sequence_key, a._Object_key as _Marker_key 
+	from allSeqs s, ACC_Accession a 
+	where a._MGIType_key = 2 
+	and a._LogicalDB_key in (59, 60, 85, 9) 
+	and lower(s.seqID) = lower(a.accid) 
+	order by _Sequence_key 
+	''', 'auto')
 
     # load genomic sequences associated with markers lookup
     prevSeqKey = ''
@@ -305,16 +306,17 @@ def init ():
     # genomic, transcript, and protein sequences
     #
     # Load transcriptLookupByGenomicKey 
-    db.sql('select sa._Sequence_key_1 as transcriptKey, ' + \
-	'ss.length as transcriptLength, ' + \
-	'sa._Sequence_key_2 as genomicKey ' + \
-	'INTO TEMPORARY TABLE transGen ' + \
-	'from SEQ_Sequence_Assoc sa, SEQ_Sequence ss ' + \
-	'where sa._Qualifier_key = %s ' % TRANSCRIBED_FROM_KEY + \
-	'and sa._Sequence_key_1 = ss._Sequence_key', None)
+    db.sql('''
+    	select sa._Sequence_key_1 as transcriptKey, 
+		ss.length as transcriptLength, 
+		sa._Sequence_key_2 as genomicKey 
+	INTO TEMPORARY TABLE transGen 
+	from SEQ_Sequence_Assoc sa, SEQ_Sequence ss 
+	where sa._Qualifier_key = %s 
+	and sa._Sequence_key_1 = ss._Sequence_key
+	''' % (TRANSCRIBED_FROM_KEY), None)
     db.sql('create index idx4 on transGen(transcriptKey)', None)
-    results = db.sql('select * from transGen ' + \
-	'order by genomicKey', 'auto')
+    results = db.sql('select * from transGen order by genomicKey', 'auto')
     prevGKey = ''
     for r in results:
 	gKey = r['genomicKey']
@@ -326,15 +328,16 @@ def init ():
         prevGKey = gKey
 
     # Load proteinLookupByGenomicKey
-    results = db.sql('select tg.genomicKey, ' + \
-	'sa._Sequence_key_1 as proteinKey, ' + \
-	'ss.length as proteinLength ' + \
-	'from transGen tg, SEQ_Sequence_Assoc sa, ' + \
-	'SEQ_Sequence ss ' + \
-	'where sa._Qualifier_key = %s ' % TRANSLATED_FROM_KEY + \
-	'and tg.transcriptKey =  sa._Sequence_key_2 ' + \
-	'and sa._Sequence_key_1 = ss._Sequence_key ' + \
-	'order by tg.genomicKey', 'auto')
+    results = db.sql('''
+    	select tg.genomicKey, 
+		sa._Sequence_key_1 as proteinKey, 
+		ss.length as proteinLength 
+	from transGen tg, SEQ_Sequence_Assoc sa, SEQ_Sequence ss 
+	where sa._Qualifier_key = %s
+	and tg.transcriptKey =  sa._Sequence_key_2 
+	and sa._Sequence_key_1 = ss._Sequence_key 
+	order by tg.genomicKey
+	''' % (TRANSLATED_FROM_KEY), 'auto')
 
     prevGKey = ''
     for r in results:
@@ -347,14 +350,16 @@ def init ():
         prevGKey = gKey
     # Load transcriptLookupByProteinKey
     # there should be only one transcript for a protein, but one never knows
-    results = db.sql('select sa._Sequence_key_1 as proteinKey, ' + \
-                'sa._Sequence_key_2 as transcriptKey, ' + \
-		'ss.length as transcriptLength ' + \
-                'from SEQ_Sequence_Assoc sa, ' + \
-		'SEQ_Sequence ss ' + \
-                'where sa._Qualifier_key = %s ' % TRANSLATED_FROM_KEY + \
-		'and sa._Sequence_key_2 = ss._Sequence_key ' + \
-                'order by sa._Sequence_key_1', 'auto')
+    results = db.sql('''
+    		select sa._Sequence_key_1 as proteinKey, 
+                	sa._Sequence_key_2 as transcriptKey,
+			ss.length as transcriptLength 
+                from SEQ_Sequence_Assoc sa, 
+		SEQ_Sequence ss 
+                where sa._Qualifier_key = %s 
+		and sa._Sequence_key_2 = ss._Sequence_key 
+                order by sa._Sequence_key_1
+		''' % (TRANSLATED_FROM_KEY), 'auto')
     prevPKey = ''
     for r in results:
         pKey = r['proteinKey']
@@ -377,6 +382,7 @@ def init ():
 def writeError(sKey, lKey, rawBiotype):
     print 'No equivalency set for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' \
 	% (sKey, lKey, rawBiotype)
+
 # Purpose: Determines representative genomic, transcript, and protein
 #          for the given marker
 # Returns: Nothing
@@ -1014,15 +1020,16 @@ def generateBiotypeLookups():
     #
     nonCodingRNAGeneTermKey = 6238162
     
-    results = db.sql('''select t.term as descTerm, c._AncestorObject_key,
+    results = db.sql('''
+    	    select t.term as descTerm, c._AncestorObject_key,
                 c._DescendentObject_key
             from DAG_Closure c, VOC_Term t
             where c._DAG_key = 9
                 and c._MGIType_key = 13
                 and _AncestorObject_key = %s
                 and c._DescendentObject_key = t._Term_key
-            order by  c._AncestorObject_key, c._DescendentObject_key''' % \
-                nonCodingRNAGeneTermKey, 'auto')
+            order by  c._AncestorObject_key, c._DescendentObject_key
+	    ''' % nonCodingRNAGeneTermKey, 'auto')
     # add the term itself
     ncRNAdescSet.add(nonCodingRNAGeneTermKey)
     # add the term 'gene' - C4AM/Build 38
@@ -1036,140 +1043,138 @@ def generateBiotypeLookups():
     #
     allFeatureTypesTermKey = 6238159
 
-    results = db.sql('''select t.term as descTerm, c._AncestorObject_key,
+    results = db.sql('''
+            select t.term as descTerm, c._AncestorObject_key,
                 c._DescendentObject_key
             from DAG_Closure c, VOC_Term t
             where c._DAG_key = 9
                 and c._MGIType_key = 13
                 and _AncestorObject_key = %s
                 and c._DescendentObject_key = t._Term_key
-            order by  c._AncestorObject_key, c._DescendentObject_key''' % \
-                allFeatureTypesTermKey, 'auto')
+            order by  c._AncestorObject_key, c._DescendentObject_key
+	    ''' % allFeatureTypesTermKey, 'auto')
     for r in results:
         allFeatureTypesDescSet.add(r['_DescendentObject_key'])
 
     #
-    # map  all feature type terms to their keys
+    # map all feature type terms to their keys
     #
-    results = db.sql('''select _Term_key, term
-		from VOC_Term
-		where _Vocab_key = 79''', 'auto')
+    results = db.sql('select _Term_key, lower(term) as term from VOC_Term where _Vocab_key = 79', 'auto')
     for r in results:
-	mcvTermToKeyDict[string.lower(r['term'])] = r['_Term_key']
+	mcvTermToKeyDict[r['term']] = r['_Term_key']
 
     #
-    # create list of all raw feature types translating to mkr type 'pseudogene'
+    # create list of all raw biotypes mapping to marker type 'pseudogene'
     #
-
-    results = db.sql('''select badName
-		from MGI_Translation
-		where _TranslationType_key = 1020
-		and _Object_key = 7''', 'auto')
+    results = db.sql('''
+    		select distinct lower(t.term) as term
+    		from MRK_BiotypeMapping m, VOC_Term t
+    		where m._biotypeterm_key = t._Term_key
+		and m._Marker_Type_key = 7
+		order by term
+                ''', 'auto')
     for r in results:
-	pseudogeneRawFeatureTypeList.append( string.lower(string.strip(r['badName'])) )
-    #
-    # create list of all raw feature types translating to mkr type 'gene'
-    #
+	pseudogeneRawFeatureTypeList.append(r['term'])
 
-    results = db.sql('''select badName
-                from MGI_Translation
-                where _TranslationType_key = 1020
-                and _Object_key = 1''', 'auto')
+    #
+    # create list of all raw biotypes mapping to marker type 'gene'
+    #
+    results = db.sql('''
+    		select distinct lower(t.term) as term
+    		from MRK_BiotypeMapping m, VOC_Term t
+    		where m._biotypeterm_key = t._Term_key
+		and m._Marker_Type_key = 1
+		order by term
+                ''', 'auto')
     for r in results:
-        geneRawFeatureTypeList.append( string.lower(string.strip(r['badName'])) )
+        geneRawFeatureTypeList.append(r['term'])
 
     #
     # create NCBI, Ensembl and VEGA equivalency Lookups 
     #
-    # raw term/equivalency sets split on ','
-    # raw term split from equivalent terms using ':'
-    # equivalent terms split on '|'
-    # VEGA example:
-    # ..,_polymorphic:protein coding gene,_pseudogene:pseudogene,.
+    # TR12070/TR12116/TR10308 (rawbiotype spreadsheet converted to tab-delimited file)
+    #
+    # MRK_BiotypeMapping:
+    #	_biotypeterm_key : raw biotype term
+    # 	_mcvterm_key     : feature type
+    # 	_Marker_Type_key : marker type
+    #
+    # one raw biotype maps to 1-or-more feature types
+    # one raw biotype maps to only 1 marker type
+    #
 
-    print 'Initializing NCBI raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
-    ncbiEquiv = string.lower(os.environ['NCBI_EQUIV'])
-    mappingList = string.split(ncbiEquiv, ',')
+    for v in ['BioType Ensembl', 'BioType NCBI', 'BioType VEGA']:
 
-    for m in mappingList:
-        rawList = string.split(m, ':')
-	raw = string.strip(rawList[0])
-        equivList = string.split(rawList[1], '|')
-	if raw in pseudogeneRawFeatureTypeList:
-	    equivList.append('pseudogenic region')
-	elif raw in geneRawFeatureTypeList:
-            equivList.append('gene')
-	equivKeySet = set()
-	for e in equivList:
-	    e = string.strip(e)
-	    if e == ALL_FEATURES_CONFIG_TERM:
-		equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
-	    elif e == NC_RNA_CONFIG_TERM:
-		equivKeySet = equivKeySet.union(ncRNAdescSet)
-	    elif mcvTermToKeyDict.has_key(e):
-                equivKeySet.add(mcvTermToKeyDict[e])
-	    else:
-		sys.exit('NCBI equivalency term does not resolve: %s' % e)
-        NCBIEquivDict[raw] = equivKeySet
+    	print 'Initializing %s raw biotype to equivalency mapping ... %s' % (v, mgi_utils.date())
 
-    print 'Initializing Ensembl raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
+    	# select all distinct raw-biotype terms
+    	rawresults = db.sql('''
+    		select distinct m._biotypeterm_key, lower(t1.term) as rawTerm
+    		from MRK_BiotypeMapping m, VOC_Vocab v, VOC_Term t1
+    		where m._biotypevocab_key = v._vocab_key
+		and v.name = '%s' 
+		and m._biotypeterm_key = t1._Term_key
+		order by rawTerm
+    		''' % (v), 'auto')
 
-    ensEquiv = string.lower(os.environ['ENSEMBL_EQUIV'])
-    mappingList = string.split(ensEquiv, ',')
-    for m in mappingList:
-        rawList = string.split(m, ':')
-	raw = string.strip(rawList[0])
-        equivList = string.split(rawList[1], '|')
-	if raw in pseudogeneRawFeatureTypeList:
-            equivList.append('pseudogenic region')
-        elif raw in geneRawFeatureTypeList:
-            equivList.append('gene')
-	equivKeySet = set()
-        for e in equivList:
-            e = string.strip(e)
-	    print 'mappingTerm: %s' % e
-            if e == ALL_FEATURES_CONFIG_TERM:
-                equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
-            elif e == NC_RNA_CONFIG_TERM:
-                equivKeySet = equivKeySet.union(ncRNAdescSet)
-            elif mcvTermToKeyDict.has_key(e):
-                equivKeySet.add(mcvTermToKeyDict[e])
-            else:
-                sys.exit('Ensembl equivalency term does not resolve: %s' % e)
-        EnsEquivDict[raw] = equivKeySet
+    	for r in rawresults:
 
-    print 'Initializing VEGA raw biotype to equivalency mapping ... %s' % (mgi_utils.date())
-    vegaEquiv = string.lower(os.environ['VEGA_EQUIV'])
-    mappingList = string.split(vegaEquiv, ',')
-    for m in mappingList:
-	rawList = string.split(m, ':')
-	raw = string.strip(rawList[0])
-	equivList = string.split(rawList[1], '|')
-        if raw in pseudogeneRawFeatureTypeList:
-            equivList.append('pseudogenic region')
-        elif raw in geneRawFeatureTypeList:
-            equivList.append('gene')
-	equivKeySet = set()
-        for e in equivList:
-	    e = string.strip(e)
-            if e == ALL_FEATURES_CONFIG_TERM:
-                equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
-            elif e == NC_RNA_CONFIG_TERM:
-                equivKeySet = equivKeySet.union(ncRNAdescSet)
-            elif mcvTermToKeyDict.has_key(e):
-                equivKeySet.add(mcvTermToKeyDict[e])
-            else:
-                sys.exit('VEGA equivalency term does not resolve: %s' % e)
-        VEGAEquivDict[raw] = equivKeySet
+		# equivalency for given raw biotype
+    		equivList = []
+
+		rawKey = r['_biotypeterm_key']
+		rawTerm = r['rawTerm']
+
+		# select all mcvterms for this raw-biotype term
+    		mcvresults = db.sql('''
+			select lower(t1.term) as mcvterm
+    			from MRK_BiotypeMapping m, VOC_Term t1
+    			where m._biotypeterm_key = %s
+    			and m._mcvterm_key = t1._Term_key
+			order by mcvterm
+			'''% (rawKey), 'auto')
+
+		# append extra mcvterms to this raw-biotype term
+		for m in mcvresults:
+			equivList.append(m['mcvterm'])
+
+			if rawTerm in pseudogeneRawFeatureTypeList:
+				equivList.append('pseudogenic region')
+	
+			elif rawTerm in geneRawFeatureTypeList:
+        			equivList.append('gene')
+
+    		equivKeySet = set()
+
+    		for e in equivList:
+    			if e == ALL_FEATURES_CONFIG_TERM:
+				equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
+    			elif e == NC_RNA_CONFIG_TERM:
+				equivKeySet = equivKeySet.union(ncRNAdescSet)
+    			elif mcvTermToKeyDict.has_key(e):
+        			equivKeySet.add(mcvTermToKeyDict[e])
+    			else:
+				sys.exit('%s equivalency term does not resolve: %s' % (v, e))
+
+		if v == 'BioType Ensembl':
+        		EnsEquivDict[rawTerm] = equivKeySet
+		elif v == 'BioType NCBI':
+    			NCBIEquivDict[rawTerm] = equivKeySet
+		elif v == 'BioType VEGA':
+    			VEGAEquivDict[rawTerm] = equivKeySet
+    #print NCBIEquivDict
+    #print len(EnsEquivDict)
+    #print len(VEGAEquivDict)
 
     #
-    #   for each Marker associated with a NCBI (59), Ensembl (60), VEGA (85) 
-    #       gene model sequence:
-    #     get the gene model raw biotype and map it to its set of equivalent
-    #     mcv terms
+    #   for each Marker associated with a 
+    #		NCBI (59), Ensembl (60), VEGA (85) gene model sequence:
+    #     map the gene model raw biotype to its set of equivalent mcv terms
     #
     print 'Initializing  gene model lookup by marker key ... %s' % (mgi_utils.date())
-    results = db.sql('''select s._Sequence_key, a._Object_key as _Marker_key,
+
+    results = db.sql('''
+         select s._Sequence_key, a._Object_key as _Marker_key,
 		a._LogicalDB_key, g.rawBiotype
 	 from gm s, ACC_Accession a, SEQ_GeneModel g
 	 where a._MGIType_key = 2
@@ -1178,7 +1183,6 @@ def generateBiotypeLookups():
 	 and s._Sequence_key = g._Sequence_key
 	 order by s._Sequence_key
 	 ''', 'auto')
-	 #and m._Marker_key = 332286
 
     for r in results:
 	markerKey = r['_Marker_key']
@@ -1232,7 +1236,8 @@ def generateBiotypeLookups():
     results = db.sql('''
 	select _Marker_key, _MCVTerm_key
 	from MRK_MCV_Cache
-	where qualifier = 'D' ''', 'auto')
+	where qualifier = 'D' 
+	''', 'auto')
 
     for r in results:
 	key = r['_Marker_key']
@@ -1279,6 +1284,7 @@ def generateBiotypeLookups():
 
 	    if len(finalIntersectSet) != 1:
 		conflictType = yesConflict
+
 	# now re-iterate thru the marker/sequences
 	# and set the conflict key and raw biotype
 	# all sequences for a given marker get the same conflict key value
@@ -1371,102 +1377,119 @@ def createBCP():
     global outBCP
 
     print 'Processing ...%s' % (mgi_utils.date())
+
     #	
-    # select only mouse, human, rat, dog, chimpanzee, cattle, chicken,
-    # zebrafish and monkey markers with ANY marker status 
-    #db.sql('set rowcount 10000', None)
-    db.sql('select _Marker_key, _Organism_key, _Marker_Type_key ' + \
-	'INTO TEMPORARY TABLE markers from MRK_Marker ' + \
-	'where _Organism_key in (1, 2, 40, 10, 13, 11, 63, 84, 94, 95) ', None)
-	#'where _Organism_key = 1 ' + \
-	#' and _Marker_key in (12179)', None)
-	#'and _Marker_key in (6005, 6385, 6644)', None)
+    # select only:
+    # mouse, human, rat, dog, chimpanzee, cattle, chicken,
+    # zebrafish and monkey 
+    #
+    # with ANY marker status 
+    #
+    db.sql('''
+        select _Marker_key, _Organism_key, _Marker_Type_key 
+	INTO TEMPORARY TABLE markers 
+	from MRK_Marker 
+	where _Organism_key in (1, 2, 40, 10, 13, 11, 63, 84, 94, 95) 
+	''', None)
     db.sql('create index idx_key on markers (_Marker_key)', None)
 
     # select all non-MGI accession ids for markers 
 
-    db.sql('select m._Marker_key, m._Organism_key, m._Marker_Type_key, ' + \
-	'a._LogicalDB_key, a.accID, r._Refs_key, a._ModifiedBy_key, ' + \
-	'to_char( a.modification_date, \'MM/dd/yyyy\') as mdate ' + \
-	'INTO TEMPORARY TABLE markerAccs ' + \
-	'from markers m, ACC_Accession a, ACC_AccessionReference r ' + \
-	'where m._Marker_key = a._Object_key ' + \
-	'and a._MGIType_key = 2 ' + \
-	'and a._LogicalDB_key != 1 ' + \
-	'and a._Accession_key = r._Accession_key', None)
+    db.sql('''
+        select m._Marker_key, m._Organism_key, m._Marker_Type_key, 
+	       a._LogicalDB_key, a.accID, r._Refs_key, a._ModifiedBy_key, 
+	       to_char( a.modification_date, 'MM/dd/yyyy') as mdate 
+	INTO TEMPORARY TABLE markerAccs 
+	from markers m, ACC_Accession a, ACC_AccessionReference r 
+	where m._Marker_key = a._Object_key 
+	and a._MGIType_key = 2 
+	and a._LogicalDB_key != 1 
+	and a._Accession_key = r._Accession_key
+	''', None)
 
     db.sql('create index idx5 on markerAccs (_LogicalDB_key, accID)', None)
     db.sql('create index idx6 on markerAccs (lower(accID))', None)
 
     # select all sequence annotations
     
-    db.sql('select s._Object_key as _Sequence_key, ' + \
-	'm._Marker_key, m._Organism_key, ' + \
-	'm._Marker_Type_key, ' + \
-	'm._LogicalDB_key, ' + \
-	'm._Refs_key, m._ModifiedBy_key as _User_key, ' + \
-	'm.mdate, m.accID ' + \
-	'INTO TEMPORARY TABLE preallannot ' + \
-	'from markerAccs m, ACC_Accession s ' + \
-	'where lower(m.accID) = lower(s.accID) ' + \
-	'and m._LogicalDB_key = s._LogicalDB_key ' + \
-	'and s._MGIType_key = 19 ', None)
+    db.sql('''
+    	select s._Object_key as _Sequence_key, 
+		m._Marker_key, m._Organism_key, 
+		m._Marker_Type_key, 
+		m._LogicalDB_key, 
+		m._Refs_key, m._ModifiedBy_key as _User_key, 
+		m.mdate, m.accID 
+	INTO TEMPORARY TABLE preallannot 
+	from markerAccs m, ACC_Accession s 
+	where lower(m.accID) = lower(s.accID) 
+	and m._LogicalDB_key = s._LogicalDB_key 
+	and s._MGIType_key = 19 
+	''', None)
 
     db.sql('create index idx7 on preallannot (_Sequence_key)', None)
 
     # get the sequence provider and sequence type
 
-    db.sql('select m._Sequence_key, m._Marker_key, m._Organism_key, ' + \
-	'm._Marker_Type_key, ss._SequenceProvider_key, ' + \
-	'ss._SequenceType_key, ' + \
-	'm._LogicalDB_key, m._Refs_key, m._User_key, m.mdate, m.accID ' + \
-	'INTO TEMPORARY TABLE allannot ' + \
-	'from preallannot m, SEQ_Sequence ss ' + \
-	'where m._Sequence_key = ss._Sequence_key', None)
+    db.sql('''
+    	select m._Sequence_key, m._Marker_key, m._Organism_key, 
+	m._Marker_Type_key, ss._SequenceProvider_key, 
+	ss._SequenceType_key, 
+	m._LogicalDB_key, m._Refs_key, m._User_key, m.mdate, m.accID 
+	INTO TEMPORARY TABLE allannot 
+	from preallannot m, SEQ_Sequence ss 
+	where m._Sequence_key = ss._Sequence_key
+	''', None)
 
     db.sql('create index idx8 on allannot (_Sequence_key)', None)
 
     # grab sequence's primary accID
 
-    db.sql('select a._Sequence_key, a._Marker_key, a._Organism_key, ' + \
-	'a._Marker_Type_key, a._SequenceProvider_key, ' + \
-	'a._SequenceType_key, a._LogicalDB_key, ' + \
-	'a._Refs_key, a._User_key, a.mdate, upper(ac.accID) accID ' + \
-	'INTO TEMPORARY TABLE allseqannot ' + \
-	'from allannot a, ACC_Accession ac ' + \
-	'where a._Sequence_key = ac._Object_key ' + \
-	'and ac._MGIType_key = 19 ' + \
-	'and ac.preferred = 1', None)
+    db.sql('''
+        select a._Sequence_key, a._Marker_key, a._Organism_key, 
+		a._Marker_Type_key, a._SequenceProvider_key, 
+		a._SequenceType_key, a._LogicalDB_key, 
+		a._Refs_key, a._User_key, a.mdate, upper(ac.accID) accID 
+	INTO TEMPORARY TABLE allseqannot 
+	from allannot a, ACC_Accession ac 
+	where a._Sequence_key = ac._Object_key 
+	and ac._MGIType_key = 19 
+	and ac.preferred = 1
+	''', None)
 
     db.sql('create index idx9 on allseqannot (_Sequence_key, _Marker_key, _Refs_key)', None)
 
     # select records, grouping by sequence, marker and reference
-    db.sql('select _Sequence_key, _Marker_key, _Organism_key, ' + \
-	'_Marker_Type_key, _SequenceProvider_key, _SequenceType_key, ' + \
-	'_LogicalDB_key, _Refs_key, _User_key, max(mdate) as mdate, accID ' + \
-	'INTO TEMPORARY TABLE finalannot ' + \
-	'from allseqannot ' + \
-	'group by _Sequence_key, _Marker_key, _Refs_key, _organism_Key, _marker_type_key, _sequenceprovider_key, '+ \
-	'_sequencetype_key, _logicaldb_key, _user_key, accID', None)
+    db.sql('''
+        select _Sequence_key, _Marker_key, _Organism_key, 
+		_Marker_Type_key, _SequenceProvider_key, _SequenceType_key, 
+		_LogicalDB_key, _Refs_key, _User_key, max(mdate) as mdate, accID 
+	INTO TEMPORARY TABLE finalannot 
+	from allseqannot 
+	group by _Sequence_key, _Marker_key, _Refs_key, _organism_Key, _marker_type_key, _sequenceprovider_key,
+		_sequencetype_key, _logicaldb_key, _user_key, accID
+	''', None)
     db.sql('create index idx10 on finalannot (_Sequence_key, _Marker_key, _Refs_key, _User_key, mdate)', None)
     db.sql('create index idx11 on finalannot (_Sequence_key, _Marker_key, _Marker_Type_key, accID)', None)
     db.sql('create index idx12 on finalannot (_Marker_key)', None)
 
-    db.sql('select distinct _Sequence_key, _Marker_key, ' + \
-	'_Marker_Type_key, accID ' + \
-	'INTO TEMPORARY TABLE deriveQuality ' + \
-	'from finalannot order by _Marker_key', None)
+    db.sql('''
+        select distinct _Sequence_key, _Marker_key, _Marker_Type_key, accID
+	INTO TEMPORARY TABLE deriveQuality
+	from finalannot order by _Marker_key
+	''', None)
     db.sql('create index idx13 on deriveQuality (_Sequence_key)', None)
     db.sql('create index idx14 on deriveQuality (_Marker_key)', None)
 
     # do not include deleted sequences
-    results = db.sql('select q._Sequence_key, q._Marker_key, ' + \
-	'q._Marker_Type_key, q.accID, s._SequenceProvider_key, ' + \
-	's._SequenceType_key, s.length ' + \
-	'from deriveQuality q, SEQ_Sequence s ' + \
-	'where q._Sequence_key = s._Sequence_key ' + \
-	'and s._SequenceStatus_key != 316343 ' + \
-	'order by q._Marker_key, s._SequenceProvider_key', 'auto')
+    results = db.sql('''
+    	select q._Sequence_key, q._Marker_key, 
+		q._Marker_Type_key, q.accID, s._SequenceProvider_key, 
+		s._SequenceType_key, s.length 
+	from deriveQuality q, SEQ_Sequence s 
+	where q._Sequence_key = s._Sequence_key 
+	and s._SequenceStatus_key != 316343 
+	order by q._Marker_key, s._SequenceProvider_key
+	''', 'auto')
 
     # process derived representative values
     prevMarker = ''
@@ -1595,11 +1618,13 @@ def createBCP():
     determineRepresentative(prevMarker)
 
     print 'Writing bcp file ...%s' % (mgi_utils.date())
-    results = db.sql('select distinct _Sequence_key, _Marker_key, ' + \
-	'_Organism_key, _Marker_Type_key, _SequenceProvider_key, ' + \
-	'_SequenceType_key, _LogicalDB_key, _Refs_key, ' + \
-	'_User_key, mdate, accID ' + \
-	'from finalannot', 'auto')
+    results = db.sql('''
+    	select distinct _Sequence_key, _Marker_key,
+		_Organism_key, _Marker_Type_key, _SequenceProvider_key,
+		_SequenceType_key, _LogicalDB_key, _Refs_key,
+		_User_key, mdate, accID 
+	from finalannot
+	''', 'auto')
     
     # results are ordered by  _Sequence_key, _Marker_key, _Refs_key
     for r in results:
