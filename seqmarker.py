@@ -1162,9 +1162,10 @@ def generateBiotypeLookups():
     			NCBIEquivDict[rawTerm] = equivKeySet
 		elif v == 'BioType VEGA':
     			VEGAEquivDict[rawTerm] = equivKeySet
-    #print NCBIEquivDict
-    #print len(EnsEquivDict)
-    #print len(VEGAEquivDict)
+    if debug == 'true':
+    	print len(NCBIEquivDict)
+    	print len(EnsEquivDict)
+    	print len(VEGAEquivDict)
 
     #
     #   for each Marker associated with a 
