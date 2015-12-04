@@ -1143,12 +1143,22 @@ def generateBiotypeLookups():
     		equivKeySet = set()
 
     		for e in equivList:
+
 			# consider all children
     			if e == 'all feature types':
 				print 'biotype conflicts : allFeatureTypesDescSet'
 				equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
+
 			# consider all children
-    			elif e == 'non-coding rna gene':
+    			elif e == 'non-coding rna gene' \
+					and rawTerm in ['non_coding',
+						'_non_coding',
+						'misc_rna', 
+						'miscrna',
+						'ncrna',
+						'known_non_coding',
+						'novel_non_coding',
+						'putative_non_coding']:
 				print 'biotype conflicts : ncRNAdescSet'
 				equivKeySet = equivKeySet.union(ncRNAdescSet)
     			elif mcvTermToKeyDict.has_key(e):
