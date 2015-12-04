@@ -1,8 +1,11 @@
+TAG: seqcacheload-6-0-2-?
 TAG: seqcacheload-6-0-2-1
-DATE: 12/02/2015
+DATE: 12/02/2015, 12/03/2015
 STAFF: lec
 CHANGES:
+seqmarker.py
 1) TR12070/12038/dots/dfci/nia
+2) TR12070/12116/bitype conflicts
 
 branch is :  tr12070-1
 (made a mistake when making tr12070 branch)

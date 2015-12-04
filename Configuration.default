@@ -34,16 +34,6 @@ setenv LINEDELIM      "\n"
 # representative sequence selected
 setenv SEQMARKER_DEBUG  false
 
-# equivalency term that indicates to map the associated raw term to
-# 'non-coding RNA gene' and all its children. This is applicable to all
-# providers. We do this in code rather than in config file because there is a
-# limit to the length of a configuration value
-setenv NC_RNA_TERM	"non-coding RNA gene"
-
-# equivalency term that indicates to map the associated raw term to all
-# children of 'all feature types'. This is applicable to NCBI only.
-setenv ALL_FEATURES_TERM	"all feature types"
-
 setenv SCHEMADIR ${MGD_DBSCHEMADIR}
 setenv BCP_CMD "${PG_DBUTILS}/bin/bcpin.csh ${MGD_DBSERVER} ${MGD_DBNAME}"
 

@@ -980,10 +980,6 @@ def generateBiotypeLookups():
 
     global biotypeLookup
 
-    # do all comparisons in lower case
-    NC_RNA_CONFIG_TERM=string.lower(string.strip(os.environ['NC_RNA_TERM']))
-    ALL_FEATURES_CONFIG_TERM=string.lower(string.strip(os.environ['ALL_FEATURES_TERM']))
-
     # non-coding RNA gene feature types and its descendents
     ncRNAdescSet = set([])
 
@@ -1147,9 +1143,13 @@ def generateBiotypeLookups():
     		equivKeySet = set()
 
     		for e in equivList:
-    			if e == ALL_FEATURES_CONFIG_TERM:
+			# consider all children
+    			if e in ['null', 'unknown', 'other', 'all feature types']:
+				print 'allFeatureTypesDescSet'
 				equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
-    			elif e == NC_RNA_CONFIG_TERM:
+			# consider all children
+    			elif e in ['miscrna', 'ncrna', 'non-coding rna gene']:
+				print 'ncRNAdescSet'
 				equivKeySet = equivKeySet.union(ncRNAdescSet)
     			elif mcvTermToKeyDict.has_key(e):
         			equivKeySet.add(mcvTermToKeyDict[e])
