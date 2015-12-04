@@ -1144,12 +1144,12 @@ def generateBiotypeLookups():
 
     		for e in equivList:
 			# consider all children
-    			if e in ['null', 'unknown', 'other', 'all feature types']:
-				print 'allFeatureTypesDescSet'
+    			if e == 'all feature types':
+				print 'biotype conflicts : allFeatureTypesDescSet'
 				equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
 			# consider all children
-    			elif e in ['miscrna', 'ncrna', 'non-coding rna gene']:
-				print 'ncRNAdescSet'
+    			elif e == 'non-coding rna gene':
+				print 'biotype conflicts : ncRNAdescSet'
 				equivKeySet = equivKeySet.union(ncRNAdescSet)
     			elif mcvTermToKeyDict.has_key(e):
         			equivKeySet.add(mcvTermToKeyDict[e])
@@ -1162,6 +1162,7 @@ def generateBiotypeLookups():
     			NCBIEquivDict[rawTerm] = equivKeySet
 		elif v == 'BioType VEGA':
     			VEGAEquivDict[rawTerm] = equivKeySet
+
     if debug == 'true':
     	print len(NCBIEquivDict)
     	print len(EnsEquivDict)
