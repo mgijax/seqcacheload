@@ -1,6 +1,6 @@
-TAG: seqcacheload-6-0-2-?
+TAG: seqcacheload-6-0-2-2
 TAG: seqcacheload-6-0-2-1
-DATE: 12/02/2015, 12/03/2015
+DATE: 12/02/2015, 12/07/2015
 STAFF: lec
 CHANGES:
 seqmarker.py
