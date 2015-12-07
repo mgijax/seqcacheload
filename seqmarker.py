@@ -1094,6 +1094,7 @@ def generateBiotypeLookups():
     #	_biotypeterm_key : raw biotype term
     # 	_mcvterm_key     : feature type
     # 	_Marker_Type_key : marker type
+    # 	useMCVchildren   : use childrent to determine conflict
     #
     # one raw biotype maps to 1-or-more feature types
     # one raw biotype maps to only 1 marker type
@@ -1105,7 +1106,7 @@ def generateBiotypeLookups():
 
     	# select all distinct raw-biotype terms
     	rawresults = db.sql('''
-    		select distinct m._biotypeterm_key, lower(t1.term) as rawTerm
+    		select distinct m._biotypeterm_key, lower(t1.term) as rawTerm, m.useMCVchildren
     		from MRK_BiotypeMapping m, VOC_Vocab v, VOC_Term t1
     		where m._biotypevocab_key = v._vocab_key
 		and v.name = '%s' 
@@ -1120,6 +1121,7 @@ def generateBiotypeLookups():
 
 		rawKey = r['_biotypeterm_key']
 		rawTerm = r['rawTerm']
+		useMCVchildren = r['useMCVchildren']
 
 		# select all mcvterms for this raw-biotype term
     		mcvresults = db.sql('''
@@ -1150,15 +1152,16 @@ def generateBiotypeLookups():
 				equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
 
 			# consider all children
-    			elif e == 'non-coding rna gene' \
-					and rawTerm in ['non_coding',
-						'_non_coding',
-						'misc_rna', 
-						'miscrna',
-						'ncrna',
-						'known_non_coding',
-						'novel_non_coding',
-						'putative_non_coding']:
+    			#elif e == 'non-coding rna gene' \
+			#		and rawTerm in ['non_coding',
+			#			'_non_coding',
+			#			'misc_rna', 
+			#			'miscrna',
+			#			'ncrna',
+			#			'known_non_coding',
+			#			'novel_non_coding',
+			#			'putative_non_coding']:
+    			elif e == 'non-coding rna gene' and useMCVchildren == 1:
 				print 'biotype conflicts : ncRNAdescSet'
 				equivKeySet = equivKeySet.union(ncRNAdescSet)
     			elif mcvTermToKeyDict.has_key(e):
