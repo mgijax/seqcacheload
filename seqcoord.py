@@ -35,9 +35,6 @@ datadir = os.environ['CACHEDATADIR']
 userKey = 0
 loaddate = loadlib.loaddate
 
-db.setAutoTranslate(False)
-db.setAutoTranslateBE(False)
-
 def createBCP():
 
 	print 'Creating %s.bcp...%s' % (table, mgi_utils.date())

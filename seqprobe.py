@@ -30,9 +30,6 @@ import mgi_utils
 import loadlib
 import db
 
-db.setAutoTranslate(False)
-db.setAutoTranslateBE(False)
-
 NL = '\n'
 DL = os.environ['COLDELIM']
 table = os.environ['TABLE']
