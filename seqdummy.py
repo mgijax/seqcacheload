@@ -166,6 +166,7 @@ def process():
 	and a._LogicalDB_key in (9,13,27,41) 
 	and a._Object_key = m._Marker_key 
 	and m._Organism_key = 1 
+	and m._Marker_Status_key in (1,2)
 	and not exists (select 1 from ACC_Accession s 
 	    where s._MGIType_key = 19 
 		and s._LogicalDB_key = a._LogicalDB_key 

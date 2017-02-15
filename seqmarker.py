@@ -1388,13 +1388,14 @@ def createBCP():
     # mouse, human, rat, dog, chimpanzee, cattle, chicken,
     # zebrafish and monkey 
     #
-    # with ANY marker status 
+    # with non-reserved marker status 
     #
     db.sql('''
         select _Marker_key, _Organism_key, _Marker_Type_key 
 	INTO TEMPORARY TABLE markers 
 	from MRK_Marker 
 	where _Organism_key in (1, 2, 40, 10, 13, 11, 63, 84, 94, 95) 
+	and _Marker_Status_key in (1,2)
 	''', None)
     db.sql('create index idx_key on markers (_Marker_key)', None)
 
