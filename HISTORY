@@ -1,3 +1,10 @@
+TAG: seqcacheload-6-0-9-1
+DATE: 04/04/2018
+STAFF: sc
+CHANGES: TR9835 Mice Crispies project
+1) seqmarker.py - allow Genbank CON division seqs
+    be chosen as rep genomic
+
 TAG: seqcacheload-6-0-8-1
 DATE: 02/15/2018
 STAFF: lec 

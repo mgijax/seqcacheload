@@ -30,6 +30,10 @@
 #
 #  History
 #
+# 04/04/2017	sc
+#	- TR9835 Support coordinates on contigs (MICE CRISPIES project)
+#	  Add GenBank CON division provider so these seqs may be rep genomic
+#
 # 10/28/2015	lec
 #	- TR12070/TR12116/TR10308/biotype conflict revision : generateBiotypeLookups()
 #
@@ -1544,7 +1548,7 @@ def createBCP():
 	# these are all GenBank provider terms by division
 	# e.g. "GenBank/EMBL/DDBJ:Rodent" or "GenBank/EMBL/DDBJ:GSS"
 	elif providerKey in \
-	      [316380,316376,316379,316375,316377,316374,316373,316378,492451] \
+	      [316380,316376,316379,316375,316377,316374,316373,316378,492451,29320966] \
 	      and seqTypeKey == 316347:
             if allgenomic[gGENBANK].has_key(m):
                 allgenomic[gGENBANK][m].append(r)
