@@ -45,7 +45,7 @@
 #
 #  03/01/2010   sc
 #	- TR9774; update rep tran and prot sequence algorithm for 
-#	 markers with VEGA or Ensembl representative Genomic sequences
+#	 markers with Ensembl representative Genomic sequences
 #
 #  02/18/2010	lec
 #	- TR 9239; add rawbiotype, _BiotypeConflict_key, _Marker_Type_key
@@ -147,21 +147,19 @@ markerToGMDict = {}
 allgenomic = [{}, {}, {}, {}]
 
 # indexes of allgenomic
-VEGA = 0
 ENSEMBL = 1
 NCBI = 2
 gGENBANK = 3
 
 # genomic sequence provider terms, these are used when the 
-# provider is VEGA or Ensembl, to determine the rep transcript and
+# provider is Ensembl, to determine the rep transcript and
 # protein associated with the gene model.
 genbank_prov = 'GENBANK'
 ncbi_prov = 'NCBI'
 ensembl_prov = 'ENSEMBL'
-vega_prov = 'VEGA'
 
 # Lookups from SEQ_Sequence_Assoc to determine relationships 
-# between VEGA and Ensembl genomic, transcript, and protein sequences
+# between Ensembl genomic, transcript, and protein sequences
 
 # Looks like {gKey1:{tKey1:length, tKey2:length, ...},...,gKeyn:{tKeyn:length, ...}, ...}
 transcriptLookupByGenomicKey = {}
@@ -243,7 +241,7 @@ def init ():
 
     # query with which to load
     # genomic sequences associated with markers lookup
-    # for VEGA Gene Model(85), Ensembl Gene Model (60),
+    # for Ensembl Gene Model (60),
     # NCBI Gene Model(59), GenBank DNA (9)
 
     # get the set of all preferred GenBank DNA sequences
@@ -258,12 +256,12 @@ def init ():
         and s._SequenceType_key = 316347
 	''', None)
 
-    # get the set of all Ensembl, NCBI, VEGA gene models
+    # get the set of all Ensembl, NCBI gene models
     db.sql('''
     	select upper(a.accID) as seqID, a._Object_key as _Sequence_key 
 	INTO TEMPORARY TABLE gm 
 	from ACC_Accession a 
-        where a._LogicalDB_key in (59, 60, 85) 
+        where a._LogicalDB_key in (59, 60) 
 	and a.preferred = 1 
         and a._MGIType_key = 19
 	''', None)
@@ -286,7 +284,7 @@ def init ():
     	select s._Sequence_key, a._Object_key as _Marker_key 
 	from allSeqs s, ACC_Accession a 
 	where a._MGIType_key = 2 
-	and a._LogicalDB_key in (59, 60, 85, 9) 
+	and a._LogicalDB_key in (59, 60, 9) 
 	and lower(s.seqID) = lower(a.accid) 
 	order by _Sequence_key 
 	''', 'auto')
@@ -303,7 +301,7 @@ def init ():
 	prevSeqKey = seqKey
 
     #
-    # Load lookups determine relationships between VEGA and Ensembl 
+    # Load lookups determine relationships between Ensembl 
     # genomic, transcript, and protein sequences
     #
     # Load transcriptLookupByGenomicKey 
@@ -411,64 +409,31 @@ def determineRepresentative(marker):
     # The attributes
     ##--------------------------------------
 
-    # * = VEGA|Ensembl|NCBI|GenBank
+    # * = Ensembl|NCBI|GenBank
     # True if this marker has a * sequence
-    # NOTE: we need these has* variables to determine multiple and not
-    # uniq because, for example,  a marker can still have a VEGA Gene Model
-    # if vegaIsSgl = False and vegaHasUniq = False 
+    # NOTE: we need these has* variables to determine multiple and not uniq
     hasVega = False
     hasEnsembl = False
     hasNCBI = False
     hasGenBank = False
 
     # True if this marker has only one * id
-    vegaIsSgl = False
     ensemblIsSgl = False
     ncbiIsSgl = False
     genbankIsSgl = False
 
     # True if this marker has a unique * sequence (associated with only
     # this marker)
-    vegaHasUniq = False
     ensemblHasUniq = False
     ncbiHasUniq = False
     genbankHasUniq = False
 
     # list of dictionaries of * seqs for this marker
     # looks like [{UNIQ:True/False, SEQKEY:key, LENGTH:length}, ...]
-    vegaSeqs = []
     ensemblSeqs = []
     ncbiSeqs = []
     genbankSeqs = []
 
-    ##--------------------------------------
-    # Get VEGA attributes 
-    ##--------------------------------------    
-    if allgenomic[VEGA].has_key(marker):
-
-        hasVega = True
-
-	# if this marker has only one VEGA sequence flag it as single
-	if len(allgenomic[VEGA][marker]) == 1:
-	    vegaIsSgl = True
-
-	# get seqKey, seqLength, and uniqueness for each VEGA sequence 
-	for result in allgenomic[VEGA][marker]:
-	    seqDict =  {}
-	    seqKey = result['_Sequence_key']
-	    length = result['length']
-	    seqDict[SEQKEY] = seqKey
-	    seqDict[LENGTH] = length
-
-	    value = False
-	    if mkrsByGenomicSeqKeyLookup.has_key(seqKey) and \
-		    len(mkrsByGenomicSeqKeyLookup[seqKey]) == 1:
-		value = True
-		vegaHasUniq = True
-	    seqDict[UNIQ] = value
-	    vegaSeqs.append(seqDict)
-	if debug == 'true':
-	    print 'vegaSeqs: %s' % vegaSeqs
     ##--------------------------------------
     # Get Ensembl attributes
     ##--------------------------------------
@@ -582,18 +547,12 @@ def determineRepresentative(marker):
 
     # marker has at least one GM, therefore WILL HAVE REP SEQUENCE
     else: 
-	if vegaIsSgl and vegaHasUniq:
-	    genomicRepKey = vegaSeqs[0][SEQKEY]
-	    genomicRepProvider = vega_prov
-	    if debug == 'true':
-		print 'CASE 3'
-	else:    # no single uniq Vega exists
-	    # check single uniq Ensembl and NCBI
-	    if ensemblIsSgl and ensemblHasUniq:
+	# check single uniq Ensembl and NCBI
+	if ensemblIsSgl and ensemblHasUniq:
 		hasSglUniqEnsembl = True
-	    if ncbiIsSgl and ncbiHasUniq:
+	if ncbiIsSgl and ncbiHasUniq:
 		hasSglUniqNCBI = True
-	    if hasSglUniqEnsembl and hasSglUniqNCBI:
+	if hasSglUniqEnsembl and hasSglUniqNCBI:
 		ensemblLen =   ensemblSeqs[0][LENGTH]
 		ncbiLen = ncbiSeqs[0][LENGTH]
 		value = determineShortest(ensemblLen, ncbiLen)
@@ -608,28 +567,19 @@ def determineRepresentative(marker):
 		    genomicRepProvider = ensembl_prov
 		    if debug == 'true':
 			print 'CASE 5'
-	    elif hasSglUniqEnsembl:
+	elif hasSglUniqEnsembl:
 		genomicRepKey = ensemblSeqs[0][SEQKEY]
 		genomicRepProvider = ensembl_prov
 		if debug == 'true':
 		    print 'CASE 6'
-	    elif hasSglUniqNCBI:
+	elif hasSglUniqNCBI:
 		genomicRepKey = ncbiSeqs[0][SEQKEY]
 		genomicRepProvider = ncbi_prov
 		if debug == 'true':
 		    print 'CASE 7'
-	    # only multiples (uniq or not) or single not-uniq left
-	    else:
-		# check uniq (must be multiple)
-                if vegaHasUniq or ensemblHasUniq or ncbiHasUniq:
-		    if vegaHasUniq:
-			# pick shortest uniq, if tie pick one
-			(s,l) = determineSeq(vegaSeqs, False, True)
-			genomicRepKey = s
-			genomicRepProvider = vega_prov
-			if debug == 'true':
-			    print 'CASE 8'
-		    elif ensemblHasUniq and ncbiHasUniq:
+	# only multiples (uniq or not) or single not-uniq left
+	else:
+		if ensemblHasUniq and ncbiHasUniq:
 			# pick shortest uniq, if tie pick one
 			(s_e, l_e) = determineSeq(ensemblSeqs, False, True)
 			(s_n, l_n) = determineSeq(ncbiSeqs, False, True)
@@ -644,13 +594,13 @@ def determineRepresentative(marker):
 			    genomicRepProvider = ensembl_prov	
 			    if debug == 'true':
 				print 'CASE 10'
-		    elif ensemblHasUniq:
+		elif ensemblHasUniq:
 			(s_e, l_e) = determineSeq(ensemblSeqs, False, True)
 			genomicRepKey = s_e
 			genomicRepProvider = ensembl_prov
 			if debug == 'true':
 			    print 'CASE 11'
-		    elif ncbiHasUniq:
+		elif ncbiHasUniq:
 			(s_n, l_n) = determineSeq(ncbiSeqs, False, True)
 			genomicRepKey = s_n
 			genomicRepProvider = ncbi_prov
@@ -658,15 +608,8 @@ def determineRepresentative(marker):
 			    print 'CASE 12'
 		# no uniques, only single or multiple non-uniq left
 		else:
-		    # check for vega sgl
-		    if vegaIsSgl:
-			genomicRepKey = vegaSeqs[0][SEQKEY]
-			genomicRepProvider = vega_prov
-			if debug == 'true':
-			    print 'CASE 13'
-		    else:
-			# check for ensembl and ncbi sgl
-			if ensemblIsSgl or ncbiIsSgl:
+		    # check for ensembl and ncbi sgl
+		    if ensemblIsSgl or ncbiIsSgl:
 			    if ensemblIsSgl and ncbiIsSgl:
 				value = determineShortest( \
 				    ensemblSeqs[0][LENGTH], \
@@ -691,16 +634,9 @@ def determineRepresentative(marker):
 				genomicRepProvider = ncbi_prov
 				if debug == 'true':
 				    print 'CASE 17'
-			# no singles, must be multiple non-uniq
-			else:
-			    if hasVega:
-                                # pick shortest
-				(s,l) = determineSeq(vegaSeqs, False, False)
-				genomicRepKey = s
-				genomicRepProvider = vega_prov
-				if debug == 'true':
-				    print 'CASE 18'
-                            elif hasEnsembl and hasNCBI:
+		    # no singles, must be multiple non-uniq
+		    else:
+                            if hasEnsembl and hasNCBI:
                                 # pick shortest, NCBI if tie
 				(s_e, l_e) = determineSeq( \
 				    ensemblSeqs, False, False)
@@ -747,17 +683,16 @@ def determineRepresentative(marker):
     #
     # Determine Representative Protein and Transcript Sequences
     #
-    if genomicRepProvider == ensembl_prov or \
-	    genomicRepProvider == vega_prov:
+    if genomicRepProvider == ensembl_prov:
 	determineVegaEnsProtTransRep(marker, genomicRepKey)
-    else: # not VEGA or Ensembl
+    else: # not Ensembl
 	determineNonVegaEnsProtRep(marker)
         determineNonVegaEnsTransRep(marker)
     return
 
 def determineVegaEnsProtTransRep(marker, genomicRepKey):
     # Purpose: Determine the representative protein and transcript
-    #     for 'marker'. When the rep genomic is VEGA or Ensembl
+    #     for 'marker'. When the rep genomic is Ensembl
     #     the protein and transcript must be from same provider
     #     if they exist
     # Returns: nothing
@@ -833,14 +768,14 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
 		    transRepKey = tKey
 	    if transRepKey  != 0:
 		transcript[marker] = transRepKey
-	else:   # no VEGA or Ensembl protein i.e.
+	else:   # no Ensembl protein i.e.
 		# we have a protein w/o a transcript
 	    print "This shouldn't happen 3"
             sys.exit("This shouldn't happen 3")
     return
 
 def determineNonVegaEnsProtRep(marker):
-    # Purpose: determine non-VEGA, non-Ensembl rep protein
+    # Purpose: determine non-Ensembl rep protein
     # Returns: nothing
     # Assumes: nothing
     # Effects: nothing
@@ -854,7 +789,7 @@ def determineNonVegaEnsProtRep(marker):
     return
 
 def determineNonVegaEnsTransRep(marker):
-    # Purpose: determine non-VEGA, non-Ensembl rep transcript
+    # Purpose: determine non-Ensembl rep transcript
     # Returns: nothing
     # Assumes: nothing
     # Effects: nothing
@@ -1004,7 +939,6 @@ def generateBiotypeLookups():
     # equivalency dicts look like {rawTerm:[listOfEquivalentTermKeys], ...}
     NCBIEquivDict = {}
     EnsEquivDict = {}
-    VEGAEquivDict = {}
 
     # conflict types (see _Vocab_key = 76)
     yesConflict = 5420767
@@ -1087,7 +1021,7 @@ def generateBiotypeLookups():
         geneRawFeatureTypeList.append(r['term'])
 
     #
-    # create NCBI, Ensembl and VEGA equivalency Lookups 
+    # create NCBI, Ensembl Lookups 
     #
     # TR12070/TR12116/TR10308 (rawbiotype spreadsheet converted to tab-delimited file)
     #
@@ -1101,7 +1035,7 @@ def generateBiotypeLookups():
     # one raw biotype maps to only 1 marker type
     #
 
-    for v in ['BioType Ensembl', 'BioType NCBI', 'BioType VEGA']:
+    for v in ['BioType Ensembl', 'BioType NCBI']:
 
     	print 'Initializing %s raw biotype to equivalency mapping ... %s' % (v, mgi_utils.date())
 
@@ -1167,17 +1101,14 @@ def generateBiotypeLookups():
         		EnsEquivDict[rawTerm] = equivKeySet
 		elif v == 'BioType NCBI':
     			NCBIEquivDict[rawTerm] = equivKeySet
-		elif v == 'BioType VEGA':
-    			VEGAEquivDict[rawTerm] = equivKeySet
 
     if debug == 'true':
     	print len(NCBIEquivDict)
     	print len(EnsEquivDict)
-    	print len(VEGAEquivDict)
 
     #
     #   for each Marker associated with a 
-    #		NCBI (59), Ensembl (60), VEGA (85) gene model sequence:
+    #		NCBI (59), Ensembl (60), gene model sequence:
     #     map the gene model raw biotype to its set of equivalent mcv terms
     #
     print 'Initializing  gene model lookup by marker key ... %s' % (mgi_utils.date())
@@ -1187,7 +1118,7 @@ def generateBiotypeLookups():
 		a._LogicalDB_key, g.rawBiotype
 	 from gm s, ACC_Accession a, SEQ_GeneModel g
 	 where a._MGIType_key = 2
-	 and a._LogicalDB_key in (59, 60, 85)
+	 and a._LogicalDB_key in (59, 60)
 	 and lower(s.seqID) = lower(a.accid)
 	 and s._Sequence_key = g._Sequence_key
 	 order by s._Sequence_key
@@ -1213,12 +1144,6 @@ def generateBiotypeLookups():
 	elif ldbKey ==  60: 
 	    if EnsEquivDict.has_key(lowerRawBiotype):
 		currentEquivSet = EnsEquivDict[lowerRawBiotype]
-	    else:
-                writeError(sequenceKey, ldbKey, rawBiotype)
-                continue
-	elif ldbKey == 85:
-	    if VEGAEquivDict.has_key(lowerRawBiotype):
-		currentEquivSet = VEGAEquivDict[lowerRawBiotype]
 	    else: 
 		writeError(sequenceKey, ldbKey, rawBiotype)
 		continue
@@ -1523,15 +1448,8 @@ def createBCP():
 	    if prevMarker != '':
 		determineRepresentative(prevMarker)
 
-	# VEGA
-	if providerKey == 1865333:
-	    if allgenomic[VEGA].has_key(m):
-		allgenomic[VEGA][m].append(r)
-	    else:
-		allgenomic[VEGA][m] = [r]
-
 	# Ensembl
-	elif (providerKey in [615429]):
+	if (providerKey in [615429]):
             if allgenomic[ENSEMBL].has_key(m):
                 allgenomic[ENSEMBL][m].append(r)
             else:
