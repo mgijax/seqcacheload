@@ -39,18 +39,18 @@ def createExcluded():
 
     excludeNote = 'The source of the material used to create this cDNA probe was different than that used to create the GenBank sequence record.'
 
-    print 'excluded begin...%s' % (mgi_utils.date())
+    print('excluded begin...%s' % (mgi_utils.date()))
     db.sql('''select _Probe_key INTO TEMPORARY TABLE excluded from PRB_Notes 
         where note like 'The source of the material used to create this cDNA probe was different%'
         ''', None)
     db.sql('create index idx1 on excluded(_Probe_key)', None)
-    print 'excluded end...%s' % (mgi_utils.date())
+    print('excluded end...%s' % (mgi_utils.date()))
 
 def createBCP():
 
         outBCP = open('%s/%s.bcp' % (datadir, table), 'w')
 
-        print 'sequences1 begin...%s' % (mgi_utils.date())
+        print('sequences1 begin...%s' % (mgi_utils.date()))
         db.sql('''select s._Object_key as sequenceKey, p._Object_key as probeKey, p._Accession_key 
                 INTO TEMPORARY TABLE sequences1 
                 from ACC_Accession s, ACC_Accession p 
@@ -62,14 +62,14 @@ def createBCP():
         db.sql('create index idx2 on sequences1 (sequenceKey)', None)
         db.sql('create index idx3 on sequences1 (probeKey)', None)
         db.sql('create index idx4 on sequences1 (_Accession_key)', None)
-        print 'sequences1 end...%s' % (mgi_utils.date())
+        print('sequences1 end...%s' % (mgi_utils.date()))
 
-        print 'deletion begin...%s' % (mgi_utils.date())
+        print('deletion begin...%s' % (mgi_utils.date()))
         db.sql('delete from sequences1 using excluded e where sequences1.probeKey = e._Probe_key', None)
-        print 'deletion end...%s' % (mgi_utils.date())
+        print('deletion end...%s' % (mgi_utils.date()))
         db.commit()
 
-        print 'sequences2 begin...%s' % (mgi_utils.date())
+        print('sequences2 begin...%s' % (mgi_utils.date()))
         db.sql('''select s.sequenceKey, s.probeKey, ar._Refs_key as refskey, 
                         ar._ModifiedBy_key as userKey, ar.modification_date as mdate 
                 INTO TEMPORARY TABLE sequences2 
@@ -79,15 +79,15 @@ def createBCP():
         db.sql('create index idx5 on sequences2 (sequenceKey, probeKey, refsKey, userKey, mdate)', None)
         db.sql('create index idx6 on sequences2 (userKey)', None)
         db.sql('create index idx7 on sequences2 (mdate)', None)
-        print 'sequences2 end...%s' % (mgi_utils.date())
+        print('sequences2 end...%s' % (mgi_utils.date()))
 
-        print 'final begin...%s' % (mgi_utils.date())
+        print('final begin...%s' % (mgi_utils.date()))
         results = db.sql('''select distinct sequenceKey, probeKey, refsKey, 
                 max(userKey) as userKey, max(mdate) as mdate 
                 from sequences2 
                 group by sequenceKey, probeKey, refsKey
                 ''', 'auto')
-        print 'final end...%s' % (mgi_utils.date())
+        print('final end...%s' % (mgi_utils.date()))
 
         for r in results:
                 outBCP.write(mgi_utils.prvalue(r['sequenceKey']) + DL + \
@@ -103,8 +103,8 @@ def createBCP():
 #
 
 db.useOneConnection(1)
-print '%s' % mgi_utils.date()
+print('%s' % mgi_utils.date())
 createExcluded()
 createBCP()
 db.useOneConnection(0)
-print '%s' % mgi_utils.date()
+print('%s' % mgi_utils.date())

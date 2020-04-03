@@ -36,7 +36,7 @@ loaddate = loadlib.loaddate
 
 def createBCP():
 
-        print 'Creating %s.bcp...%s' % (table, mgi_utils.date())
+        print('Creating %s.bcp...%s' % (table, mgi_utils.date()))
 
         outBCP = open('%s/%s.bcp' % (datadir, table), 'w')
 
@@ -80,7 +80,7 @@ def createBCP():
 userKey = loadlib.verifyUser(os.environ['MGD_DBUSER'], 1, None)
 
 db.useOneConnection(1)
-print '%s' % mgi_utils.date()
+print('%s' % mgi_utils.date())
 createBCP()
-print '%s' % mgi_utils.date()
+print('%s' % mgi_utils.date())
 db.useOneConnection(0)

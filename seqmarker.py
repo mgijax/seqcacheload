@@ -232,7 +232,7 @@ def init ():
     #
     # load representative sequence qualifer lookups
     #
-    print 'Initializing ...%s' % (mgi_utils.date())
+    print('Initializing ...%s' % (mgi_utils.date()))
     results = db.sql('select _Term_key, term from VOC_Term_RepQualifier_View', 'auto')
     for r in results:
        qualByTermLookup[r['term']] = r['_Term_key']
@@ -378,8 +378,8 @@ def init ():
     return
 
 def writeError(sKey, lKey, rawBiotype):
-    print 'No equivalency set for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' \
-        % (sKey, lKey, rawBiotype)
+    print('No equivalency set for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' \
+        % (sKey, lKey, rawBiotype))
 
 # Purpose: Determines representative genomic, transcript, and protein
 #          for the given marker
@@ -391,7 +391,7 @@ def writeError(sKey, lKey, rawBiotype):
 def determineRepresentative(marker):
     global genomic, transcript, polypeptide
     if debug == 'true':
-        print 'determineRep for marker: %s' % marker
+        print('determineRep for marker: %s' % marker)
     #
     # Determine Representative Genomic Sequence
     #
@@ -436,7 +436,7 @@ def determineRepresentative(marker):
     ##--------------------------------------
     # Get Ensembl attributes
     ##--------------------------------------
-    if allgenomic[ENSEMBL].has_key(marker):
+    if marker in allgenomic[ENSEMBL]:
         
         hasEnsembl = True
         # if this marker has only one ENSEMBL sequence flag it as single
@@ -451,18 +451,18 @@ def determineRepresentative(marker):
             seqDict[LENGTH] = length
 
             value = False
-            if mkrsByGenomicSeqKeyLookup.has_key(seqKey) and \
+            if seqKey in mkrsByGenomicSeqKeyLookup and \
                     len(mkrsByGenomicSeqKeyLookup[seqKey]) == 1:
                 value = True
                 ensemblHasUniq = True
             seqDict[UNIQ] = value
             ensemblSeqs.append(seqDict)
         if debug == 'true':
-            print 'ensemblseqs: %s' % ensemblSeqs
+            print('ensemblseqs: %s' % ensemblSeqs)
     ##--------------------------------------
     # Get NCBI attributes
     ##--------------------------------------
-    if allgenomic[NCBI].has_key(marker):
+    if marker in allgenomic[NCBI]:
         
         hasNCBI = True
 
@@ -479,18 +479,18 @@ def determineRepresentative(marker):
             seqDict[LENGTH] = length
 
             value = False
-            if mkrsByGenomicSeqKeyLookup.has_key(seqKey) and \
+            if seqKey in mkrsByGenomicSeqKeyLookup and \
                     len(mkrsByGenomicSeqKeyLookup[seqKey]) == 1:
                 value = True
                 ncbiHasUniq = True
             seqDict[UNIQ] = value
             ncbiSeqs.append(seqDict)
         if debug == 'true':
-            print 'ncbiseqs: %s' % ncbiSeqs
+            print('ncbiseqs: %s' % ncbiSeqs)
     ##--------------------------------------
     # Get GenBank attributes
     ##--------------------------------------
-    if allgenomic[gGENBANK].has_key(marker):
+    if marker in allgenomic[gGENBANK]:
         hasGenBank = True 
 
         # if this marker has only one GENBANK sequence flag it as single
@@ -506,14 +506,14 @@ def determineRepresentative(marker):
             seqDict[LENGTH] = length
 
             value = False
-            if mkrsByGenomicSeqKeyLookup.has_key(seqKey) and \
+            if seqKey in mkrsByGenomicSeqKeyLookup and \
                     len(mkrsByGenomicSeqKeyLookup[seqKey]) == 1:
                 value = True
                 genbankHasUniq = True
             seqDict[UNIQ] = value
             genbankSeqs.append(seqDict)
         if debug == 'true':
-            print 'genbankseqs: %s' % genbankSeqs
+            print('genbankseqs: %s' % genbankSeqs)
     ##-----------------------------------------------------------------
     # Determine representative genomic for marker using provider
     # and provider sequence attributes
@@ -533,7 +533,7 @@ def determineRepresentative(marker):
             genomicRepKey = s
             genomicRepProvider = genbank_prov
             if debug == 'true':
-                print 'CASE 1'
+                print('CASE 1')
         # if no longest uniq get longest
         if genomicRepKey == 0:
             (s,l) = determineSeq(genbankSeqs, True, False)
@@ -541,7 +541,7 @@ def determineRepresentative(marker):
                 genomicRepKey = s
                 genomicRepProvider = genbank_prov
                 if debug == 'true':
-                    print 'CASE 2'
+                    print('CASE 2')
         # else NO REPRESENTATIVE SEQUENCE value of genomicRepKey is still 0
 
     # marker has at least one GM, therefore WILL HAVE REP SEQUENCE
@@ -560,22 +560,22 @@ def determineRepresentative(marker):
                     genomicRepKey = ncbiSeqs[0][SEQKEY]
                     genomicRepProvider = ncbi_prov
                     if debug == 'true':
-                        print 'CASE 4'
+                        print('CASE 4')
                 else:
                     genomicRepKey =  ensemblSeqs[0][SEQKEY]
                     genomicRepProvider = ensembl_prov
                     if debug == 'true':
-                        print 'CASE 5'
+                        print('CASE 5')
         elif hasSglUniqEnsembl:
                 genomicRepKey = ensemblSeqs[0][SEQKEY]
                 genomicRepProvider = ensembl_prov
                 if debug == 'true':
-                    print 'CASE 6'
+                    print('CASE 6')
         elif hasSglUniqNCBI:
                 genomicRepKey = ncbiSeqs[0][SEQKEY]
                 genomicRepProvider = ncbi_prov
                 if debug == 'true':
-                    print 'CASE 7'
+                    print('CASE 7')
         # only multiples (uniq or not) or single not-uniq left
         else:
                 if ensemblHasUniq and ncbiHasUniq:
@@ -587,24 +587,24 @@ def determineRepresentative(marker):
                             genomicRepKey = s_n
                             genomicRepProvider = ncbi_prov
                             if debug == 'true':
-                                print 'CASE 9'
+                                print('CASE 9')
                         else:
                             genomicRepKey = s_e
                             genomicRepProvider = ensembl_prov	
                             if debug == 'true':
-                                print 'CASE 10'
+                                print('CASE 10')
                 elif ensemblHasUniq:
                         (s_e, l_e) = determineSeq(ensemblSeqs, False, True)
                         genomicRepKey = s_e
                         genomicRepProvider = ensembl_prov
                         if debug == 'true':
-                            print 'CASE 11'
+                            print('CASE 11')
                 elif ncbiHasUniq:
                         (s_n, l_n) = determineSeq(ncbiSeqs, False, True)
                         genomicRepKey = s_n
                         genomicRepProvider = ncbi_prov
                         if debug == 'true':
-                            print 'CASE 12'
+                            print('CASE 12')
                 # no uniques, only single or multiple non-uniq left
                 else:
                     # check for ensembl and ncbi sgl
@@ -617,22 +617,22 @@ def determineRepresentative(marker):
                                     genomicRepKey = ncbiSeqs[0][SEQKEY]
                                     genomicRepProvider = ncbi_prov
                                     if debug == 'true':
-                                        print 'CASE 14'
+                                        print('CASE 14')
                                 else:
                                     genomicRepKey =  ensemblSeqs[0][SEQKEY]
                                     genomicRepProvider = ensembl_prov
                                     if debug == 'true':
-                                        print 'CASE 15'
+                                        print('CASE 15')
                             elif ensemblIsSgl:
                                 genomicRepKey = ensemblSeqs[0][SEQKEY]
                                 genomicRepProvider = ensembl_prov
                                 if debug == 'true':
-                                    print 'CASE 16'
+                                    print('CASE 16')
                             elif ncbiIsSgl:
                                 genomicRepKey = ncbiSeqs[0][SEQKEY]
                                 genomicRepProvider = ncbi_prov
                                 if debug == 'true':
-                                    print 'CASE 17'
+                                    print('CASE 17')
                     # no singles, must be multiple non-uniq
                     else:
                             if hasEnsembl and hasNCBI:
@@ -646,12 +646,12 @@ def determineRepresentative(marker):
                                     genomicRepKey = s_n
                                     genomicRepProvider = ncbi_prov
                                     if debug == 'true':
-                                        print 'CASE 19'
+                                        print('CASE 19')
                                 else:
                                     genomicRepKey =  s_e
                                     genomicRepProvider = ensembl_prov
                                     if debug == 'true':
-                                        print 'CASE 20'
+                                        print('CASE 20')
                             elif hasEnsembl:
                                 # pick shortest
                                 (s_e, l_e) = determineSeq( \
@@ -659,7 +659,7 @@ def determineRepresentative(marker):
                                 genomicRepKey = s_e
                                 genomicRepProvider = ensembl_prov
                                 if debug == 'true':
-                                    print 'CASE 21'
+                                    print('CASE 21')
                             # must be an NCBI
                             else:
                                 # pick shortest NCBI
@@ -668,16 +668,16 @@ def determineRepresentative(marker):
                                 genomicRepKey = s_n
                                 genomicRepProvider = ncbi_prov
                                 if debug == 'true':
-                                    print 'CASE 22'
+                                    print('CASE 22')
     # if we found a genomicRepKey for this marker add it to the dictionary
     if debug == 'true':
-        print 'genomicRepKey: %s' % genomicRepKey
-        print 'genomicRepProvider: %s' % genomicRepProvider
+        print('genomicRepKey: %s' % genomicRepKey)
+        print('genomicRepProvider: %s' % genomicRepProvider)
     if genomicRepKey != 0:
         genomic[marker] = genomicRepKey
     else:
         if debug == 'true':
-            print 'CASE 23'
+            print('CASE 23')
 
     #
     # Determine Representative Protein and Transcript Sequences
@@ -709,19 +709,19 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
     # we determine the reprentative protein first per requirements -
     # see TR9774
     #
-    if not proteinLookupByGenomicKey.has_key(genomicRepKey):
+    if genomicRepKey not in proteinLookupByGenomicKey:
         # no prots for this genomic, get rep protein in the usual way
         determineNonVegaEnsProtRep(marker)
 
         # now get Vega/Ensembl transcript(s) for the genomicRepKey
-        if transcriptLookupByGenomicKey.has_key(genomicRepKey):
+        if genomicRepKey in transcriptLookupByGenomicKey:
             # get the list of transcriptIds mapped to their length
             #transDict- {t1:length, t2:length, ...}
             transDict = transcriptLookupByGenomicKey[genomicRepKey]
             # length of current longest transcript
             currentLongestTransLen = 0
             # Now determine the longest transcript
-            for tKey in transDict.keys():
+            for tKey in list(transDict.keys()):
                 tLength = transDict[tKey]
                 if tLength > currentLongestTransLen:
                     currentLongestTransLen = tLength
@@ -729,7 +729,7 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
             if transRepKey != 0:
                 transcript[marker] = transRepKey
             else:
-                print "This shouldn't happen 1"
+                print("This shouldn't happen 1")
                 sys.exit("This shouldn't happen 1")
         else: # no trans for the genomic, get rep trans in the usual way
             determineNonVegaEnsTransRep(marker)
@@ -741,7 +741,7 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
         currentLongestProtLen = 0
         protRepKey = 0
         # determine the longest polypeptide
-        for pKey in protDict.keys():
+        for pKey in list(protDict.keys()):
             pLength = protDict[pKey]
 
             if int(pLength) > int(currentLongestProtLen):
@@ -751,16 +751,16 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
         if protRepKey != 0:
             polypeptide[marker] = protRepKey
         else: 
-            print "This shouldn't happen 2"
+            print("This shouldn't happen 2")
             sys.exit("This shouldn't happen 2")
         # now get Vega/Ensembl transcript(s) for the protRepKey
-        if transcriptLookupByProteinKey.has_key(protRepKey):
+        if protRepKey in transcriptLookupByProteinKey:
             transDict = transcriptLookupByProteinKey[protRepKey]
             # length of current longest transcript
             currentLongestTransLen = 0
             transRepKey = 0
             # determine the longest transcript
-            for tKey in transDict.keys():
+            for tKey in list(transDict.keys()):
                 tLength = transDict[tKey]
                 if tLength > currentLongestTransLen:
                     currentLongestTransLen = tLength
@@ -769,7 +769,7 @@ def determineVegaEnsProtTransRep(marker, genomicRepKey):
                 transcript[marker] = transRepKey
         else:   # no Ensembl protein i.e.
                 # we have a protein w/o a transcript
-            print "This shouldn't happen 3"
+            print("This shouldn't happen 3")
             sys.exit("This shouldn't happen 3")
     return
 
@@ -782,7 +782,7 @@ def determineNonVegaEnsProtRep(marker):
 
     global allpolypeptide, polypeptide
     for i in range(len(allpolypeptide)):
-        if allpolypeptide[i].has_key(marker):
+        if marker in allpolypeptide[i]:
             polypeptide[marker] = allpolypeptide[i][marker]
             return
     return
@@ -796,7 +796,7 @@ def determineNonVegaEnsTransRep(marker):
 
     global alltranscript, transcript
     for i in range(len(alltranscript)):
-        if alltranscript[i].has_key(marker):
+        if marker in alltranscript[i]:
             #transcript[marker] = []
             # why is this different then loading polypeptide i.e. 
             # why append to list
@@ -829,7 +829,7 @@ def determineSeq(seqList, 	# list of dictionaries
     currAllLen = ''
     currAllSeqKey = 0
     if debug == 'true':
-        print 'getLongest: %s, useUniq: %s' % (getLongest, useUniq)
+        print('getLongest: %s, useUniq: %s' % (getLongest, useUniq))
     for seq in seqList:
         # if we are looking for the longest sequence
         if getLongest == True:
@@ -943,7 +943,7 @@ def generateBiotypeLookups():
     yesConflict = 5420767
     noConflict = 5420769
 
-    print 'Initializing Biotype Lookups ... %s' % (mgi_utils.date())
+    print('Initializing Biotype Lookups ... %s' % (mgi_utils.date()))
 
     #
     # create set of non-coding RNA gene and its descendent terms
@@ -1036,7 +1036,7 @@ def generateBiotypeLookups():
 
     for v in ['BioType Ensembl', 'BioType NCBI']:
 
-        print 'Initializing %s raw biotype to equivalency mapping ... %s' % (v, mgi_utils.date())
+        print('Initializing %s raw biotype to equivalency mapping ... %s' % (v, mgi_utils.date()))
 
         # select all distinct raw-biotype terms
         rawresults = db.sql('''
@@ -1082,15 +1082,15 @@ def generateBiotypeLookups():
 
                         # consider all children
                         if e == 'all feature types':
-                                print 'biotype conflicts : allFeatureTypesDescSet'
+                                print('biotype conflicts : allFeatureTypesDescSet')
                                 equivKeySet = equivKeySet.union(allFeatureTypesDescSet)
 
                         # consider all children
                         elif e == 'non-coding rna gene' and useMCVchildren == 1:
-                                print 'biotype conflicts : ncRNAdescSet'
+                                print('biotype conflicts : ncRNAdescSet')
                                 equivKeySet = equivKeySet.union(ncRNAdescSet)
 
-                        elif mcvTermToKeyDict.has_key(e):
+                        elif e in mcvTermToKeyDict:
                                 equivKeySet.add(mcvTermToKeyDict[e])
 
                         else:
@@ -1102,15 +1102,15 @@ def generateBiotypeLookups():
                         NCBIEquivDict[rawTerm] = equivKeySet
 
     if debug == 'true':
-        print len(NCBIEquivDict)
-        print len(EnsEquivDict)
+        print(len(NCBIEquivDict))
+        print(len(EnsEquivDict))
 
     #
     #   for each Marker associated with a 
     #		NCBI (59), Ensembl (60), gene model sequence:
     #     map the gene model raw biotype to its set of equivalent mcv terms
     #
-    print 'Initializing  gene model lookup by marker key ... %s' % (mgi_utils.date())
+    print('Initializing  gene model lookup by marker key ... %s' % (mgi_utils.date()))
 
     results = db.sql('''
          select s._Sequence_key, a._Object_key as _Marker_key,
@@ -1133,22 +1133,22 @@ def generateBiotypeLookups():
         currentEquivSet = set()
 
         # equivalencies are in lower case, so compare with lower biotype
-        lowerRawBiotype = string.lower(rawBiotype)
+        lowerRawBiotype = str.lower(rawBiotype)
         if ldbKey == 59:
-            if NCBIEquivDict.has_key(lowerRawBiotype):
+            if lowerRawBiotype in NCBIEquivDict:
                 currentEquivSet =  NCBIEquivDict[lowerRawBiotype]
             else:
                 writeError(sequenceKey, ldbKey, rawBiotype)
                 continue
         elif ldbKey ==  60: 
-            if EnsEquivDict.has_key(lowerRawBiotype):
+            if lowerRawBiotype in EnsEquivDict:
                 currentEquivSet = EnsEquivDict[lowerRawBiotype]
             else: 
                 writeError(sequenceKey, ldbKey, rawBiotype)
                 continue
         else:
-            print 'Invalid ldbKey for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (
-                sequenceKey, ldbKey, rawBiotype)
+            print('Invalid ldbKey for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (
+                sequenceKey, ldbKey, rawBiotype))
             continue
 
         # create a GeneModel object; map marker key to the GM object 
@@ -1157,7 +1157,7 @@ def generateBiotypeLookups():
         gm.ldbKey = ldbKey
         gm.rawBiotype = rawBiotype
         gm.equivalentBiotypeSet = currentEquivSet
-        if not markerToGMDict.has_key(markerKey):
+        if markerKey not in markerToGMDict:
              markerToGMDict[markerKey] = []
         markerToGMDict[markerKey].append(gm)
 
@@ -1165,7 +1165,7 @@ def generateBiotypeLookups():
     #   for each Marker in MRK_MCV_Cache 
     #        get the direct term(s) and map them to the marker
     #
-    print 'Initializing MGI Marker feature type lookup ... %s' % (mgi_utils.date())
+    print('Initializing MGI Marker feature type lookup ... %s' % (mgi_utils.date()))
     results = db.sql('''
         select _Marker_key, _MCVTerm_key
         from MRK_MCV_Cache
@@ -1175,13 +1175,13 @@ def generateBiotypeLookups():
     for r in results:
         key = r['_Marker_key']
         value = r['_MCVTerm_key']
-        if not featureTypesDict.has_key(key):
+        if key not in featureTypesDict:
             featureTypesDict[key] = []
         featureTypesDict[key].append(value)
 
     # now iterate through the MRK_MCV_Cache markers
-    print 'Iterating through all markers in MRK_MCV_Cache to determine conflicts ... %s' % (mgi_utils.date())
-    markerKeys = featureTypesDict.keys()
+    print('Iterating through all markers in MRK_MCV_Cache to determine conflicts ... %s' % (mgi_utils.date()))
+    markerKeys = list(featureTypesDict.keys())
     markerKeys.sort()
 
     for markerKey in markerKeys:
@@ -1195,7 +1195,7 @@ def generateBiotypeLookups():
         first = True
         gmIntersectSet = set()
 
-        if markerToGMDict.has_key(markerKey):
+        if markerKey in markerToGMDict:
             for gm in markerToGMDict[markerKey]:
                 s = gm.equivalentBiotypeSet
                 if first == True:
@@ -1221,13 +1221,13 @@ def generateBiotypeLookups():
         # now re-iterate thru the marker/sequences
         # and set the conflict key and raw biotype
         # all sequences for a given marker get the same conflict key value
-        if markerToGMDict.has_key(markerKey):
+        if markerKey in markerToGMDict:
             for gm in  markerToGMDict[markerKey]:
                 rawBiotype = gm.rawBiotype
                 sequenceKey = gm.sequenceKey
                 key = '%s:%s' % (markerKey, sequenceKey)
                 value = [conflictType, rawBiotype]
-                if not biotypeLookup.has_key(key):
+                if key not in biotypeLookup:
                     biotypeLookup[key] = value
     return
 
@@ -1250,19 +1250,19 @@ def writeRecord(r):
         mgi_utils.prvalue(r['_Refs_key']) + DL)
 
     printedQualifier = 0
-    if genomic.has_key(r['_Marker_key']):
+    if r['_Marker_key'] in genomic:
         if genomic[r['_Marker_key']] == r['_Sequence_key']:
             outBCP.write(mgi_utils.prvalue(qualByTermLookup['genomic']) + DL)
             printedQualifier = 1
 
-    if transcript.has_key(r['_Marker_key']):
+    if r['_Marker_key'] in transcript:
         # used to be transcript[markerKey] used to be a list of one now 
         # just seqKey
         if r['_Sequence_key'] == transcript[r['_Marker_key']]:
             outBCP.write(mgi_utils.prvalue(qualByTermLookup['transcript']) + DL)
             printedQualifier = 1
 
-    if polypeptide.has_key(r['_Marker_key']):
+    if r['_Marker_key'] in polypeptide:
         if polypeptide[r['_Marker_key']] == r['_Sequence_key']:
             outBCP.write(mgi_utils.prvalue(qualByTermLookup['polypeptide']) + \
                 DL)
@@ -1276,7 +1276,7 @@ def writeRecord(r):
     # use defaults if there is no biotype record for this marker/sequence
     #
     biotypeKey = '%s:%s' % (r['_Marker_key'], r['_Sequence_key'])
-    if biotypeLookup.has_key(biotypeKey):
+    if biotypeKey in biotypeLookup:
         biotypeConflict = biotypeLookup[biotypeKey][0]
         biotypeRaw = biotypeLookup[biotypeKey][1]
     else:
@@ -1309,7 +1309,7 @@ def createBCP():
     global allgenomic, alltranscript, allpolypeptide
     global outBCP
 
-    print 'Processing ...%s' % (mgi_utils.date())
+    print('Processing ...%s' % (mgi_utils.date()))
 
     #	
     # select only:
@@ -1449,14 +1449,14 @@ def createBCP():
 
         # Ensembl
         if (providerKey in [615429]):
-            if allgenomic[ENSEMBL].has_key(m):
+            if m in allgenomic[ENSEMBL]:
                 allgenomic[ENSEMBL][m].append(r)
             else:
                 allgenomic[ENSEMBL][m] = [r]
 
         # NCBI
         elif providerKey == 706915:
-            if allgenomic[NCBI].has_key(m):
+            if m in allgenomic[NCBI]:
                 allgenomic[NCBI][m].append(r)
             else:
                 allgenomic[NCBI][m] = [r]
@@ -1467,7 +1467,7 @@ def createBCP():
         elif providerKey in \
               [316380,316376,316379,316375,316377,316374,316373,316378,492451,29320966] \
               and seqTypeKey == 316347:
-            if allgenomic[gGENBANK].has_key(m):
+            if m in allgenomic[gGENBANK]:
                 allgenomic[gGENBANK][m].append(r)
             else:
                 allgenomic[gGENBANK][m] = [r]
@@ -1482,8 +1482,8 @@ def createBCP():
         #
 
         # RefSeq
-        if providerKey == 316372 and (string.find(a, 'NM_') > -1 or \
-              string.find(a, 'NR_') > -1):
+        if providerKey == 316372 and (str.find(a, 'NM_') > -1 or \
+              str.find(a, 'NR_') > -1):
             if seqlength > tlengths[0]:
                 alltranscript[0][m] = s
                 tlengths[0] = seqlength
@@ -1496,8 +1496,8 @@ def createBCP():
 
         # RefSeq
         elif providerKey == 316372 \
-              and (string.find(a, 'XM_') > -1 \
-              or string.find(a, 'XR_') > -1):
+              and (str.find(a, 'XM_') > -1 \
+              or str.find(a, 'XR_') > -1):
             if seqlength > tlengths[2]:
                 alltranscript[2][m] = s
                 tlengths[2] = seqlength
@@ -1523,7 +1523,7 @@ def createBCP():
             plengths[0] = seqlength
 
         # RefSeq
-        elif providerKey == 316372 and string.find(a, 'NP_') > -1 \
+        elif providerKey == 316372 and str.find(a, 'NP_') > -1 \
               and seqlength > plengths[1]:
             allpolypeptide[1][m] = s
             plengths[1] = seqlength
@@ -1534,7 +1534,7 @@ def createBCP():
             plengths[2] = seqlength
 
         # RefSeq
-        elif providerKey == 316372 and string.find(a, 'XP_') > -1 \
+        elif providerKey == 316372 and str.find(a, 'XP_') > -1 \
               and seqlength > plengths[3]:
             allpolypeptide[3][m] = s
             plengths[3] = seqlength
@@ -1544,7 +1544,7 @@ def createBCP():
     # last record
     determineRepresentative(prevMarker)
 
-    print 'Writing bcp file ...%s' % (mgi_utils.date())
+    print('Writing bcp file ...%s' % (mgi_utils.date()))
     results = db.sql('''
         select distinct _Sequence_key, _Marker_key,
                 _Organism_key, _Marker_Type_key, _SequenceProvider_key,
@@ -1578,11 +1578,11 @@ try:
     init()
     createBCP()
     finalize()
-except db.connection_exc, message:
+except db.connection_exc as message:
     error = '%s%s' % (DB_CONNECT_ERROR, message)
     sys.stderr.write(message)
     sys.exit(message)
-except db.error, message:
+except db.error as message:
     error = '%s%s' % (DB_ERROR, message)
     sys.stderr.write(message)
     sys.exit(message)
