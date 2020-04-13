@@ -23,7 +23,7 @@ date | tee -a ${LOG}
 
 # Create the bcp file
 
-${PYTHON} ./seqmarker.py | tee -a ${LOG}
+./seqmarker.py | tee -a ${LOG}
 
 date | tee -a ${LOG}
 

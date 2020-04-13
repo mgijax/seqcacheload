@@ -20,7 +20,7 @@ date | tee -a ${LOG}
 
 # Create the bcp file
 
-${PYTHON} ./seqcoord.py | tee -a ${LOG}
+./seqcoord.py | tee -a ${LOG}
 
 if ( -z ${TABLE}.bcp ) then
 echo 'BCP Files are empty' | tee -a ${LOG}
