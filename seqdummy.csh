@@ -24,7 +24,7 @@ date | tee -a ${LOG}
 
 # Create the bcp file
 
-./seqdummy.py | tee -a ${LOG}
+${PYTHON} ./seqdummy.py | tee -a ${LOG}
 
 if ( -z SEQ_Sequence.bcp ) then
 echo 'BCP Files are empty' | tee -a ${LOG}
