@@ -20,7 +20,7 @@ date | tee -a ${LOG}
 
 # Create the bcp file
 
-./seqprobe.py | tee -a ${LOG}
+${PYTHONE} ./seqprobe.py | tee -a ${LOG}
 
 if ( -z ${TABLE}.bcp ) then
 echo 'BCP Files are empty' | tee -a ${LOG}
