@@ -1,4 +1,3 @@
-#!/usr/local/bin/python
 
 # $Name$
 
@@ -113,7 +112,7 @@ def init():
 def setPrimaryKeys():
     """
     Assign global primary key variables
-	using max keys from database
+        using max keys from database
     """
 
     global seqKey, assocKey, accKey, userKey
@@ -133,7 +132,7 @@ def setPrimaryKeys():
 def process():
     """
     Query database to determine if dummy sequences need to
-	be created
+        be created
     Generates appropriate BCP files
     """
 
@@ -143,104 +142,104 @@ def process():
     # are not represented as Sequence objects.
 
     db.sql("""select a.accID, a._LogicalDB_key, ps._Organism_key 
-	INTO TEMPORARY TABLE probeaccs1 
-	from ACC_Accession a, PRB_Probe p, PRB_Source ps 
-	where a._MGIType_key = 3 
-	and a._LogicalDB_key = 9 
-	and a._Object_key = p._Probe_key 
-	and p._Source_key = ps._Source_key 
-	and ps._Organism_key = 1 
-	and not exists (select 1 from ACC_Accession s 
-	    where s._MGIType_key = 19 
-		and s._LogicalDB_key = a._LogicalDB_key 
-		and lower(s.accID) = lower(a.accID)
-	)""", None)
+        INTO TEMPORARY TABLE probeaccs1 
+        from ACC_Accession a, PRB_Probe p, PRB_Source ps 
+        where a._MGIType_key = 3 
+        and a._LogicalDB_key = 9 
+        and a._Object_key = p._Probe_key 
+        and p._Source_key = ps._Source_key 
+        and ps._Organism_key = 1 
+        and not exists (select 1 from ACC_Accession s 
+            where s._MGIType_key = 19 
+                and s._LogicalDB_key = a._LogicalDB_key 
+                and lower(s.accID) = lower(a.accID)
+        )""", None)
 
     # generate table of all mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # TrEMBL IDs are not represented as Sequence objects.
 
     db.sql("""select a.accID, a._LogicalDB_key, m._Organism_key 
-	INTO TEMPORARY TABLE markeraccs1 
-	from ACC_Accession a, MRK_Marker m 
-	where a._MGIType_key = 2 
-	and a._LogicalDB_key in (9,13,27,41) 
-	and a._Object_key = m._Marker_key 
-	and m._Organism_key = 1 
-	and m._Marker_Status_key in (1,2)
-	and not exists (select 1 from ACC_Accession s 
-	    where s._MGIType_key = 19 
-		and s._LogicalDB_key = a._LogicalDB_key 
-		and lower(s.accID) = lower(a.accID)
-	)""", None)
+        INTO TEMPORARY TABLE markeraccs1 
+        from ACC_Accession a, MRK_Marker m 
+        where a._MGIType_key = 2 
+        and a._LogicalDB_key in (9,13,27,41) 
+        and a._Object_key = m._Marker_key 
+        and m._Organism_key = 1 
+        and m._Marker_Status_key in (1,2)
+        and not exists (select 1 from ACC_Accession s 
+            where s._MGIType_key = 19 
+                and s._LogicalDB_key = a._LogicalDB_key 
+                and lower(s.accID) = lower(a.accID)
+        )""", None)
 
     # generate table of all non-mouse molecular segments Acc IDs whose GenBank SeqIDs
     # are not represented as Sequence objects.
 
     db.sql("""select a.accID, a._LogicalDB_key, s._Organism_key 
-	INTO TEMPORARY TABLE probeaccs2 
-	from ACC_Accession a, PRB_Probe p, PRB_Source s 
-	where a._MGIType_key = 3 
-	and a._LogicalDB_key = 9 
-	and a._Object_key = p._Probe_key 
-	and p._Source_key = s._Source_key 
-	and s._Organism_key != 1 
-	and not exists (select 1 from ACC_Accession s 
-	    where s._MGIType_key = 19 
-		and s._LogicalDB_key = a._LogicalDB_key 
-		and lower(s.accID) = lower(a.accID)
-	)""", None)
+        INTO TEMPORARY TABLE probeaccs2 
+        from ACC_Accession a, PRB_Probe p, PRB_Source s 
+        where a._MGIType_key = 3 
+        and a._LogicalDB_key = 9 
+        and a._Object_key = p._Probe_key 
+        and p._Source_key = s._Source_key 
+        and s._Organism_key != 1 
+        and not exists (select 1 from ACC_Accession s 
+            where s._MGIType_key = 19 
+                and s._LogicalDB_key = a._LogicalDB_key 
+                and lower(s.accID) = lower(a.accID)
+        )""", None)
 
     # generate table of all non-mouse marker Acc IDs whose GenBank, SWISSProt, RefSeq,
     # TrEMBL IDs are not represented as Sequence objects.
 
     db.sql("""select a.accID, a._LogicalDB_key, m._Organism_key 
-	INTO TEMPORARY TABLE markeraccs2 
-	from ACC_Accession a, MRK_Marker m 
-	where a._MGIType_key = 2 
-	and a._LogicalDB_key in (9,13,27,41) 
-	and a._Object_key = m._Marker_key 
-	and m._Organism_key != 1 
-	and not exists (select 1 from ACC_Accession s 
-	    where s._MGIType_key = 19 
-		and s._LogicalDB_key = a._LogicalDB_key 
-		and lower(s.accID) = lower(a.accID)
-	)""", None)
+        INTO TEMPORARY TABLE markeraccs2 
+        from ACC_Accession a, MRK_Marker m 
+        where a._MGIType_key = 2 
+        and a._LogicalDB_key in (9,13,27,41) 
+        and a._Object_key = m._Marker_key 
+        and m._Organism_key != 1 
+        and not exists (select 1 from ACC_Accession s 
+            where s._MGIType_key = 19 
+                and s._LogicalDB_key = a._LogicalDB_key 
+                and lower(s.accID) = lower(a.accID)
+        )""", None)
 
     # union these 4 sets together to form one unique set
 
     db.sql('select accID, _LogicalDB_key, _Organism_key ' + \
-	'INTO TEMPORARY TABLE allaccs ' + \
-	'from probeaccs1 ' + \
-	'union ' + \
-	'select accID, _LogicalDB_key, _Organism_key ' + \
-	'from markeraccs1 ' + \
-	'union ' + \
-	'select accID, _LogicalDB_key, _Organism_key ' + \
-	'from probeaccs2 ' + \
-	'union ' + \
-	'select accID, _LogicalDB_key, _Organism_key ' + \
-	'from markeraccs2', None)
+        'INTO TEMPORARY TABLE allaccs ' + \
+        'from probeaccs1 ' + \
+        'union ' + \
+        'select accID, _LogicalDB_key, _Organism_key ' + \
+        'from markeraccs1 ' + \
+        'union ' + \
+        'select accID, _LogicalDB_key, _Organism_key ' + \
+        'from probeaccs2 ' + \
+        'union ' + \
+        'select accID, _LogicalDB_key, _Organism_key ' + \
+        'from markeraccs2', None)
 
     results = db.sql('select * from allaccs', 'auto')
     for r in results:
 
-	accID = r['accID']
-	logicalDB = r['_LogicalDB_key']
-	organism = r['_Organism_key']
+        accID = r['accID']
+        logicalDB = r['_LogicalDB_key']
+        organism = r['_Organism_key']
 
-	if organism == 1:
-	    sourceKey = mouseSourceKey
+        if organism == 1:
+            sourceKey = mouseSourceKey
         else:
-	    sourceKey = nonmouseSourceKey
+            sourceKey = nonmouseSourceKey
 
-	virtual = 1
+        virtual = 1
 
         # change values for specific cases
 
-	# types:  316347 (DNA), 316346 (RNA), 316348 (polypeptide), 316349 (not loaded)
-	# quality:  316338 (high), 316339 (medium), 316340 (low), 316341 (not loaded)
-	# provider: 316380 (GenBank/EMBL/DDBJ), 316372 (RefSeq)
-	#           316384 (SwissProt), 316385 (TrEMBL)
+        # types:  316347 (DNA), 316346 (RNA), 316348 (polypeptide), 316349 (not loaded)
+        # quality:  316338 (high), 316339 (medium), 316340 (low), 316341 (not loaded)
+        # provider: 316380 (GenBank/EMBL/DDBJ), 316372 (RefSeq)
+        #           316384 (SwissProt), 316385 (TrEMBL)
 
         if logicalDB == 9:	# GenBank
             typeKey = 316349
@@ -264,64 +263,63 @@ def process():
             providerKey = 316385
 
         seqFile.write(mgi_utils.prvalue(seqKey) + DL + \
-        	mgi_utils.prvalue(typeKey) + DL + \
-        	mgi_utils.prvalue(qualityKey) + DL + \
-        	mgi_utils.prvalue(statusKey) + DL + \
-        	mgi_utils.prvalue(providerKey) + DL + \
-        	mgi_utils.prvalue(organism) + DL + \
-		DL + DL + DL + DL + \
-        	mgi_utils.prvalue(virtual) + DL + \
-		DL + \
-		loaddate + DL + loaddate + DL + \
-		str(userKey) + DL + str(userKey) + DL + \
-		loaddate + DL + loaddate + NL)
+                mgi_utils.prvalue(typeKey) + DL + \
+                mgi_utils.prvalue(qualityKey) + DL + \
+                mgi_utils.prvalue(statusKey) + DL + \
+                mgi_utils.prvalue(providerKey) + DL + \
+                mgi_utils.prvalue(organism) + DL + \
+                DL + DL + DL + DL + \
+                mgi_utils.prvalue(virtual) + DL + \
+                DL + \
+                loaddate + DL + loaddate + DL + \
+                str(userKey) + DL + str(userKey) + DL + \
+                loaddate + DL + loaddate + NL)
 
         rawFile.write(mgi_utils.prvalue(seqKey) + DL + \
-		notLoaded + DL + \
-		notLoaded + DL + \
-		notLoaded + DL + \
-		notLoaded + DL + \
-		notLoaded + DL + \
-		notLoaded + DL + \
-		notLoaded + DL + \
-		notLoaded + DL + \
-		str(userKey) + DL + str(userKey) + DL + \
-		loaddate + DL + loaddate + NL)
+                notLoaded + DL + \
+                notLoaded + DL + \
+                notLoaded + DL + \
+                notLoaded + DL + \
+                notLoaded + DL + \
+                notLoaded + DL + \
+                notLoaded + DL + \
+                notLoaded + DL + \
+                str(userKey) + DL + str(userKey) + DL + \
+                loaddate + DL + loaddate + NL)
 
         sourceFile.write(mgi_utils.prvalue(assocKey) + DL + \
-        	mgi_utils.prvalue(seqKey) + DL + \
-        	mgi_utils.prvalue(sourceKey) + DL + \
-		str(userKey) + DL + str(userKey) + DL + \
-		loaddate + DL + loaddate + NL)
+                mgi_utils.prvalue(seqKey) + DL + \
+                mgi_utils.prvalue(sourceKey) + DL + \
+                str(userKey) + DL + str(userKey) + DL + \
+                loaddate + DL + loaddate + NL)
 
-	prefixPart, numericPart = accessionlib.split_accnum(accID)
+        prefixPart, numericPart = accessionlib.split_accnum(accID)
         accFile.write(mgi_utils.prvalue(accKey) + DL + \
-        	mgi_utils.prvalue(accID) + DL + \
-        	mgi_utils.prvalue(prefixPart) + DL + \
-        	mgi_utils.prvalue(numericPart) + DL + \
-        	mgi_utils.prvalue(logicalDB) + DL + \
-        	mgi_utils.prvalue(seqKey) + DL + \
-        	mgi_utils.prvalue(mgiTypeKey) + DL + \
-		'0' + DL + \
-		'1' + DL + \
-		str(userKey) + DL + str(userKey) + DL + \
-		loaddate + DL + loaddate + NL)
+                mgi_utils.prvalue(accID) + DL + \
+                mgi_utils.prvalue(prefixPart) + DL + \
+                mgi_utils.prvalue(numericPart) + DL + \
+                mgi_utils.prvalue(logicalDB) + DL + \
+                mgi_utils.prvalue(seqKey) + DL + \
+                mgi_utils.prvalue(mgiTypeKey) + DL + \
+                '0' + DL + \
+                '1' + DL + \
+                str(userKey) + DL + str(userKey) + DL + \
+                loaddate + DL + loaddate + NL)
 
         seqKey = seqKey + 1
-	assocKey = assocKey + 1
-	accKey = accKey + 1
+        assocKey = assocKey + 1
+        accKey = accKey + 1
 
 
 if __name__ == "__main__":
     try:
-	init()
-	setPrimaryKeys()
-	process()
+        init()
+        setPrimaryKeys()
+        process()
 
     finally:
-	# always close output files
-	seqFile.close()
-	rawFile.close()
-	sourceFile.close()
-	accFile.close()
-
+        # always close output files
+        seqFile.close()
+        rawFile.close()
+        sourceFile.close()
+        accFile.close()
