@@ -1034,17 +1034,17 @@ def generateBiotypeLookups():
     # one raw biotype maps to only 1 marker type
     #
 
-    for v in ['BioType Ensembl', 'BioType NCBI', 'BioType Ensembl Regulatory Feature', 'BioType VISTA']:
+    for v in [103,104,175,176]:
 
         print('Initializing %s raw biotype to equivalency mapping ... %s' % (v, mgi_utils.date()))
 
         # select all distinct raw-biotype terms
         rawresults = db.sql('''
-                select distinct m._biotypeterm_key, lower(t1.term) as rawTerm, m.useMCVchildren
-                from MRK_BiotypeMapping m, VOC_Vocab v, VOC_Term t1
-                where m._biotypevocab_key = v._vocab_key
-                and v.name = '%s' 
-                and m._biotypeterm_key = t1._Term_key
+                select distinct m._biotypeterm_key, lower(t.term) as rawTerm, m.useMCVchildren
+                from MRK_BiotypeMapping m, VOC_Term t
+                where m._biotypevocab_key = t._vocab_key
+                and t._vocab_key = %s
+                and m._biotypeterm_key = t._Term_key
                 order by rawTerm
                 ''' % (v), 'auto')
 
@@ -1096,16 +1096,16 @@ def generateBiotypeLookups():
                         else:
                                 sys.exit('%s equivalency term does not resolve: %s' % (v, e))
 
-                if v == 'BioType Ensembl':
+                if v == 103:
                         EnsEquivDict[rawTerm] = equivKeySet
 
-                elif v == 'BioType NCBI':
+                elif v == 104:
                         NCBIEquivDict[rawTerm] = equivKeySet
 
-                elif v == 'BioType Ensembl Regulatory Feature':
+                elif v == 176:
                         EnsRegEquivDict[rawTerm] = equivKeySet
 
-                elif v == 'BioType VISTA':
+                elif v == 175:
                         VistaRegEquivDict[rawTerm] = equivKeySet
 
     if debug == 'true':
