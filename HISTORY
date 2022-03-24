@@ -1,3 +1,12 @@
+TAG: seqcacheload-6-0-18-1
+DATE: 03/24/2022
+STAFF: lec
+wts2-813/cre2022/Regulatory Features Ensembl & VISTA
+
+seqmarker.py: added
+175 | BioType VISTA
+176 | BioType Ensembl Regulatory Feature
+
 TAG: seqcacheload-6-0-16-1
 DATE: 08/21/2020
 STAFF: lec
