@@ -261,7 +261,13 @@ def init ():
         select upper(a.accID) as seqID, a._Object_key as _Sequence_key 
         INTO TEMPORARY TABLE gm 
         from ACC_Accession a 
-        where a._LogicalDB_key in (59, 60, 222, 223) 
+        where a._LogicalDB_key in (59, 60, 222) 
+        and a.preferred = 1 
+        and a._MGIType_key = 19
+        union
+        select a.accID as seqID, a._Object_key as _Sequence_key 
+        from ACC_Accession a 
+        where a._LogicalDB_key in (223) 
         and a.preferred = 1 
         and a._MGIType_key = 19
         ''', None)
@@ -1409,6 +1415,17 @@ def createBCP():
         from allannot a, ACC_Accession ac 
         where a._Sequence_key = ac._Object_key 
         and ac._MGIType_key = 19 
+        and ac._Logicaldb_key not in (223)
+        and ac.preferred = 1
+        union
+        select a._Sequence_key, a._Marker_key, a._Organism_key, 
+                a._Marker_Type_key, a._SequenceProvider_key, 
+                a._SequenceType_key, a._LogicalDB_key, 
+                a._Refs_key, a._User_key, a.mdate, ac.accID accID 
+        from allannot a, ACC_Accession ac 
+        where a._Sequence_key = ac._Object_key 
+        and ac._MGIType_key = 19 
+        and ac._Logicaldb_key in (223)
         and ac.preferred = 1
         ''', None)
 
