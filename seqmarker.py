@@ -240,8 +240,7 @@ def init ():
 
     # query with which to load
     # genomic sequences associated with markers lookup
-    # for Ensembl Gene Model (60),
-    # NCBI Gene Model(59), GenBank DNA (9)
+    # for Ensembl Gene Model (60), # NCBI Gene Model(59), GenBank DNA (9)
 
     # get the set of all preferred GenBank DNA sequences
     db.sql('''
@@ -255,12 +254,12 @@ def init ():
         and s._SequenceType_key = 316347
         ''', None)
 
-    # get the set of all Ensembl, NCBI gene models
+    # get the set of all Ensembl, NCBI gene models, Ensembl Regulatory Feature (222), VISTA Enhancer Element (223)
     db.sql('''
         select upper(a.accID) as seqID, a._Object_key as _Sequence_key 
         INTO TEMPORARY TABLE gm 
         from ACC_Accession a 
-        where a._LogicalDB_key in (59, 60) 
+        where a._LogicalDB_key in (59, 60, 222, 223) 
         and a.preferred = 1 
         and a._MGIType_key = 19
         ''', None)
@@ -283,7 +282,7 @@ def init ():
         select s._Sequence_key, a._Object_key as _Marker_key 
         from allSeqs s, ACC_Accession a 
         where a._MGIType_key = 2 
-        and a._LogicalDB_key in (59, 60, 9) 
+        and a._LogicalDB_key in (59, 60, 9, 222, 223) 
         and lower(s.seqID) = lower(a.accid) 
         order by _Sequence_key 
         ''', 'auto')
@@ -378,8 +377,7 @@ def init ():
     return
 
 def writeError(sKey, lKey, rawBiotype):
-    print('No equivalency set for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' \
-        % (sKey, lKey, rawBiotype))
+    print('No equivalency set for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (sKey, lKey, rawBiotype))
 
 # Purpose: Determines representative genomic, transcript, and protein
 #          for the given marker
@@ -938,6 +936,8 @@ def generateBiotypeLookups():
     # equivalency dicts look like {rawTerm:[listOfEquivalentTermKeys], ...}
     NCBIEquivDict = {}
     EnsEquivDict = {}
+    EnsRegEquivDict = {}
+    VistaRegEquivDict = {}
 
     # conflict types (see _Vocab_key = 76)
     yesConflict = 5420767
@@ -1034,7 +1034,7 @@ def generateBiotypeLookups():
     # one raw biotype maps to only 1 marker type
     #
 
-    for v in ['BioType Ensembl', 'BioType NCBI']:
+    for v in ['BioType Ensembl', 'BioType NCBI', 'BioType Ensembl Regulatory Feature', 'BioType VISTA']:
 
         print('Initializing %s raw biotype to equivalency mapping ... %s' % (v, mgi_utils.date()))
 
@@ -1098,16 +1098,25 @@ def generateBiotypeLookups():
 
                 if v == 'BioType Ensembl':
                         EnsEquivDict[rawTerm] = equivKeySet
+
                 elif v == 'BioType NCBI':
                         NCBIEquivDict[rawTerm] = equivKeySet
+
+                elif v == 'BioType Ensembl Regulatory Feature':
+                        EnsRegEquivDict[rawTerm] = equivKeySet
+
+                elif v == 'BioType VISTA':
+                        VistaRegEquivDict[rawTerm] = equivKeySet
 
     if debug == 'true':
         print(len(NCBIEquivDict))
         print(len(EnsEquivDict))
+        print(len(EnsRegEquivDict))
+        print(len(VistaRegEquivDict))
 
     #
     #   for each Marker associated with a 
-    #		NCBI (59), Ensembl (60), gene model sequence:
+    #		NCBI (59), Ensembl (60), gene model sequence, Ensembl Regulatory Feature (222), VISTA Enhancer Element (223):
     #     map the gene model raw biotype to its set of equivalent mcv terms
     #
     print('Initializing  gene model lookup by marker key ... %s' % (mgi_utils.date()))
@@ -1117,7 +1126,7 @@ def generateBiotypeLookups():
                 a._LogicalDB_key, g.rawBiotype
          from gm s, ACC_Accession a, SEQ_GeneModel g
          where a._MGIType_key = 2
-         and a._LogicalDB_key in (59, 60)
+         and a._LogicalDB_key in (59, 60, 222, 223)
          and lower(s.seqID) = lower(a.accid)
          and s._Sequence_key = g._Sequence_key
          order by s._Sequence_key
@@ -1146,9 +1155,20 @@ def generateBiotypeLookups():
             else: 
                 writeError(sequenceKey, ldbKey, rawBiotype)
                 continue
+        elif ldbKey ==  222: 
+            if lowerRawBiotype in EnsRegEquivDict:
+                currentEquivSet = EnsRegEquivDict[lowerRawBiotype]
+            else: 
+                writeError(sequenceKey, ldbKey, rawBiotype)
+                continue
+        elif ldbKey ==  223: 
+            if lowerRawBiotype in VistaRegEquivDict:
+                currentEquivSet = VistaRegEquivDict[lowerRawBiotype]
+            else: 
+                writeError(sequenceKey, ldbKey, rawBiotype)
+                continue
         else:
-            print('Invalid ldbKey for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (
-                sequenceKey, ldbKey, rawBiotype))
+            print('Invalid ldbKey for sequenceKey: %s, ldbKey: %s, rawBiotype: %s' % (sequenceKey, ldbKey, rawBiotype))
             continue
 
         # create a GeneModel object; map marker key to the GM object 
