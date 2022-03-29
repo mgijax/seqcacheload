@@ -654,36 +654,36 @@ def determineRepresentative(marker):
                     genomicRepKey = ncbiSeqs[0][SEQKEY]
                     genomicRepProvider = ncbi_prov
                     if debug == 'true':
-                        print('CASE 4')
+                        print('CASE 3')
                 else:
                     genomicRepKey =  ensemblSeqs[0][SEQKEY]
                     genomicRepProvider = ensembl_prov
                     if debug == 'true':
-                        print('CASE 5')
+                        print('CASE 4')
 
         elif hasSglUniqEnsembl:
                 genomicRepKey = ensemblSeqs[0][SEQKEY]
                 genomicRepProvider = ensembl_prov
                 if debug == 'true':
-                    print('CASE 6')
+                    print('CASE 5')
 
         elif hasSglUniqNCBI:
                 genomicRepKey = ncbiSeqs[0][SEQKEY]
                 genomicRepProvider = ncbi_prov
                 if debug == 'true':
-                    print('CASE 7')
+                    print('CASE 6')
 
         elif hasSglUniqEnsemblr:
                 genomicRepKey = ensemblrSeqs[0][SEQKEY]
                 genomicRepProvider = ensemblr_prov
                 if debug == 'true':
-                    print('CASE Ensemblr')
+                    print('CASE 7')
 
         elif hasSglUniqVISTA:
                 genomicRepKey = vistaSeqs[0][SEQKEY]
                 genomicRepProvider = vista_prov
                 if debug == 'true':
-                    print('CASE VISTA')
+                    print('CASE 8')
 
         # only multiples (uniq or not) or single not-uniq left
         else:
@@ -722,14 +722,14 @@ def determineRepresentative(marker):
                         genomicRepKey = s
                         genomicRepProvider = ensemblr_prov
                         if debug == 'true':
-                            print('CASE EnsemblR')
+                            print('CASE 13')
 
                 elif vistaHasUniq:
                         (s, l) = determineSeq(vistaSeqs, False, True)
                         genomicRepKey = s
                         genomicRepProvider = vista_prov
                         if debug == 'true':
-                            print('CASE VISTA')
+                            print('CASE 14')
 
                 # no uniques, only single or multiple non-uniq left
                 else:
@@ -741,25 +741,25 @@ def determineRepresentative(marker):
                                     genomicRepKey = ncbiSeqs[0][SEQKEY]
                                     genomicRepProvider = ncbi_prov
                                     if debug == 'true':
-                                        print('CASE 14')
+                                        print('CASE 15')
 
                                 else:
                                     genomicRepKey =  ensemblSeqs[0][SEQKEY]
                                     genomicRepProvider = ensembl_prov
                                     if debug == 'true':
-                                        print('CASE 15')
+                                        print('CASE 16')
 
                             elif ensemblIsSgl:
                                 genomicRepKey = ensemblSeqs[0][SEQKEY]
                                 genomicRepProvider = ensembl_prov
                                 if debug == 'true':
-                                    print('CASE 16')
+                                    print('CASE 17')
 
                             elif ncbiIsSgl:
                                 genomicRepKey = ncbiSeqs[0][SEQKEY]
                                 genomicRepProvider = ncbi_prov
                                 if debug == 'true':
-                                    print('CASE 17')
+                                    print('CASE 18')
 
                     # no singles, must be multiple non-uniq
                     else:
@@ -801,7 +801,7 @@ def determineRepresentative(marker):
                                 genomicRepKey = s
                                 genomicRepProvider = ensemblr_prov
                                 if debug == 'true':
-                                    print('CASE EnsemblR')
+                                    print('CASE 23')
 
                             elif hasVISTA:
                                 # pick shortest
@@ -809,7 +809,7 @@ def determineRepresentative(marker):
                                 genomicRepKey = s
                                 genomicRepProvider = vista_prov
                                 if debug == 'true':
-                                    print('CASE VISTA')
+                                    print('CASE 24')
 
     # if we found a genomicRepKey for this marker add it to the dictionary
     if debug == 'true':
@@ -820,7 +820,7 @@ def determineRepresentative(marker):
         genomic[marker] = genomicRepKey
     else:
         if debug == 'true':
-            print('CASE 23')
+            print('CASE 25')
 
     return
 
