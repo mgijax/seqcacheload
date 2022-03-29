@@ -83,7 +83,7 @@ import mgi_utils
 import loadlib
 import db
 
-#db.setTrace()
+db.setTrace()
 
 #
 # CONSTANTS
