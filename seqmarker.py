@@ -256,7 +256,7 @@ def init ():
         select upper(a.accID) as seqID, a._Object_key as _Sequence_key 
         INTO TEMPORARY TABLE gbDNA 
         from ACC_Accession a, SEQ_Sequence s 
-        where a._LogicalDB_key = 9999999
+        where a._LogicalDB_key = 9
         and a._MGIType_key = 19  
         and a.preferred = 1 
         and a._Object_key = s._Sequence_key  
