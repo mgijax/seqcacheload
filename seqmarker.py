@@ -898,6 +898,132 @@ def determineRepresentative(marker):
         if debug == 'true':
             print('CASE 35')
 
+    #
+    # Determine Representative Protein and Transcript Sequences
+    #
+    if genomicRepProvider == ensembl_prov:
+        determineVegaEnsProtTransRep(marker, genomicRepKey)
+    else: # not Ensembl
+        determineNonVegaEnsProtRep(marker)
+        determineNonVegaEnsTransRep(marker)
+
+    return
+
+def determineVegaEnsProtTransRep(marker, genomicRepKey):
+    # Purpose: Determine the representative protein and transcript
+    #     for 'marker'. When the rep genomic is Ensembl
+    #     the protein and transcript must be from same provider
+    #     if they exist
+    # Returns: nothing
+    # Assumes: nothing
+    # Effects: nothing
+    # Throws: nothing
+
+    global allpolypeptide, polypeptide, alltranscript, transcript
+    global transcriptLookupByGenomicKey, transcriptLookupByProteinKey
+
+    protRepKey = 0 	# default
+    transRepKey = 0 	# default
+
+    #
+    # we determine the reprentative protein first per requirements -
+    # see TR9774
+    #
+    if genomicRepKey not in proteinLookupByGenomicKey:
+        # no prots for this genomic, get rep protein in the usual way
+        determineNonVegaEnsProtRep(marker)
+
+        # now get Vega/Ensembl transcript(s) for the genomicRepKey
+        if genomicRepKey in transcriptLookupByGenomicKey:
+            # get the list of transcriptIds mapped to their length
+            #transDict- {t1:length, t2:length, ...}
+            transDict = transcriptLookupByGenomicKey[genomicRepKey]
+            # length of current longest transcript
+            currentLongestTransLen = 0
+            # Now determine the longest transcript
+            for tKey in list(transDict.keys()):
+                tLength = transDict[tKey]
+                if tLength > currentLongestTransLen:
+                    currentLongestTransLen = tLength
+                    transRepKey = tKey
+            if transRepKey != 0:
+                transcript[marker] = transRepKey
+            else:
+                print("This shouldn't happen 1")
+                sys.exit("This shouldn't happen 1")
+        else: # no trans for the genomic, get rep trans in the usual way
+            determineNonVegaEnsTransRep(marker)
+
+    else: # there are proteins for the genomicRepKey, determine longest
+        protDict = proteinLookupByGenomicKey[genomicRepKey]
+
+        # length of current longest polypeptide
+        currentLongestProtLen = 0
+        protRepKey = 0
+        # determine the longest polypeptide
+        for pKey in list(protDict.keys()):
+            pLength = protDict[pKey]
+
+            if int(pLength) > int(currentLongestProtLen):
+                currentLongestProtLen = pLength
+                protRepKey = pKey
+
+        if protRepKey != 0:
+            polypeptide[marker] = protRepKey
+        else: 
+            print("This shouldn't happen 2")
+            sys.exit("This shouldn't happen 2")
+        # now get Vega/Ensembl transcript(s) for the protRepKey
+        if protRepKey in transcriptLookupByProteinKey:
+            transDict = transcriptLookupByProteinKey[protRepKey]
+            # length of current longest transcript
+            currentLongestTransLen = 0
+            transRepKey = 0
+            # determine the longest transcript
+            for tKey in list(transDict.keys()):
+                tLength = transDict[tKey]
+                if tLength > currentLongestTransLen:
+                    currentLongestTransLen = tLength
+                    transRepKey = tKey
+            if transRepKey  != 0:
+                transcript[marker] = transRepKey
+        else:   # no Ensembl protein i.e.
+                # we have a protein w/o a transcript
+            print("This shouldn't happen 3")
+            sys.exit("This shouldn't happen 3")
+    return
+
+def determineNonVegaEnsProtRep(marker):
+    # Purpose: determine non-Ensembl rep protein
+    # Returns: nothing
+    # Assumes: nothing
+    # Effects: nothing
+    # Throws: nothing
+
+    global allpolypeptide, polypeptide
+    for i in range(len(allpolypeptide)):
+        if marker in allpolypeptide[i]:
+            polypeptide[marker] = allpolypeptide[i][marker]
+            return
+    return
+
+def determineNonVegaEnsTransRep(marker):
+    # Purpose: determine non-Ensembl rep transcript
+    # Returns: nothing
+    # Assumes: nothing
+    # Effects: nothing
+    # Throws: nothing
+
+    global alltranscript, transcript
+    for i in range(len(alltranscript)):
+        if marker in alltranscript[i]:
+            #transcript[marker] = []
+            # why is this different then loading polypeptide i.e. 
+            # why append to list
+            #transcript[marker].append(alltranscript[i][marker])
+            # changed to be the same as Prot
+            transcript[marker] = alltranscript[i][marker]
+            return
     return
 
 def determineSeq(seqList, 	# list of dictionaries
