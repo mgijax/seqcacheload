@@ -46,12 +46,9 @@
 
 import sys
 import os
-import string
-import getopt
 import accessionlib
 import mgi_utils
 import loadlib
-import sourceloadlib
 import db
 
 db.setTrace()
