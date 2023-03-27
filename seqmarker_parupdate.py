@@ -98,6 +98,7 @@ def doDeletes():
             and _sequence_key = %s''' % (markerKey, sequenceKey)
         print(cmd)
         db.sql(cmd, None)
+        db.commit()
 
     return
 
