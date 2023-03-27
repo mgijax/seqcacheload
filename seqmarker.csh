@@ -45,4 +45,6 @@ ${BCP_CMD} ${TABLE} ${CACHEDATADIR} ${TABLE}.bcp ${COLDELIM} ${LINEDELIM} ${PG_D
 # Create indexes
 ${SCHEMADIR}/index/${TABLE}_create.object | tee -a ${LOG}
 
+${PYTHON} ./seqmarker_parupdate.py >>& ${LOG}
+
 date | tee -a ${LOG}
