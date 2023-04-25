@@ -1,3 +1,10 @@
+TAG: seqcacheload-6-0-22-?
+DATE: ??
+STAFF: ??
+CHANGES:
+1. added seqmarker_parupdate.py - post-processing for par
+2. seqmarker.csh - add call to post-processing for par
+
 TAG: seqcacheload-6-0-19-2
 DATE: 05/18/2022, 03/30/2022, 04/11/2022
 STAFF: lec
