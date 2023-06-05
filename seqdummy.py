@@ -117,8 +117,8 @@ def setPrimaryKeys():
     results = db.sql("select max(_Sequence_key) + 1 as maxKey from %s" % (seqTable), "auto")
     seqKey = results[0]["maxKey"]
 
-    results = db.sql("select max(_Assoc_key) + 1 as maxKey from %s" % (sourceTable), "auto")
-    assocKey = results[0]["maxKey"]
+    results = db.sql('''select nextval('seq_source_assoc_seq') as nextKey''', 'auto')
+    assocKey = results[0]["nextKey"]
 
     results = db.sql("select max(_Accession_key) + 1 as maxKey from %s" % (accTable), "auto")
     accKey = results[0]["maxKey"]

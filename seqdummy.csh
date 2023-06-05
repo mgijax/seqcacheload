@@ -55,6 +55,11 @@ ${BCP_CMD} SEQ_Sequence_Raw ${CACHEDATADIR} SEQ_Sequence_Raw.bcp ${COLDELIM} ${L
 ${BCP_CMD} SEQ_Source_Assoc ${CACHEDATADIR} SEQ_Source_Assoc.bcp ${COLDELIM} ${LINEDELIM} ${PG_DB_SCHEMA} | tee -a ${LOG}
 ${BCP_CMD} ACC_Accession ${CACHEDATADIR} ACC_Accession.bcp ${COLDELIM} ${LINEDELIM} ${PG_DB_SCHEMA} | tee -a ${LOG}
 
+# update serialization on seq_source_assoc
+cat - <<EOSQL | ${PG_DBUTILS}/bin/doisql.csh $0 | tee -a ${LOG}
+select setval('seq_source_assoc_seq', (select max(_Assoc_key) from SEQ_Source_Assoc));
+EOSQL
+
 # Re-create index and triggers
 
 if ( $b > 3000 ) then

@@ -1,3 +1,10 @@
+TAG: seqcacheload-6-0-22-3
+STAFF: lec
+CHANGES:
+wts2-1202/fl2-396/seqdummy.py needs to use autosequence for SEQ_Source_Assoc
+Refseqload failed saturday night. Something up with Seq_Source_Assoc._assoc_key autosequence?
+seqdummy.py : needs to use seq_source_assoc/autosequence
+
 TAG: seqcacheload-6-0-22-2
 TAG: seqcacheload-6-0-22-1
 DATE: 04/26/2022, 05/04/2023
