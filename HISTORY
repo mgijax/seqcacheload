@@ -1,3 +1,10 @@
+TAG: seqcacheload-6-0-24-1
+DATE: 08/12/2024
+STAFF: lec
+CHANGES:
+wts2-1534/fl2-942/Biotype display/logic Conflict issue
+add “other genome feature” to the SEQ_Marker_Cache/generateBiotypeLookups()
+
 TAG: seqcacheload-6-0-22-3
 STAFF: lec
 CHANGES:

@@ -1144,6 +1144,9 @@ def generateBiotypeLookups():
     # all feature types descendents
     allFeatureTypesDescSet = set([])
 
+    # other genome feature descendents
+    otherGenomeFeatureDescSet = set([])
+
     # map mcv feature type terms from the VOC_Term table to their keys
     mcvTermToKeyDict = {}
 
@@ -1208,6 +1211,23 @@ def generateBiotypeLookups():
             ''' % allFeatureTypesTermKey, 'auto')
     for r in results:
         allFeatureTypesDescSet.add(r['_DescendentObject_key'])
+
+    #
+    # create set of other genome feature descendent terms
+    #
+    otherGenomeFeatureTermKey = 6238178
+
+    results = db.sql('''
+            select t.term as descTerm, c._AncestorObject_key, c._DescendentObject_key
+            from DAG_Closure c, VOC_Term t
+            where c._DAG_key = 9
+                and c._MGIType_key = 13
+                and _AncestorObject_key = %s
+                and c._DescendentObject_key = t._Term_key
+            order by  c._AncestorObject_key, c._DescendentObject_key
+            ''' % otherGenomeFeatureTermKey, 'auto')
+    for r in results:
+        otherGenomeFeatureDescSet.add(r['_DescendentObject_key'])
 
     #
     # map all feature type terms to their keys
@@ -1312,6 +1332,11 @@ def generateBiotypeLookups():
                         elif e == 'non-coding rna gene' and useMCVchildren == 1:
                                 print('biotype conflicts : ncRNAdescSet')
                                 equivKeySet = equivKeySet.union(ncRNAdescSet)
+
+                        # consider all children
+                        elif e == 'other genome feature':
+                                print('biotype conflicts : otherGenomeFeatureDescSet')
+                                equivKeySet = equivKeySet.union(otherGenomeFeatureDescSet)
 
                         elif e in mcvTermToKeyDict:
                                 equivKeySet.add(mcvTermToKeyDict[e])
