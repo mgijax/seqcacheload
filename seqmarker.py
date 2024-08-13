@@ -1334,7 +1334,7 @@ def generateBiotypeLookups():
                                 equivKeySet = equivKeySet.union(ncRNAdescSet)
 
                         # consider all children
-                        elif e == 'other genome feature':
+                        elif e == 'other genome feature' and useMCVchildren == 1:
                                 print('biotype conflicts : otherGenomeFeatureDescSet')
                                 equivKeySet = equivKeySet.union(otherGenomeFeatureDescSet)
 
