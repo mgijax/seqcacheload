@@ -26,16 +26,12 @@ date | tee -a ${LOG}
 
 ${PYTHON} ./seqdummy.py | tee -a ${LOG}
 
-if ( -z SEQ_Sequence.bcp ) then
-echo 'BCP Files are empty' | tee -a ${LOG}
+if ( ! -s SEQ_Sequence.bcp ) then
+echo 'BCP Files are empty : done' | tee -a ${LOG}
 exit 0
 endif
 
-if ( -z SEQ_Sequence.bcp ) then
-echo 'BCP Files are empty' | tee -a ${LOG}
-exit 0
-endif
-
+echo 'BCP Files are not empty : continue' | tee -a ${LOG}
 date | tee -a ${LOG}
 
 set a=`wc -l ${CACHEDATADIR}/SEQ_Sequence.bcp`

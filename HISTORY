@@ -1,3 +1,11 @@
+TAG: seqcacheload-6-0-25-1
+DATE: 02/26/2025
+STAFF: lec
+CHANGES:
+        modified:   seqdummy.csh
+        modified:   seqdummy.py
+seqdummy/set userKey = 1670 (seqdummy) to track dummy records
+
 TAG: seqcacheload-6-0-24-2
 TAG: seqcacheload-6-0-24-1
 DATE: 08/12/2024

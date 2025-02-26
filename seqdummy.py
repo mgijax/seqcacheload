@@ -27,7 +27,7 @@
 #       BCP files:
 #
 #       SEQ_Sequence.bcp                master Sequence records
-#	SEQ_Source_Assoc.bcp		Sequence/Source Association records
+#	    SEQ_Source_Assoc.bcp		    Sequence/Source Association records
 #       ACC_Accession.bcp               Accession records
 #
 #       Diagnostics file of all input parameters and SQL commands
@@ -77,7 +77,7 @@ accFileName = datadir + '/' + accTable + '.bcp'
 seqKey = 0              # SEQ_Sequence._Sequence_key
 assocKey = 0		# SEQ_Source_Assoc._Assoc_key
 accKey = 0              # ACC_Accession._Accession_key
-userKey = 0		# MGI_User._User_key
+userKey = 1670		# MGI_User._User_key
 
 mgiTypeKey = 19		# Sequence
 statusKey = 316345	# "Not Loaded" Sequence Status
@@ -123,7 +123,7 @@ def setPrimaryKeys():
     results = db.sql("select max(_Accession_key) + 1 as maxKey from %s" % (accTable), "auto")
     accKey = results[0]["maxKey"]
 
-    userKey = loadlib.verifyUser(os.environ['MGD_DBUSER'], 1, None)
+    #userKey = loadlib.verifyUser(os.environ['MGD_DBUSER'], 1, None)
 
 
 def process():
